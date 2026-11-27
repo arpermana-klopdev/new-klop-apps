@@ -7,12 +7,12 @@ import {
   Settings2,
   ShieldCheck,
 } from "lucide-react";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getRegistrationPolicy } from "../../api/auth";
 import { getCurrentTerms } from "../../api/legal";
-import { getOrganizationTypes } from "../../api/tenants";
+import { getOrganizationTypes, getTenantTypes } from "../../api/tenants";
 import { getRolePermissionMatrixAccess } from "../../api/rolePermissionMatrix";
 import { toApiRequestError } from "../../api/client";
 import type { OrganizationType } from "../../api/contracts";
@@ -37,7 +37,7 @@ const setupSections = [
   {
     title: "Master Data",
     route: "/platform-setup/master-data",
-    description: "View organization-type reference data exposed by the current API.",
+    description: "Search active tenant and organization reference catalogs from the API.",
     status: "Partial read only",
     icon: Database,
   },
@@ -269,50 +269,16 @@ function RegistrationScopeReadiness({ scope, enabled, termsRequired }: {
 }
 
 export function MasterDataSetupPage() {
-  const organizationTypesQuery = useQuery({
-    queryKey: ["platform-setup", "master-data", "organization-types"],
-    queryFn: getOrganizationTypes,
-  });
-  const organizationTypes = organizationTypesQuery.data ?? [];
-
   return (
     <SetupSectionPage
       title="Master Data"
-      description="Read-only view of the existing reference data endpoint. No generic master-data administration API is available."
+      description="Read-only active reference catalogs from the database-backed API. Catalog availability is not the same as effective registration or access permission."
       status="Partial read only"
     >
-      <section aria-labelledby="setup-organization-types-heading">
-        <div className="mb-4">
-          <h3 id="setup-organization-types-heading" className="text-sm font-semibold">Organization types</h3>
-          <p className="mt-1 text-xs text-slate-500">
-            Source: GET /api/v1/master/organization-types
-          </p>
-        </div>
-        {organizationTypesQuery.isPending ? (
-          <div className="space-y-2" role="status" aria-label="Loading organization types">
-            <Skeleton className="h-12" />
-            <Skeleton className="h-12" />
-          </div>
-        ) : organizationTypesQuery.isError ? (
-          <div>
-            <Notice>{toApiRequestError(organizationTypesQuery.error).message}</Notice>
-            <Button
-              className="mt-3"
-              size="sm"
-              variant="secondary"
-              onClick={() => void organizationTypesQuery.refetch()}
-            >
-              Retry
-            </Button>
-          </div>
-        ) : organizationTypes.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-slate-300 px-4 py-6 text-center text-sm text-slate-500 dark:border-slate-700">
-            No organization types were returned by the existing API.
-          </p>
-        ) : (
-          <OrganizationTypeList organizationTypes={organizationTypes} />
-        )}
-      </section>
+      <div className="space-y-6">
+        <ReferenceCatalog title="Tenant types" endpoint="tenant-types" load={getTenantTypes} />
+        <ReferenceCatalog title="Organization types" endpoint="organization-types" load={getOrganizationTypes} />
+      </div>
       <div className="mt-5 border-t border-slate-100 pt-4 dark:border-slate-800">
         <p className="text-xs leading-5 text-slate-500 dark:text-slate-400">
           Other master-data catalogs, editing, and approval are not exposed by the current API. No records are changed here.
@@ -322,24 +288,69 @@ export function MasterDataSetupPage() {
   );
 }
 
-function OrganizationTypeList({ organizationTypes }: { organizationTypes: OrganizationType[] }) {
+function ReferenceCatalog({ title, endpoint, load }: {
+  title: string;
+  endpoint: "tenant-types" | "organization-types";
+  load: () => Promise<OrganizationType[]>;
+}) {
+  const [search, setSearch] = useState("");
+  const query = useQuery({
+    queryKey: ["platform-setup", "master-data", endpoint],
+    queryFn: load,
+    staleTime: 0,
+    refetchOnMount: "always",
+    retry: false,
+  });
+  const rows = query.isSuccess && !query.isFetching ? query.data : undefined;
+  const term = search.trim().toLocaleLowerCase();
+  const visible = (rows ?? []).filter((row) =>
+    [row.code, row.name, row.countryCode].some((value) => value?.toLocaleLowerCase().includes(term)),
+  );
   return (
-    <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-      {organizationTypes.map((organizationType, index) => (
-        <li
-          key={organizationType.organizationTypeId ?? organizationType.code ?? `organization-type-${index}`}
-          className="rounded-xl border border-slate-200 p-4 dark:border-slate-800"
-        >
-          <p className="text-sm font-semibold">{organizationType.name ?? "Name unavailable"}</p>
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            {organizationType.code && <StatusBadge value={organizationType.code} />}
-            {organizationType.countryCode && (
-              <span className="text-xs text-slate-500">{organizationType.countryCode}</span>
-            )}
+    <section aria-label={title} className="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h3 className="text-sm font-semibold">{title}</h3>
+          <p className="mt-1 text-xs text-slate-500">Source: GET /api/v1/master/{endpoint}</p>
+        </div>
+        <Button size="sm" variant="secondary" onClick={() => void query.refetch()} disabled={query.isFetching}>
+          Refresh
+        </Button>
+      </div>
+      {query.isPending || query.isFetching ? (
+        <div className="space-y-2" role="status" aria-label={"Loading " + title.toLowerCase()}><Skeleton className="h-12" /><Skeleton className="h-12" /></div>
+      ) : query.isError ? (
+        <Notice>{title} could not be loaded. {toApiRequestError(query.error).message}</Notice>
+      ) : rows ? (
+        <>
+          <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
+            <label className="text-xs font-medium">
+              Search {title.toLowerCase()}
+              <input className="mt-1 block rounded-lg border border-slate-300 bg-transparent px-3 py-2 text-sm dark:border-slate-600"
+                value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Code or name" />
+            </label>
+            <p className="text-xs text-slate-500">{visible.length} of {rows.length} records</p>
           </div>
-        </li>
-      ))}
-    </ul>
+          {rows.length === 0 ? (
+            <p className="py-4 text-sm text-slate-500">No active records were returned by the API.</p>
+          ) : visible.length === 0 ? (
+            <p className="py-4 text-sm text-slate-500">No records match your search.</p>
+          ) : (
+            <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              {visible.map((row, index) => (
+                <li key={row.organizationTypeId ?? row.code ?? index} className="rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+                  <p className="text-sm font-semibold">{row.name ?? "Name unavailable"}</p>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    {row.code && <StatusBadge value={row.code} />}
+                    {row.countryCode && <span className="text-xs text-slate-500">{row.countryCode}</span>}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
+      ) : <Notice>{title} are unavailable.</Notice>}
+    </section>
   );
 }
 
