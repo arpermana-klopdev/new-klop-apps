@@ -192,6 +192,8 @@ AS
 BEGIN
     SET NOCOUNT ON;
     SET XACT_ABORT ON;
+    DECLARE @TemplateCode VARCHAR(50),
+            @ContentToCheck NVARCHAR(MAX)=@Subject+NCHAR(10)+@Body;
     EXEC iam.usp_ValidatePlatformPermission @ActorUserId,@PublicSessionId,'platform.notifications.draft.edit';
     IF NULLIF(LTRIM(RTRIM(@Subject)),N'') IS NULL OR LEN(@Subject)>300
        OR @Subject LIKE N'%' + NCHAR(13) + N'%' OR @Subject LIKE N'%' + NCHAR(10) + N'%'
@@ -256,10 +258,11 @@ BEGIN
 
     DECLARE @CurrentStatus VARCHAR(30),@TemplateId UNIQUEIDENTIFIER,@TemplateCode VARCHAR(50),
             @TargetStatus VARCHAR(30),@ActionType VARCHAR(20)='UPDATE',
-            @ContentToCheck NVARCHAR(MAX)=@Subject+NCHAR(10)+@Body;
+            @ContentToCheck NVARCHAR(MAX);
     BEGIN TRY
         BEGIN TRANSACTION;
-        SELECT @CurrentStatus=v.StatusCode,@TemplateId=v.TemplateId,@TemplateCode=t.TemplateCode
+        SELECT @CurrentStatus=v.StatusCode,@TemplateId=v.TemplateId,@TemplateCode=t.TemplateCode,
+               @ContentToCheck=v.Subject+NCHAR(10)+v.Body
         FROM ntf.NotificationTemplateVersions v WITH(UPDLOCK,HOLDLOCK)
         JOIN ntf.NotificationTemplates t ON t.TemplateId=v.TemplateId
         WHERE v.TemplateVersionId=@TemplateVersionId AND v.RowVersion=@ExpectedVersion;
