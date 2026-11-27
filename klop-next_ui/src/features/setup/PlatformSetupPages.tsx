@@ -66,9 +66,12 @@ function SetupSectionNav() {
   const matrixAccessQuery = useQuery({
     queryKey: ["platform-role-permission-matrix", "access"],
     queryFn: getRolePermissionMatrixAccess,
+    staleTime: 0,
+    refetchOnMount: "always",
+    retry: false,
   });
   const sections = setupSections.filter(({ route }) =>
-    route !== "/platform-setup/access-approval" || matrixAccessQuery.data?.canRead === true,
+    route !== "/platform-setup/access-approval" || (matrixAccessQuery.isSuccess && !matrixAccessQuery.isFetching && matrixAccessQuery.data?.canRead === true),
   );
   return (
     <nav aria-label="Platform Setup sections" className="mb-6 flex flex-wrap gap-2">
@@ -126,9 +129,12 @@ export function PlatformSetupPage() {
   const matrixAccessQuery = useQuery({
     queryKey: ["platform-role-permission-matrix", "access"],
     queryFn: getRolePermissionMatrixAccess,
+    staleTime: 0,
+    refetchOnMount: "always",
+    retry: false,
   });
   const sections = setupSections.filter(({ route }) =>
-    route !== "/platform-setup/access-approval" || matrixAccessQuery.data?.canRead === true,
+    route !== "/platform-setup/access-approval" || (matrixAccessQuery.isSuccess && !matrixAccessQuery.isFetching && matrixAccessQuery.data?.canRead === true),
   );
   return (
     <>
