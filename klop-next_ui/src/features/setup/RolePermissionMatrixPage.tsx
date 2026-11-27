@@ -147,6 +147,7 @@ export function RolePermissionMatrixPage() {
         queryClient.invalidateQueries({ queryKey: ["platform-role-permission-matrix"] }),
         queryClient.invalidateQueries({ queryKey: ["platform-role-permission-history"] }),
         queryClient.invalidateQueries({ queryKey: ["tenant-permissions"] }),
+        queryClient.invalidateQueries({ queryKey: ["platform-registration-permissions"] }),
       ]);
     },
   });
