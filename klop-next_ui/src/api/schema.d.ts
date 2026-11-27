@@ -3856,9 +3856,12 @@ export interface components {
             tlsRequired: boolean;
             credentialsConfigured: boolean;
             templateRolloutEnabled: boolean;
+            deliveryAuditEnabled: boolean;
             verificationLifetimeStatus: string;
         };
         NotificationDeliveryHistoryItem: {
+            /** Format: int64 */
+            attemptId: number;
             /** Format: uuid */
             deliveryId: string;
             templateCode: string;

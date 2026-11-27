@@ -37,19 +37,31 @@ public sealed class NotificationTemplateRendererTests
     [InlineData("{{verification_link}}", "This template omits the expiry value.")]
     [InlineData("Verify\r\nBcc: attacker@example.test", Body)]
     [InlineData("{{verification_link}}", "{{unknown_value}} {{expiry_hours}}")]
-    [InlineData("{{expiry_hours}}", Body)]
-    [InlineData("Verify {{expiry_hours}}", Body)]
     public void PreviewRejectsMissingUnknownOrHeaderInjection(string subject, string body)
     {
         Assert.Throws<ArgumentException>(() => NotificationTemplateRenderer.Preview(subject, body));
     }
 
     [Fact]
-    public void RenderedSubjectIsValidatedAfterPlaceholderExpansion()
+    public void RenderedSubjectRemainsWithinHeaderAndLengthLimits()
     {
-        var subject = new string('a', 299) + "{{expiry_hours}}";
+        var subject = new string('a', 280) + "{{expiry_hours}}";
+        var rendered = NotificationTemplateRenderer.RenderVerification(
+            subject, Body, "https://app.example.test/verify-email", 24);
+        Assert.True(rendered.Subject.Length <= 300);
+        Assert.DoesNotContain('\r', rendered.Subject);
+        Assert.DoesNotContain('\n', rendered.Subject);
+    }
+
+    [Fact]
+    public void ExpiryMayBeRenderedInSubjectButVerificationLinkMayNot()
+    {
+        var result = NotificationTemplateRenderer.RenderVerification(
+            "Verify within {{expiry_hours}} hours", Body, "https://app.example.test/verify-email", 4);
+
+        Assert.Equal("Verify within 4 hours", result.Subject);
         Assert.Throws<ArgumentException>(() => NotificationTemplateRenderer.RenderVerification(
-            subject, Body, "https://app.example.test/verify-email", 24));
+            "{{verification_link}}", Body, "https://app.example.test/verify-email", 4));
     }
 
     [Fact]

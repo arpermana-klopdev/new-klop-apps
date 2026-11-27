@@ -24,7 +24,9 @@ The transition procedure enforces DRAFT → PENDING_APPROVAL → APPROVED → AC
 
 Active and archived versions cannot be edited or deleted. Version rows retain the template code and use composite foreign keys to prevent a version's variable set from referencing another template's definitions. Delivery records contain no recipient metadata column; attempts enforce positive attempt numbers and provider-accepted/rejected outcome consistency. Automatic archival of the previous active version is audited in the activation transaction.
 
-Delivery history records the provider attempt outcome, template/version (or the explicit `LEGACY` label while the rollout gate is off), channel, UTC timestamp, correlation ID, and an allowlisted safe error category. The schema deliberately omits recipient metadata. It does not record an email address, token, URL, body, SMTP secret, or exception payload. `PROVIDER_ACCEPTED` means accepted by the SMTP provider only; it is not evidence of inbox delivery. There is no automatic retry policy.
+The verification flow selects only the seeded `EMAIL` / `EMAIL_VERIFICATION` / `en` active version. Other locales are not selected, and API/UI mutations and preview reject non-English verification templates. `verification_link` and `expiry_hours` are required in the body; only the expiry placeholder may be used in a subject, and the verification link is never permitted there. Placeholder matching is ordinal/case-sensitive in application code and binary-collated in the proposal procedures.
+
+When the independent delivery-audit gate is explicitly enabled, history records the provider attempt outcome, template/version (or the explicit `LEGACY` label while template rollout is off), channel, UTC timestamp, correlation ID, and an allowlisted safe error category. With the default-off audit gate, the legacy sender makes no notification SQL calls and no delivery history is recorded. The schema deliberately omits recipient metadata. It does not record an email address, token, URL, body, SMTP secret, or exception payload. `PROVIDER_ACCEPTED` means accepted by the SMTP provider only; it is not evidence of inbox delivery. There is no automatic retry policy.
 
 ## Permission proposal — owner decision required
 
@@ -71,7 +73,7 @@ Before any authorized manual setup:
 5. After an approved change, restart the API because runtime settings are loaded at startup. Verify only the authorized readiness booleans; never display host, sender, username, or secret reference values.
 6. Confirm Production TLS is enabled. Do not run a real SMTP send or network test under this change.
 
-The Settings tab exposes only configured/not-configured booleans, TLS-required status, gate status, and verification-lifetime validity, behind `platform.notifications.settings.read`. It does not expose raw values or permit writes.
+The Settings tab exposes only configured/not-configured booleans, TLS-required status, template and delivery-audit gate status, and verification-lifetime validity, behind `platform.notifications.settings.read`. It does not expose raw values or permit writes.
 
 ## SQL package and manual execution order
 
@@ -104,12 +106,14 @@ Do not use live Playwright, a live database, a new test database, real SMTP, or 
 
 ## Validation evidence and remaining gates
 
-The source-level tests use fake SMTP transport, fake repositories, and local SQL-contract inspection; they do not execute SQL or contact SMTP. The targeted notification unit tests pass. Required offline checks for the reviewed source include:
+The source-level tests use fake SMTP transport, fake repositories, and local SQL-contract inspection; they do not execute SQL or contact SMTP. Validation on the current working tree:
 
-- `dotnet test tests/KLOP.Platform.UnitTests/KLOP.Platform.UnitTests.csproj`
-- `npm test -- --run`
-- `npm run typecheck`
-- `npm run build`
-- `npm run api:types` followed by a clean diff check
+- `dotnet test /home/runner/work/new-klop-apps/new-klop-apps/klop-next-platform-api/tests/KLOP.Platform.UnitTests/KLOP.Platform.UnitTests.csproj --no-restore` — PASS, 158 tests.
+- `cd /home/runner/work/new-klop-apps/new-klop-apps/klop-next_ui && npm test -- --run` — PASS, 97 tests.
+- `cd /home/runner/work/new-klop-apps/new-klop-apps/klop-next_ui && npm run typecheck` — PASS.
+- `cd /home/runner/work/new-klop-apps/new-klop-apps/klop-next_ui && npm run build` — PASS (Rollup emitted existing dependency annotation warnings).
+- `cd /home/runner/work/new-klop-apps/new-klop-apps/klop-next_ui && npm run api:types` — PASS; a second generation matched the first byte-for-byte, and `git diff --check` passed.
+- `cd /home/runner/work/new-klop-apps/new-klop-apps/klop-next_ui && npm ci` — PASS; npm audit reported zero vulnerabilities.
+- Notification SQL procedure variable references were checked statically; no undeclared local-variable references were found. SQL parsing/installation was not tested because SQL execution is held.
 
-The complete backend unit suite, frontend tests/build/typecheck, generated API type check, and current-head KLOP CI are still required after these review changes. SQL syntax and procedure installation remain unverified because SQL Server execution is explicitly held. The live v1.10/v1.11 migration order, owner role-matrix decisions, permission effective-state changes, SMTP setup, manual UAT, and deployment remain owner-held gates.
+Current-head KLOP CI has not yet passed; the existing run was `action_required` with zero jobs. SQL syntax and procedure installation remain unverified because SQL Server execution is explicitly held. The live v1.10/v1.11 migration order, owner role-matrix decisions, permission effective-state changes, SMTP setup, manual UAT, and deployment remain owner-held gates.

@@ -3,6 +3,7 @@ using KLOP.Platform.Application;
 using KLOP.Platform.Infrastructure;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -30,13 +31,18 @@ public sealed class SmtpVerificationEmailSenderTests
     {
         var repository = new FakeNotificationRepository { ThrowWhenRecording = true };
         var transport = new FakeTransport();
-        var sender = CreateSender(repository, transport, templatesEnabled: false, auditEnabled: true);
+        var logger = new RecordingLogger<SmtpVerificationEmailSender>();
+        var sender = CreateSender(repository, transport, templatesEnabled: false, auditEnabled: true, logger: logger);
 
         await sender.Send("person@example.test", 7, "token-value", Guid.NewGuid(), CancellationToken.None);
 
         Assert.Equal(1, transport.SendCount);
         Assert.True(repository.LastAccepted);
         Assert.Equal("PROVIDER_ACCEPTED", repository.LastErrorCategory);
+        var telemetry = string.Join(Environment.NewLine, logger.Messages);
+        Assert.Contains("PROVIDER_ACCEPTED", telemetry, StringComparison.Ordinal);
+        Assert.DoesNotContain("database details must not escape", telemetry, StringComparison.Ordinal);
+        Assert.DoesNotContain("token-value", telemetry, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -133,21 +139,40 @@ public sealed class SmtpVerificationEmailSenderTests
         Assert.Equal("SMTP_CONFIGURATION", repository.LastErrorCategory);
     }
 
+    [Fact]
+    public async Task KeyVaultFailureIsReportedAsSafeConfigurationFailureWithoutSending()
+    {
+        var repository = new FakeNotificationRepository { ThrowWhenRecording = true };
+        var transport = new FakeTransport();
+        var sender = CreateSender(repository, transport, templatesEnabled: false, auditEnabled: true,
+            failSecretLookup: true);
+
+        var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() => sender.Send(
+            "person@example.test", 7, "token-value", Guid.NewGuid(), CancellationToken.None));
+
+        Assert.Equal("SMTP credentials are unavailable.", thrown.Message);
+        Assert.Equal(0, transport.SendCount);
+        Assert.Equal("SMTP_CONFIGURATION", repository.LastErrorCategory);
+    }
+
     private static SmtpVerificationEmailSender CreateSender(
         FakeNotificationRepository repository,
         FakeTransport transport,
         bool templatesEnabled,
         bool auditEnabled,
-        string smtpHost = "smtp.invalid")
+        string smtpHost = "smtp.invalid",
+        bool failSecretLookup = false,
+        ILogger<SmtpVerificationEmailSender>? logger = null)
     {
         var settings = new RuntimeSettings(
             "https://issuer.example.test", "audience", "https://app.example.test", 15, 7,
             5, 12, 24, 30, 8, smtpHost, 587, "sender@example.test", true,
-            null, null, null, NotificationTemplatesEnabled: templatesEnabled,
+            failSecretLookup ? "smtp-user" : null, null, failSecretLookup ? "smtp-password-ref" : null,
+            NotificationTemplatesEnabled: templatesEnabled,
             NotificationDeliveryAuditEnabled: auditEnabled);
         return new SmtpVerificationEmailSender(
-            new TestHostEnvironment(), settings, new FakeSecrets(), repository, transport,
-            NullLogger<SmtpVerificationEmailSender>.Instance);
+            new TestHostEnvironment(), settings, new FakeSecrets(failSecretLookup), repository, transport,
+            logger ?? NullLogger<SmtpVerificationEmailSender>.Instance);
     }
 
     private sealed class TestHostEnvironment : IHostEnvironment
@@ -158,10 +183,21 @@ public sealed class SmtpVerificationEmailSenderTests
         public IFileProvider ContentRootFileProvider { get; set; } = new NullFileProvider();
     }
 
-    private sealed class FakeSecrets : IKeyVaultSecrets
+    private sealed class FakeSecrets(bool failLookup) : IKeyVaultSecrets
     {
         public Task<KeyVaultSecretValue> Get(string secretName, CancellationToken cancellationToken) =>
-            Task.FromResult(new KeyVaultSecretValue("test-secret", null));
+            failLookup
+                ? Task.FromException<KeyVaultSecretValue>(new InvalidOperationException("secret details must not escape"))
+                : Task.FromResult(new KeyVaultSecretValue("test-secret", null));
+    }
+
+    private sealed class RecordingLogger<T> : ILogger<T>
+    {
+        public List<string> Messages { get; } = [];
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+        public bool IsEnabled(LogLevel logLevel) => true;
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception,
+            Func<TState, Exception?, string> formatter) => Messages.Add(formatter(state, exception));
     }
 
     private sealed class FakeTransport : ISmtpMailTransport

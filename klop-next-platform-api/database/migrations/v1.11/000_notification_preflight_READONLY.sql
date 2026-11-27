@@ -14,6 +14,7 @@ FROM
         (N'aud.AuditEvents', OBJECT_ID(N'aud.AuditEvents', N'U')),
         (N'mst.AuditActionTypes', OBJECT_ID(N'mst.AuditActionTypes', N'U')),
         (N'mst.AuditResultTypes', OBJECT_ID(N'mst.AuditResultTypes', N'U')),
+        (N'iam.Users', OBJECT_ID(N'iam.Users', N'U')),
         (N'mst.Permissions', OBJECT_ID(N'mst.Permissions', N'U')),
         (N'mst.RoleScopes', OBJECT_ID(N'mst.RoleScopes', N'U')),
         (N'mst.PermissionMatrixMetadata', OBJECT_ID(N'mst.PermissionMatrixMetadata', N'U')),
@@ -26,6 +27,39 @@ FROM
         (N'cfg.usp_Configuration_GetByKey', OBJECT_ID(N'cfg.usp_Configuration_GetByKey', N'P'))
 ) prerequisite(Name, ObjectId)
 ORDER BY prerequisite.Name;
+
+IF OBJECT_ID(N'mst.Permissions',N'U') IS NOT NULL
+   AND OBJECT_ID(N'mst.PermissionMatrixMetadata',N'U') IS NOT NULL
+   AND OBJECT_ID(N'mst.RolePermissions',N'U') IS NOT NULL
+BEGIN
+    EXEC sys.sp_executesql N'
+        SELECT expected.Code,
+               CASE WHEN permission.PermissionId IS NULL THEN N''MISSING DEFINITION''
+                    WHEN permission.RoleScopeId<>scope.RoleScopeId THEN N''WRONG SCOPE''
+                    WHEN matrix.PermissionId IS NULL THEN N''MISSING MATRIX METADATA''
+                    ELSE matrix.ReadinessCode END AS MatrixStatus,
+               CASE WHEN mapping.PermissionId IS NULL THEN N''UNASSIGNED''
+                    ELSE N''ASSIGNED - OWNER REVIEW REQUIRED'' END AS RoleMapping
+        FROM (VALUES
+            (''platform.notifications.read''),
+            (''platform.notifications.draft.create''),
+            (''platform.notifications.draft.edit''),
+            (''platform.notifications.draft.preview''),
+            (''platform.notifications.submit''),
+            (''platform.notifications.approve''),
+            (''platform.notifications.activate''),
+            (''platform.notifications.archive''),
+            (''platform.notifications.history''),
+            (''platform.notifications.settings.read'')
+        ) expected(Code)
+        CROSS JOIN mst.RoleScopes scope
+        LEFT JOIN mst.Permissions permission
+          ON permission.Code=expected.Code AND permission.RoleScopeId=scope.RoleScopeId
+        LEFT JOIN mst.PermissionMatrixMetadata matrix ON matrix.PermissionId=permission.PermissionId
+        LEFT JOIN mst.RolePermissions mapping ON mapping.PermissionId=permission.PermissionId
+        WHERE scope.Code=''PLATFORM'' AND scope.IsActive=1
+        ORDER BY expected.Code;';
+END;
 
 SELECT Proposed.Name,
        CASE WHEN Proposed.ObjectId IS NULL THEN N'NOT INSTALLED' ELSE N'PRESENT - RECONCILE BEFORE APPLY' END AS Status

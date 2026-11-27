@@ -107,6 +107,20 @@ public sealed class SmtpVerificationEmailSender(
                 var secret = await secrets.Get(reference, cancellationToken);
                 credentials = new NetworkCredential(settings.SmtpUsername, secret.Value);
             }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch
+        {
+            await RecordAttemptSafely(template?.VersionId, template?.TemplateCode ?? "EMAIL_VERIFICATION",
+                template?.VersionNumber, correlationId, false, "SMTP_CONFIGURATION", cancellationToken);
+            throw new InvalidOperationException("SMTP credentials are unavailable.");
+        }
+
+        try
+        {
             await transport.Send(settings.SmtpHost, settings.SmtpPort, settings.SmtpRequireTls,
                 settings.SmtpFrom, email, subject, body, credentials, cancellationToken);
         }

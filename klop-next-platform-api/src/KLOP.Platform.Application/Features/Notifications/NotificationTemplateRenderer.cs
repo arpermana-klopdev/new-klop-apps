@@ -42,18 +42,20 @@ public static partial class NotificationTemplateRenderer
         if (string.IsNullOrWhiteSpace(body) || body.Length > 20_000 || body.Contains('\0'))
             throw new ArgumentException("The plain-text notification body is invalid.", nameof(body));
 
-        if (PlaceholderPattern().Matches(subject).Count > 0)
-            throw new ArgumentException("Notification variables are permitted only in the plain-text body.", nameof(subject));
-
-        var matches = PlaceholderPattern().Matches(body);
+        var matches = PlaceholderPattern().Matches(subject + "\n" + body);
         var names = matches.Select(match => match.Groups[1].Value).ToHashSet(StringComparer.Ordinal);
         if (names.Any(name => !values.ContainsKey(name)))
             throw new ArgumentException("The template contains an unsupported variable.", nameof(body));
-        var unresolved = PlaceholderPattern().Replace(body, "");
+        if (PlaceholderPattern().Matches(subject)
+            .Any(match => match.Groups[1].Value == "verification_link"))
+            throw new ArgumentException("The verification link is permitted only in the plain-text body.", nameof(subject));
+        var unresolved = PlaceholderPattern().Replace(subject + "\n" + body, "");
         if (unresolved.Contains("{{", StringComparison.Ordinal) ||
             unresolved.Contains("}}", StringComparison.Ordinal))
             throw new ArgumentException("The template contains a malformed variable.", nameof(body));
-        if (!names.Contains("verification_link") || !names.Contains("expiry_hours"))
+        var bodyNames = PlaceholderPattern().Matches(body)
+            .Select(match => match.Groups[1].Value).ToHashSet(StringComparer.Ordinal);
+        if (!bodyNames.Contains("verification_link") || !bodyNames.Contains("expiry_hours"))
             throw new ArgumentException("The template is missing a required variable.", nameof(body));
 
         string Replace(string value) => PlaceholderPattern().Replace(value, match =>

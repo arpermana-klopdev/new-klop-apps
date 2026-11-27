@@ -90,6 +90,36 @@ public sealed class NotificationManagementServiceTests
             repository.PreviewVersion.VersionId, 4, Guid.NewGuid(), CancellationToken.None));
     }
 
+    [Fact]
+    public async Task HistoryPreservesDatabaseTotalForAnOutOfRangePage()
+    {
+        var repository = new FakeNotificationRepository
+        {
+            HistoryPage = new NotificationDeliveryHistoryPage([], 4, 20, 61)
+        };
+        var service = CreateService(repository, new FakePlatformPermissionRepository([]));
+
+        var result = await service.History(4, 20, 4, Guid.NewGuid(), CancellationToken.None);
+
+        Assert.Empty(result.Items);
+        Assert.Equal(61L, result.TotalCount);
+        Assert.Equal(4, result.PageNumber);
+    }
+
+    [Fact]
+    public async Task LifecycleActionIsTranslatedToTheStoredProcedureCode()
+    {
+        var repository = new FakeNotificationRepository();
+        var service = CreateService(repository, new FakePlatformPermissionRepository([]));
+
+        await service.Transition(Guid.NewGuid(), "submit",
+            new NotificationDecisionRequest("submit", null, Convert.ToBase64String(new byte[8])),
+            4, Guid.NewGuid(), new RequestMetadata("request", Guid.NewGuid()), CancellationToken.None);
+
+        Assert.Equal("SUBMIT", repository.TransitionAction);
+        Assert.Equal("SUBMIT", repository.TransitionDecision);
+    }
+
     private static NotificationManagementService CreateService(
         INotificationManagementRepository repository, IPlatformPermissionRepository permissionRepository) =>
         new(repository, permissionRepository, new RuntimeSettings(
@@ -120,6 +150,9 @@ public sealed class NotificationManagementServiceTests
         public bool UpdateDraftCalled { get; private set; }
         public bool CreateDraftCalled { get; private set; }
         public NotificationTemplateVersion? PreviewVersion { get; init; }
+        public NotificationDeliveryHistoryPage? HistoryPage { get; init; }
+        public string? TransitionAction { get; private set; }
+        public string? TransitionDecision { get; private set; }
 
         public Task<IReadOnlyList<NotificationTemplateSummary>> ListTemplates(
             long actorUserId, Guid sessionId, CancellationToken cancellationToken) => throw new NotImplementedException();
@@ -132,7 +165,8 @@ public sealed class NotificationManagementServiceTests
         public Task<IReadOnlyList<NotificationChannelStatus>> ListChannels(
             long actorUserId, Guid sessionId, CancellationToken cancellationToken) => throw new NotImplementedException();
         public Task<NotificationDeliveryHistoryPage> ListDeliveryHistory(
-            int pageNumber, int pageSize, long actorUserId, Guid sessionId, CancellationToken cancellationToken) => throw new NotImplementedException();
+            int pageNumber, int pageSize, long actorUserId, Guid sessionId, CancellationToken cancellationToken) =>
+            Task.FromResult(HistoryPage ?? new NotificationDeliveryHistoryPage([], pageNumber, pageSize, 0));
         public Task<NotificationTemplateDraftResult> CreateDraft(
             string templateCode, string displayName, string channelCode, string localeCode, string subject,
             string body, long actorUserId, Guid sessionId, RequestMetadata metadata,
@@ -150,8 +184,12 @@ public sealed class NotificationManagementServiceTests
         }
         public Task<IReadOnlyList<NotificationTemplateVersion>> TransitionVersion(
             Guid versionId, string action, string? decision, string? note, byte[] expectedVersion,
-            long actorUserId, Guid sessionId, RequestMetadata metadata, CancellationToken cancellationToken) =>
-            throw new NotImplementedException();
+            long actorUserId, Guid sessionId, RequestMetadata metadata, CancellationToken cancellationToken)
+        {
+            TransitionAction = action;
+            TransitionDecision = decision;
+            return Task.FromResult<IReadOnlyList<NotificationTemplateVersion>>([]);
+        }
         public Task<NotificationTemplateVersion?> GetActiveVerificationVersion(
             CancellationToken cancellationToken) => throw new NotImplementedException();
         public Task RecordDeliveryAttempt(

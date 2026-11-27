@@ -25,6 +25,7 @@ IF OBJECT_ID(N'cfg.SystemConfigurations',N'U') IS NULL
    OR OBJECT_ID(N'aud.AuditEvents',N'U') IS NULL
    OR OBJECT_ID(N'mst.AuditActionTypes',N'U') IS NULL
    OR OBJECT_ID(N'mst.AuditResultTypes',N'U') IS NULL
+   OR OBJECT_ID(N'iam.Users',N'U') IS NULL
    OR OBJECT_ID(N'iam.usp_ValidatePlatformPermission',N'P') IS NULL
     THROW 53104, 'Required existing configuration, audit, or authorization objects are missing.', 1;
 IF SCHEMA_ID(N'ntf') IS NOT NULL
@@ -111,6 +112,7 @@ BEGIN TRY
         ArchivedAtUtc DATETIME2(3) NULL,
         RowVersion ROWVERSION NOT NULL,
         CONSTRAINT UQ_NotificationTemplateVersions_Number UNIQUE(TemplateId,VersionNumber),
+        CONSTRAINT UQ_NotificationTemplateVersions_IdCode UNIQUE(TemplateVersionId,TemplateCode),
         CONSTRAINT FK_NotificationTemplateVersions_Template FOREIGN KEY(TemplateId)
             REFERENCES ntf.NotificationTemplates(TemplateId),
         CONSTRAINT FK_NotificationTemplateVersions_TemplateCode FOREIGN KEY(TemplateId,TemplateCode)
@@ -120,8 +122,7 @@ BEGIN TRY
         CONSTRAINT FK_NotificationTemplateVersions_CreatedBy FOREIGN KEY(CreatedByUserId)
             REFERENCES iam.Users(UserId),
         CONSTRAINT CK_NotificationTemplateVersions_Number CHECK(VersionNumber>0),
-        CONSTRAINT CK_NotificationTemplateVersions_Content CHECK(LEN(Subject)>0 AND LEN(Body)>0),
-        CONSTRAINT UQ_NotificationTemplateVersions_IdCode UNIQUE(TemplateVersionId,TemplateCode)
+        CONSTRAINT CK_NotificationTemplateVersions_Content CHECK(LEN(Subject)>0 AND LEN(Body)>0)
     );
     CREATE UNIQUE INDEX UX_NotificationTemplateVersions_OneActive
         ON ntf.NotificationTemplateVersions(TemplateId) WHERE StatusCode='ACTIVE';
@@ -215,13 +216,23 @@ BEGIN TRY
                 WHERE d.StatusCode IN(''ACTIVE'',''ARCHIVED'')
                   AND (i.TemplateId<>d.TemplateId OR i.TemplateCode<>d.TemplateCode
                        OR i.VersionNumber<>d.VersionNumber
-                       OR i.Subject<>d.Subject OR i.Body<>d.Body OR i.CreatedByUserId<>d.CreatedByUserId
+                       OR CONVERT(VARBINARY(MAX),i.Subject)<>CONVERT(VARBINARY(MAX),d.Subject)
+                       OR CONVERT(VARBINARY(MAX),i.Body)<>CONVERT(VARBINARY(MAX),d.Body)
+                       OR i.CreatedByUserId<>d.CreatedByUserId
                        OR i.CreatedAtUtc<>d.CreatedAtUtc
+                       OR ISNULL(i.SubmittedAtUtc,CONVERT(DATETIME2(3),''19000101''))
+                          <>ISNULL(d.SubmittedAtUtc,CONVERT(DATETIME2(3),''19000101''))
                        OR (d.StatusCode=''ACTIVE'' AND
-                           (i.StatusCode NOT IN(''ACTIVE'',''ARCHIVED'') OR i.ActivatedAtUtc<>d.ActivatedAtUtc))
+                           (i.StatusCode NOT IN(''ACTIVE'',''ARCHIVED'')
+                            OR i.ActivatedAtUtc<>d.ActivatedAtUtc
+                            OR (i.StatusCode=''ACTIVE'' AND
+                                ISNULL(i.ArchivedAtUtc,CONVERT(DATETIME2(3),''19000101''))
+                                <>ISNULL(d.ArchivedAtUtc,CONVERT(DATETIME2(3),''19000101'')))
+                            OR (i.StatusCode=''ARCHIVED'' AND i.ArchivedAtUtc IS NULL)))
                        OR (d.StatusCode=''ARCHIVED'' AND
                            (i.StatusCode<>''ARCHIVED'' OR i.ActivatedAtUtc<>d.ActivatedAtUtc
-                            OR i.ArchivedAtUtc<>d.ArchivedAtUtc)))
+                            OR ISNULL(i.ArchivedAtUtc,CONVERT(DATETIME2(3),''19000101''))
+                               <>ISNULL(d.ArchivedAtUtc,CONVERT(DATETIME2(3),''19000101''))))
             )
                 THROW 53107, ''Active and archived notification versions are immutable.'', 1;
         END;');

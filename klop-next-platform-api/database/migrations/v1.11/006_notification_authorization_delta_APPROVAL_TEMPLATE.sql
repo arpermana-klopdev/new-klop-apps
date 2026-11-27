@@ -27,6 +27,9 @@ IF OBJECT_ID(N'iam.usp_ValidateSessionAccess',N'P') IS NULL
    OR OBJECT_ID(N'mst.Permissions',N'U') IS NULL
    OR OBJECT_ID(N'mst.PermissionMatrixMetadata',N'U') IS NULL
    OR OBJECT_ID(N'mst.PermissionReadinessStatuses',N'U') IS NULL
+   OR OBJECT_ID(N'aud.AuditEvents',N'U') IS NULL
+   OR OBJECT_ID(N'mst.AuditActionTypes',N'U') IS NULL
+   OR OBJECT_ID(N'mst.AuditResultTypes',N'U') IS NULL
     THROW 53163, 'Apply the reviewed v1.10 authorization migration and v1.11 permission catalog first.', 1;
 
 DECLARE @PlatformScopeId BIGINT=

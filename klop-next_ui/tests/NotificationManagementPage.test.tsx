@@ -135,6 +135,30 @@ describe("Notification management setup", () => {
     expect(await screen.findByText("Page 1 · 21 attempts")).toBeInTheDocument();
   });
 
+  it("disables verification mutations for an unsupported locale", async () => {
+    const template = {
+      templateId: "template-fr", templateCode: "EMAIL_VERIFICATION", displayName: "Verification",
+      channelCode: "EMAIL", localeCode: "fr", activeVersionId: null, activeVersionNumber: null,
+      activeVersionStatus: null, concurrencyVersion: "AQIDBAUGBwg=",
+    };
+    vi.mocked(getNotificationPermissions).mockResolvedValue({
+      permissions: ["platform.notifications.read", "platform.notifications.draft.create"],
+    });
+    vi.mocked(getNotificationTemplates).mockResolvedValue([template]);
+    vi.mocked(getNotificationTemplate).mockResolvedValue({
+      templateId: template.templateId,
+      templateCode: template.templateCode,
+      displayName: template.displayName,
+      versions: [],
+    });
+    renderPage();
+
+    fireEvent.click(await screen.findByRole("button", { name: /Verification.*EMAIL.*fr/ }));
+
+    expect(await screen.findByText(/supported only for EMAIL \/ en/)).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Create a new draft version" })).not.toBeInTheDocument();
+  });
+
   it("previews selected versions only with synthetic values", async () => {
     const template = {
       templateId: "template-1", templateCode: "EMAIL_VERIFICATION", displayName: "Verification",

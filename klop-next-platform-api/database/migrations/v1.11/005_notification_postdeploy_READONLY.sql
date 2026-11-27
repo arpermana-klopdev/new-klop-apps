@@ -44,7 +44,14 @@ FROM
         (N'iam.usp_ValidateSessionAccess',OBJECT_ID(N'iam.usp_ValidateSessionAccess',N'P')),
         (N'iam.usp_ValidatePlatformPermission',OBJECT_ID(N'iam.usp_ValidatePlatformPermission',N'P')),
         (N'iam.usp_GetPlatformPermissions',OBJECT_ID(N'iam.usp_GetPlatformPermissions',N'P')),
+        (N'ntf.usp_ListTemplates',OBJECT_ID(N'ntf.usp_ListTemplates',N'P')),
+        (N'ntf.usp_GetTemplate',OBJECT_ID(N'ntf.usp_GetTemplate',N'P')),
+        (N'ntf.usp_GetTemplateVersionForPreview',OBJECT_ID(N'ntf.usp_GetTemplateVersionForPreview',N'P')),
+        (N'ntf.usp_ListChannels',OBJECT_ID(N'ntf.usp_ListChannels',N'P')),
         (N'ntf.usp_ListDeliveryHistory',OBJECT_ID(N'ntf.usp_ListDeliveryHistory',N'P')),
+        (N'ntf.usp_CreateTemplateDraft',OBJECT_ID(N'ntf.usp_CreateTemplateDraft',N'P')),
+        (N'ntf.usp_UpdateTemplateDraft',OBJECT_ID(N'ntf.usp_UpdateTemplateDraft',N'P')),
+        (N'ntf.usp_TransitionTemplateVersion',OBJECT_ID(N'ntf.usp_TransitionTemplateVersion',N'P')),
         (N'ntf.usp_GetActiveVerificationTemplate',OBJECT_ID(N'ntf.usp_GetActiveVerificationTemplate',N'P')),
         (N'ntf.usp_RecordDeliveryAttempt',OBJECT_ID(N'ntf.usp_RecordDeliveryAttempt',N'P'))
 ) Dependency(Name,ObjectId)
@@ -70,6 +77,10 @@ BEGIN
         ) valuesTable(Code)
     )
     SELECT expected.Code,scope.Code AS ScopeCode,matrix.ReadinessCode,
+           CASE WHEN permission.PermissionId IS NULL THEN N'MISSING DEFINITION'
+                WHEN matrix.PermissionId IS NULL THEN N'MISSING MATRIX METADATA'
+                WHEN matrix.ReadinessCode<>'HOLD' THEN N'NOT HOLD - OWNER REVIEW REQUIRED'
+                ELSE N'HOLD' END AS AuthorizationReadiness,
            CASE WHEN permission.PermissionId IS NULL THEN N'MISSING DEFINITION'
                 WHEN mapping.PermissionId IS NULL THEN N'UNASSIGNED'
                 ELSE N'ASSIGNED - OWNER REVIEW REQUIRED' END AS RoleMapping

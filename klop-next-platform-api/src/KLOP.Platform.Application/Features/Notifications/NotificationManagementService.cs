@@ -121,7 +121,7 @@ public sealed class NotificationManagementService(
         if (!allowed.Contains(decision, StringComparer.Ordinal) ||
             (request.Note?.Length ?? 0) > 1000)
             throw new ArgumentException("The requested notification transition is invalid.");
-        return repository.TransitionVersion(versionId, action, decision, request.Note,
+        return repository.TransitionVersion(versionId, action.ToUpperInvariant(), decision, request.Note,
             DecodeConcurrencyVersion(request.ConcurrencyVersion), actorUserId, sessionId,
             metadata, cancellationToken);
     }

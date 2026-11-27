@@ -137,11 +137,16 @@ BEGIN
        AND (@ChannelCode COLLATE Latin1_General_100_BIN2<>N'EMAIL'
             OR @LocaleCode COLLATE Latin1_General_100_BIN2<>N'en')
         THROW 53136, 'Email verification templates support only the EMAIL channel and en locale.', 1;
-    IF @Subject LIKE N'%{{%' OR @Subject LIKE N'%}}%'
-        THROW 53137, 'Notification variables are permitted only in the plain-text body.', 1;
-
     DECLARE @TemplateId UNIQUEIDENTIFIER,@VersionId UNIQUEIDENTIFIER=NEWID(),@VersionNumber INT;
-    DECLARE @ChannelId INT,@ContentToCheck NVARCHAR(MAX)=@Body COLLATE Latin1_General_100_BIN2;
+    DECLARE @ChannelId INT,@ContentToCheck NVARCHAR(MAX)=@Body COLLATE Latin1_General_100_BIN2,
+            @SubjectToCheck NVARCHAR(300)=REPLACE(@Subject COLLATE Latin1_General_100_BIN2,
+                                                   N'{{expiry_hours}}' COLLATE Latin1_General_100_BIN2,N'');
+    IF CHARINDEX(N'{{verification_link}}' COLLATE Latin1_General_100_BIN2,
+                 @Subject COLLATE Latin1_General_100_BIN2)>0
+        THROW 53137, 'The verification link is permitted only in the plain-text body.', 1;
+    IF CHARINDEX(N'{{',@SubjectToCheck COLLATE Latin1_General_100_BIN2)>0
+       OR CHARINDEX(N'}}',@SubjectToCheck COLLATE Latin1_General_100_BIN2)>0
+        THROW 53134, 'The template subject contains an unsupported or malformed variable.', 1;
     BEGIN TRY
         BEGIN TRANSACTION;
         SELECT @ChannelId=ChannelId FROM ntf.NotificationChannels WITH(UPDLOCK,HOLDLOCK)
@@ -206,14 +211,20 @@ BEGIN
     SET NOCOUNT ON;
     SET XACT_ABORT ON;
     DECLARE @TemplateCode VARCHAR(50),
-            @ContentToCheck NVARCHAR(MAX)=@Body COLLATE Latin1_General_100_BIN2;
+            @ContentToCheck NVARCHAR(MAX)=@Body COLLATE Latin1_General_100_BIN2,
+            @SubjectToCheck NVARCHAR(300)=REPLACE(@Subject COLLATE Latin1_General_100_BIN2,
+                                                   N'{{expiry_hours}}' COLLATE Latin1_General_100_BIN2,N'');
     EXEC iam.usp_ValidatePlatformPermission @ActorUserId,@PublicSessionId,'platform.notifications.draft.edit';
     IF NULLIF(LTRIM(RTRIM(@Subject)),N'') IS NULL OR LEN(@Subject)>300
        OR @Subject LIKE N'%' + NCHAR(13) + N'%' OR @Subject LIKE N'%' + NCHAR(10) + N'%'
        OR NULLIF(LTRIM(RTRIM(@Body)),N'') IS NULL OR LEN(@Body)>20000
         THROW 53124, 'Notification draft content is invalid.', 1;
-    IF @Subject LIKE N'%{{%' OR @Subject LIKE N'%}}%'
-        THROW 53137, 'Notification variables are permitted only in the plain-text body.', 1;
+    IF CHARINDEX(N'{{verification_link}}' COLLATE Latin1_General_100_BIN2,
+                 @Subject COLLATE Latin1_General_100_BIN2)>0
+        THROW 53137, 'The verification link is permitted only in the plain-text body.', 1;
+    IF CHARINDEX(N'{{',@SubjectToCheck COLLATE Latin1_General_100_BIN2)>0
+       OR CHARINDEX(N'}}',@SubjectToCheck COLLATE Latin1_General_100_BIN2)>0
+        THROW 53134, 'The template subject contains an unsupported or malformed variable.', 1;
     BEGIN TRY
         BEGIN TRANSACTION;
         SELECT @TemplateCode=t.TemplateCode
@@ -283,21 +294,29 @@ BEGIN
 
     DECLARE @CurrentStatus VARCHAR(30),@TemplateId UNIQUEIDENTIFIER,@TemplateCode VARCHAR(50),
             @TargetStatus VARCHAR(30),@ActionType VARCHAR(20)='UPDATE',
-            @ContentToCheck NVARCHAR(MAX);
+            @ContentToCheck NVARCHAR(MAX),@SubjectToCheck NVARCHAR(300);
     DECLARE @AutoArchived TABLE(TemplateVersionId UNIQUEIDENTIFIER PRIMARY KEY);
     BEGIN TRY
         BEGIN TRANSACTION;
         SELECT @CurrentStatus=v.StatusCode,@TemplateId=v.TemplateId,@TemplateCode=t.TemplateCode,
-               @ContentToCheck=v.Body COLLATE Latin1_General_100_BIN2
+               @ContentToCheck=v.Body COLLATE Latin1_General_100_BIN2,@SubjectToCheck=v.Subject
         FROM ntf.NotificationTemplateVersions v WITH(UPDLOCK,HOLDLOCK)
         JOIN ntf.NotificationTemplates t ON t.TemplateId=v.TemplateId
         WHERE v.TemplateVersionId=@TemplateVersionId AND v.RowVersion=@ExpectedVersion;
         IF @TemplateId IS NULL THROW 53201, 'Notification version changed or does not exist.', 1;
-        IF @ContentToCheck IS NULL OR @ContentToCheck='' THROW 53124, 'Notification draft content is invalid.', 1;
-        IF EXISTS
-            (SELECT 1 FROM ntf.NotificationTemplateVersions
-             WHERE TemplateVersionId=@TemplateVersionId AND (Subject LIKE N'%{{%' OR Subject LIKE N'%}}%'))
-            THROW 53137, 'Notification variables are permitted only in the plain-text body.', 1;
+        IF NULLIF(LTRIM(RTRIM(@ContentToCheck)),N'') IS NULL OR LEN(@ContentToCheck)>20000
+           OR NULLIF(LTRIM(RTRIM(@SubjectToCheck)),N'') IS NULL OR LEN(@SubjectToCheck)>300
+           OR @SubjectToCheck LIKE N'%' + NCHAR(13) + N'%'
+           OR @SubjectToCheck LIKE N'%' + NCHAR(10) + N'%'
+            THROW 53124, 'Notification draft content is invalid.', 1;
+        SET @SubjectToCheck=REPLACE(@SubjectToCheck COLLATE Latin1_General_100_BIN2,
+                                    N'{{expiry_hours}}' COLLATE Latin1_General_100_BIN2,N'');
+        IF CHARINDEX(N'{{verification_link}}' COLLATE Latin1_General_100_BIN2,
+                     @SubjectToCheck COLLATE Latin1_General_100_BIN2)>0
+            THROW 53137, 'The verification link is permitted only in the plain-text body.', 1;
+        IF CHARINDEX(N'{{',@SubjectToCheck COLLATE Latin1_General_100_BIN2)>0
+           OR CHARINDEX(N'}}',@SubjectToCheck COLLATE Latin1_General_100_BIN2)>0
+            THROW 53134, 'The template subject contains an unsupported or malformed variable.', 1;
         IF @TemplateCode COLLATE Latin1_General_100_BIN2=N'EMAIL_VERIFICATION' AND EXISTS
             (SELECT 1 FROM ntf.NotificationTemplates t
              JOIN ntf.NotificationChannels c ON c.ChannelId=t.ChannelId
