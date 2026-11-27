@@ -65,9 +65,12 @@ export function RolePermissionMatrixPage() {
   const accessQuery = useQuery({
     queryKey: ["platform-role-permission-matrix", "access"],
     queryFn: getRolePermissionMatrixAccess,
+    staleTime: 0,
+    refetchOnMount: "always",
+    retry: false,
   });
-  const canRead = accessQuery.data?.canRead === true;
-  const canUpdate = accessQuery.data?.canUpdate === true;
+  const canRead = accessQuery.isSuccess && !accessQuery.isFetching && accessQuery.data?.canRead === true;
+  const canUpdate = canRead && accessQuery.data?.canUpdate === true;
   const matrixQuery = useQuery({
     queryKey: ["platform-role-permission-matrix"],
     queryFn: getRolePermissionMatrix,
@@ -85,7 +88,9 @@ export function RolePermissionMatrixPage() {
   const [readinessFilter, setReadinessFilter] = useState("all");
   const [grantFilter, setGrantFilter] = useState<GrantFilter>("all");
   const [reason, setReason] = useState("");
-  const [reviewed, setReviewed] = useState(false);
+  const [reviewedBatch, setReviewedBatch] = useState<string | null>(null);
+  const [requiresReload, setRequiresReload] = useState(false);
+  const reviewed = reviewedBatch !== null && reviewedBatch === JSON.stringify(batchRequest());
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [validationIssues, setValidationIssues] = useState<string[]>([]);
 
@@ -117,27 +122,37 @@ export function RolePermissionMatrixPage() {
 
   const validationMutation = useMutation({
     mutationFn: validateRolePermissionChanges,
-    onSuccess: (result) => {
+    onSuccess: (result, request) => {
+      if (result.issues.some((issue) => issue.code === "STALE_CONCURRENCY")) setRequiresReload(true);
       setValidationIssues(result.issues.map((issue) =>
         `${issue.permissionCode ?? "Permission"}: ${issue.message}`));
-      setReviewed(result.isValid);
+      setReviewedBatch(result.isValid ? JSON.stringify(request) : null);
     },
   });
   const saveMutation = useMutation({
     mutationFn: saveRolePermissionChanges,
+    onError: (error) => {
+      setReviewedBatch(null);
+      setConfirmOpen(false);
+      if (toApiRequestError(error).code === "STALE_PERMISSION_MATRIX") setRequiresReload(true);
+    },
     onSuccess: async () => {
       setChanges(new Map());
+      setRequiresReload(false);
       setReason("");
-      setReviewed(false);
+      setReviewedBatch(null);
       setValidationIssues([]);
       setConfirmOpen(false);
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["platform-role-permission-matrix"] }),
         queryClient.invalidateQueries({ queryKey: ["platform-role-permission-history"] }),
-        queryClient.invalidateQueries({ queryKey: ["platform-role-permission-matrix", "access"] }),
+        queryClient.invalidateQueries({ queryKey: ["tenant-permissions"] }),
       ]);
     },
   });
+
+  const busy = validationMutation.isPending || saveMutation.isPending;
+  const canEdit = canUpdate && matrixQuery.isSuccess && !matrixQuery.isFetching && !busy && !requiresReload && !confirmOpen;
 
   function currentValue(cell: RolePermissionMatrixCell, row: RolePermissionMatrixRow): boolean {
     if (row.permissionId == null) return false;
@@ -146,7 +161,7 @@ export function RolePermissionMatrixPage() {
   }
 
   function editCell(row: RolePermissionMatrixRow, cell: RolePermissionMatrixCell, nextValue: boolean) {
-    if (row.permissionId == null) return;
+    if (!canEdit || row.permissionId == null || !cell.isEditable || row.isAccountPolicy) return;
     const key = cellKey(row.permissionId, cell.roleId, cell.tenantTypeId);
     const next = new Map(changes);
     if (nextValue === cell.configuredGrant) {
@@ -161,7 +176,7 @@ export function RolePermissionMatrixPage() {
       });
     }
     setChanges(next);
-    setReviewed(false);
+    setReviewedBatch(null);
     setValidationIssues([]);
   }
 
@@ -170,21 +185,33 @@ export function RolePermissionMatrixPage() {
   }
 
   function discardChanges() {
+    if (busy) return;
+    setConfirmOpen(false);
     setChanges(new Map());
     setReason("");
-    setReviewed(false);
+    setReviewedBatch(null);
     setValidationIssues([]);
     validationMutation.reset();
     saveMutation.reset();
   }
 
+  async function reloadMatrix() {
+    if (busy) return;
+    discardChanges();
+    setRequiresReload(true);
+    const result = await matrixQuery.refetch();
+    if (result.isSuccess) setRequiresReload(false);
+  }
+
   function reviewChanges() {
+    if (!canEdit || changes.size < 1 || changes.size > 100 || reason.trim().length < 10) return;
     setValidationIssues([]);
-    setReviewed(false);
+    setReviewedBatch(null);
     validationMutation.mutate(batchRequest());
   }
 
   function confirmSave() {
+    if (!canUpdate || !matrixQuery.isSuccess || matrixQuery.isFetching || busy || requiresReload || !reviewed || !confirmOpen) return;
     saveMutation.mutate(batchRequest());
   }
 
@@ -210,15 +237,15 @@ export function RolePermissionMatrixPage() {
           </Link>
         }
       />
-      {accessQuery.isPending ? (
+      {accessQuery.isPending || accessQuery.isFetching ? (
         <div className="space-y-3"><Skeleton className="h-10" /><Skeleton className="h-48" /></div>
       ) : accessQuery.isError ? (
-        <Notice>{errorText(accessQuery.error)}</Notice>
+        <div><Notice>{errorText(accessQuery.error)}</Notice><Button variant="secondary" onClick={() => void accessQuery.refetch()}>Retry access check</Button></div>
       ) : !canRead ? (
         <Notice kind="info">You do not have permission to view the Role & Permission Matrix.</Notice>
       ) : (
         <>
-          {matrixQuery.isError && <Notice>{errorText(matrixQuery.error)}</Notice>}
+          {matrixQuery.isError && <div><Notice>{errorText(matrixQuery.error)}</Notice><Button variant="secondary" onClick={() => void reloadMatrix()} disabled={busy}>Reload Matrix (discard edits)</Button></div>}
           {matrixQuery.isPending && <div className="space-y-3"><Skeleton className="h-10" /><Skeleton className="h-64" /></div>}
           {matrixQuery.isSuccess && (
             <section className="space-y-5">
@@ -246,6 +273,12 @@ export function RolePermissionMatrixPage() {
                 </label>
               </div>
 
+              {requiresReload && (
+                <div className="space-y-2">
+                  <Notice>The matrix changed on the server. Reload the current values and review your changes again.</Notice>
+                  <Button variant="secondary" onClick={() => void reloadMatrix()} disabled={busy || matrixQuery.isFetching}>Reload Matrix (discard edits)</Button>
+                </div>
+              )}
               {changes.size > 0 && (
                 <div className="rounded-2xl border border-amber-300 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/30">
                   <div className="flex flex-wrap items-center justify-between gap-3">
@@ -261,24 +294,25 @@ export function RolePermissionMatrixPage() {
                       <Button variant="secondary" onClick={discardChanges}
                         disabled={validationMutation.isPending || saveMutation.isPending}>Discard Changes</Button>
                       <Button onClick={() => void reviewChanges()}
-                        disabled={!canUpdate || reason.trim().length < 10 ||
-                          validationMutation.isPending || saveMutation.isPending}>
+                        disabled={!canEdit || reason.trim().length < 10 || changes.size > 100}>
                         {validationMutation.isPending ? "Reviewing..." : "Review Changes"}
                       </Button>
                       <Button onClick={() => setConfirmOpen(true)}
-                        disabled={!reviewed || !canUpdate || saveMutation.isPending}>
+                        disabled={!reviewed || !canEdit}>
                         Confirm & Save
                       </Button>
                     </div>
                   </div>
                   <label className="mt-4 block text-xs font-semibold text-amber-950 dark:text-amber-100">
                     Change reason (required, 10–500 characters)
-                    <textarea value={reason} onChange={(event) => {
+                    <textarea value={reason} disabled={!canEdit} onChange={(event) => {
+                      if (!canEdit) return;
                       setReason(event.target.value);
-                      setReviewed(false);
+                      setReviewedBatch(null);
                     }} maxLength={500} rows={2}
                       className="mt-1.5 w-full rounded-lg border border-amber-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-amber-900 dark:bg-slate-950 dark:text-slate-100" />
                   </label>
+                  {changes.size > 100 && <p role="alert">A batch may contain at most 100 changes.</p>}
                   {!canUpdate && <p className="mt-2 text-xs">This session has read-only matrix access.</p>}
                   {validationMutation.isError && <p role="alert" className="mt-2 text-sm text-rose-700">{errorText(validationMutation.error)}</p>}
                   {validationIssues.length > 0 && (
@@ -326,7 +360,7 @@ export function RolePermissionMatrixPage() {
                       )}
                       {sections.map(([moduleName, resources]) => (
                         <ModuleGroup key={moduleName} moduleName={moduleName} resources={resources}
-                          columns={columns} changes={changes} canUpdate={canUpdate} onEdit={editCell}
+                          columns={columns} changes={changes} canUpdate={canEdit} onEdit={editCell}
                           currentValue={currentValue} />
                       ))}
                     </tbody>
@@ -354,7 +388,7 @@ export function RolePermissionMatrixPage() {
                       <tbody>
                         {(historyQuery.data ?? []).map((entry) => (
                           <tr key={entry.auditEventId} className="border-t border-slate-100 dark:border-slate-800">
-                            <td className="whitespace-nowrap p-2">{new Date(entry.occurredAtUtc).toLocaleString()}</td>
+                            <td className="whitespace-nowrap p-2">{new Date(entry.occurredAtUtc).toLocaleString(undefined, { timeZone: "UTC" })}</td>
                             <td className="p-2 font-mono">{entry.permissionCode}</td>
                             <td className="p-2">{entry.roleCode} / {entry.tenantTypeCode ?? entry.scopeCode}</td>
                             <td className="p-2">{entry.previousGrant ? "Granted" : "Denied"} → {entry.newGrant ? "Granted" : "Denied"}</td>
@@ -375,7 +409,7 @@ export function RolePermissionMatrixPage() {
           )}
         </>
       )}
-      {confirmOpen && (
+      {confirmOpen && canUpdate && matrixQuery.isSuccess && !requiresReload && reviewed && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/50 p-4">
           <section role="dialog" aria-modal="true" aria-labelledby="matrix-confirm-title"
             className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-900">
@@ -386,7 +420,7 @@ export function RolePermissionMatrixPage() {
             <p className="mt-3 rounded-lg bg-slate-50 p-3 text-sm dark:bg-slate-800">{reason.trim()}</p>
             <div className="mt-5 flex justify-end gap-2">
               <Button variant="secondary" onClick={() => setConfirmOpen(false)} disabled={saveMutation.isPending}>Cancel</Button>
-              <Button onClick={() => void confirmSave()} disabled={saveMutation.isPending}>
+              <Button onClick={() => void confirmSave()} disabled={busy || matrixQuery.isFetching || !reviewed || !canUpdate}>
                 {saveMutation.isPending ? "Saving..." : "Confirm & Save"}
               </Button>
             </div>
@@ -492,7 +526,7 @@ function ModuleGroup({
                             <span className="sr-only">{checked ? "Configured grant" : "No configured grant"}</span>
                           </label>
                           <span className="mt-1 block text-[10px] text-slate-500">
-                            {checked ? "Configured" : "Not configured"} · Effective {cell.effectiveAllowed ? "Allowed" : "Denied"}
+                            {checked ? "Configured" : "Not configured"} · Effective {cell.effectiveAllowed == null ? "Not evaluated" : cell.effectiveAllowed ? "Allowed" : "Denied"}
                           </span>
                           {!editable && cell.restrictionReason && (
                             <span className="mt-1 block max-w-32 text-[10px] text-amber-700 dark:text-amber-300">{cell.restrictionReason}</span>
