@@ -3434,7 +3434,7 @@ components:
         isEnabled: { type: boolean }
         readiness: { type: string }
     NotificationSettingsReadiness:
-      required: [smtpHostConfigured, smtpPortConfigured, senderConfigured, tlsRequired, credentialsConfigured, templateRolloutEnabled, verificationLifetimeStatus]
+      required: [smtpHostConfigured, smtpPortConfigured, senderConfigured, tlsRequired, credentialsConfigured, templateRolloutEnabled, deliveryAuditEnabled, verificationLifetimeStatus]
       type: object
       properties:
         smtpHostConfigured: { type: boolean }
@@ -3443,11 +3443,13 @@ components:
         tlsRequired: { type: boolean }
         credentialsConfigured: { type: boolean }
         templateRolloutEnabled: { type: boolean }
+        deliveryAuditEnabled: { type: boolean }
         verificationLifetimeStatus: { type: string }
     NotificationDeliveryHistoryItem:
-      required: [deliveryId, templateCode, templateVersion, channelCode, outcome, occurredAtUtc, correlationId]
+      required: [attemptId, deliveryId, templateCode, templateVersion, channelCode, outcome, occurredAtUtc, correlationId]
       type: object
       properties:
+        attemptId: { type: integer, format: int64 }
         deliveryId: { type: string, format: uuid }
         templateCode: { type: string }
         templateVersion: { type: string }

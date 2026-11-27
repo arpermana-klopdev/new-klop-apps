@@ -86,16 +86,20 @@ BEGIN TRY
         CreatedAtUtc DATETIME2(3) NOT NULL CONSTRAINT DF_NotificationTemplates_Created DEFAULT(SYSUTCDATETIME()),
         RowVersion ROWVERSION NOT NULL,
         CONSTRAINT UQ_NotificationTemplates_Key UNIQUE(TemplateCode,ChannelId,LocaleCode),
+        CONSTRAINT UQ_NotificationTemplates_IdCode UNIQUE(TemplateId,TemplateCode),
         CONSTRAINT FK_NotificationTemplates_Type FOREIGN KEY(TemplateCode)
             REFERENCES ntf.NotificationTemplateTypes(TemplateCode),
         CONSTRAINT FK_NotificationTemplates_Channel FOREIGN KEY(ChannelId)
-            REFERENCES ntf.NotificationChannels(ChannelId)
+            REFERENCES ntf.NotificationChannels(ChannelId),
+        CONSTRAINT FK_NotificationTemplates_CreatedBy FOREIGN KEY(CreatedByUserId)
+            REFERENCES iam.Users(UserId)
     );
     CREATE TABLE ntf.NotificationTemplateVersions
     (
         TemplateVersionId UNIQUEIDENTIFIER NOT NULL CONSTRAINT DF_NotificationTemplateVersions_Id DEFAULT(NEWSEQUENTIALID())
             CONSTRAINT PK_NotificationTemplateVersions PRIMARY KEY,
         TemplateId UNIQUEIDENTIFIER NOT NULL,
+        TemplateCode VARCHAR(50) NOT NULL,
         VersionNumber INT NOT NULL,
         StatusCode VARCHAR(30) NOT NULL,
         Subject NVARCHAR(300) NOT NULL,
@@ -109,9 +113,15 @@ BEGIN TRY
         CONSTRAINT UQ_NotificationTemplateVersions_Number UNIQUE(TemplateId,VersionNumber),
         CONSTRAINT FK_NotificationTemplateVersions_Template FOREIGN KEY(TemplateId)
             REFERENCES ntf.NotificationTemplates(TemplateId),
+        CONSTRAINT FK_NotificationTemplateVersions_TemplateCode FOREIGN KEY(TemplateId,TemplateCode)
+            REFERENCES ntf.NotificationTemplates(TemplateId,TemplateCode),
         CONSTRAINT FK_NotificationTemplateVersions_Status FOREIGN KEY(StatusCode)
             REFERENCES ntf.NotificationTemplateStatuses(StatusCode),
-        CONSTRAINT CK_NotificationTemplateVersions_Content CHECK(LEN(Subject)>0 AND LEN(Body)>0)
+        CONSTRAINT FK_NotificationTemplateVersions_CreatedBy FOREIGN KEY(CreatedByUserId)
+            REFERENCES iam.Users(UserId),
+        CONSTRAINT CK_NotificationTemplateVersions_Number CHECK(VersionNumber>0),
+        CONSTRAINT CK_NotificationTemplateVersions_Content CHECK(LEN(Subject)>0 AND LEN(Body)>0),
+        CONSTRAINT UQ_NotificationTemplateVersions_IdCode UNIQUE(TemplateVersionId,TemplateCode)
     );
     CREATE UNIQUE INDEX UX_NotificationTemplateVersions_OneActive
         ON ntf.NotificationTemplateVersions(TemplateId) WHERE StatusCode='ACTIVE';
@@ -122,8 +132,8 @@ BEGIN TRY
         VariableCode VARCHAR(80) NOT NULL,
         IsRequired BIT NOT NULL,
         CONSTRAINT PK_NotificationTemplateVersionVariables PRIMARY KEY(TemplateVersionId,VariableCode),
-        CONSTRAINT FK_NotificationTemplateVersionVariables_Version FOREIGN KEY(TemplateVersionId)
-            REFERENCES ntf.NotificationTemplateVersions(TemplateVersionId),
+        CONSTRAINT FK_NotificationTemplateVersionVariables_Version FOREIGN KEY(TemplateVersionId,TemplateCode)
+            REFERENCES ntf.NotificationTemplateVersions(TemplateVersionId,TemplateCode),
         CONSTRAINT FK_NotificationTemplateVersionVariables_Definition FOREIGN KEY(TemplateCode,VariableCode)
             REFERENCES ntf.NotificationVariableDefinitions(TemplateCode,VariableCode)
     );
@@ -137,6 +147,8 @@ BEGIN TRY
         DecidedAtUtc DATETIME2(3) NOT NULL CONSTRAINT DF_NotificationTemplateApprovals_Decided DEFAULT(SYSUTCDATETIME()),
         CONSTRAINT FK_NotificationTemplateApprovals_Version FOREIGN KEY(TemplateVersionId)
             REFERENCES ntf.NotificationTemplateVersions(TemplateVersionId),
+        CONSTRAINT FK_NotificationTemplateApprovals_Actor FOREIGN KEY(ActorUserId)
+            REFERENCES iam.Users(UserId),
         CONSTRAINT CK_NotificationTemplateApprovals_Decision CHECK(DecisionCode IN('APPROVE','REJECT'))
     );
     CREATE TABLE ntf.NotificationDeliveryOutcomes
@@ -158,8 +170,8 @@ BEGIN TRY
         TemplateVersionSnapshot INT NULL,
         ChannelId INT NOT NULL,
         CorrelationId UNIQUEIDENTIFIER NOT NULL,
-        RecipientMetadata NVARCHAR(100) NULL,
         CreatedAtUtc DATETIME2(3) NOT NULL CONSTRAINT DF_NotificationDeliveries_Created DEFAULT(SYSUTCDATETIME()),
+        CONSTRAINT CK_NotificationDeliveries_VersionSnapshot CHECK(TemplateVersionSnapshot IS NULL OR TemplateVersionSnapshot>0),
         CONSTRAINT FK_NotificationDeliveries_Version FOREIGN KEY(TemplateVersionId)
             REFERENCES ntf.NotificationTemplateVersions(TemplateVersionId),
         CONSTRAINT FK_NotificationDeliveries_Channel FOREIGN KEY(ChannelId)
@@ -176,6 +188,10 @@ BEGIN TRY
         ErrorCategoryCode VARCHAR(40) NULL,
         OccurredAtUtc DATETIME2(3) NOT NULL CONSTRAINT DF_NotificationDeliveryAttempts_Occurred DEFAULT(SYSUTCDATETIME()),
         ProviderAccepted BIT NOT NULL,
+        CONSTRAINT CK_NotificationDeliveryAttempts_Number CHECK(AttemptNumber>0),
+        CONSTRAINT CK_NotificationDeliveryAttempts_Outcome CHECK
+            ((ProviderAccepted=1 AND OutcomeCode='PROVIDER_ACCEPTED' AND ErrorCategoryCode IS NULL)
+             OR (ProviderAccepted=0 AND OutcomeCode='PROVIDER_REJECTED' AND ErrorCategoryCode IS NOT NULL)),
         CONSTRAINT UQ_NotificationDeliveryAttempts_Number UNIQUE(DeliveryId,AttemptNumber),
         CONSTRAINT FK_NotificationDeliveryAttempts_Delivery FOREIGN KEY(DeliveryId)
             REFERENCES ntf.NotificationDeliveries(DeliveryId),
@@ -196,12 +212,31 @@ BEGIN TRY
                 SELECT 1
                 FROM inserted i
                 JOIN deleted d ON d.TemplateVersionId=i.TemplateVersionId
-                WHERE d.StatusCode=''ACTIVE''
-                  AND (i.TemplateId<>d.TemplateId OR i.VersionNumber<>d.VersionNumber
+                WHERE d.StatusCode IN(''ACTIVE'',''ARCHIVED'')
+                  AND (i.TemplateId<>d.TemplateId OR i.TemplateCode<>d.TemplateCode
+                       OR i.VersionNumber<>d.VersionNumber
                        OR i.Subject<>d.Subject OR i.Body<>d.Body OR i.CreatedByUserId<>d.CreatedByUserId
-                       OR i.CreatedAtUtc<>d.CreatedAtUtc OR i.StatusCode NOT IN(''ACTIVE'',''ARCHIVED''))
+                       OR i.CreatedAtUtc<>d.CreatedAtUtc
+                       OR (d.StatusCode=''ACTIVE'' AND
+                           (i.StatusCode NOT IN(''ACTIVE'',''ARCHIVED'') OR i.ActivatedAtUtc<>d.ActivatedAtUtc))
+                       OR (d.StatusCode=''ARCHIVED'' AND
+                           (i.StatusCode<>''ARCHIVED'' OR i.ActivatedAtUtc<>d.ActivatedAtUtc
+                            OR i.ArchivedAtUtc<>d.ArchivedAtUtc)))
             )
-                THROW 53107, ''Activated notification versions are immutable.'', 1;
+                THROW 53107, ''Active and archived notification versions are immutable.'', 1;
+        END;');
+    EXEC(N'
+        CREATE TRIGGER ntf.trg_NotificationTemplateVersions_ActiveDelete
+        ON ntf.NotificationTemplateVersions
+        INSTEAD OF DELETE
+        AS
+        BEGIN
+            SET NOCOUNT ON;
+            IF EXISTS(SELECT 1 FROM deleted WHERE StatusCode IN(''ACTIVE'',''ARCHIVED''))
+                THROW 53108, ''Active and archived notification versions cannot be deleted.'', 1;
+            DELETE target
+            FROM ntf.NotificationTemplateVersions target
+            JOIN deleted item ON item.TemplateVersionId=target.TemplateVersionId;
         END;');
 
     DECLARE @ActionId BIGINT=(SELECT AuditActionTypeId FROM mst.AuditActionTypes WHERE Code='CREATE' AND IsActive=1);

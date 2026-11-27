@@ -15,6 +15,19 @@ IF @ApplyChanges<>N'APPROVED' OR @ApprovalTicket IN(N'',N'UNSET')
     THROW 53140, 'DRY RUN - explicit owner approval and a change ticket are required.', 1;
 IF @SeedActorUserId IS NULL OR @SeedActorUserId<=0
     THROW 53141, 'Provide the actual approved platform actor user ID; no actor is guessed.', 1;
+IF OBJECT_ID(N'iam.Users',N'U') IS NULL OR OBJECT_ID(N'iam.PlatformRoleAssignments',N'U') IS NULL
+   OR OBJECT_ID(N'mst.Roles',N'U') IS NULL OR OBJECT_ID(N'mst.RoleScopes',N'U') IS NULL
+    THROW 53146, 'The platform actor authorization prerequisites are missing.', 1;
+IF NOT EXISTS(SELECT 1 FROM iam.Users WHERE UserId=@SeedActorUserId)
+   OR NOT EXISTS
+   (
+       SELECT 1 FROM iam.PlatformRoleAssignments assignment
+       JOIN mst.Roles role ON role.RoleId=assignment.RoleId AND role.IsActive=1
+       JOIN mst.RoleScopes scope ON scope.RoleScopeId=role.RoleScopeId
+          AND scope.Code='PLATFORM' AND scope.IsActive=1
+       WHERE assignment.UserId=@SeedActorUserId
+   )
+    THROW 53147, 'The supplied seed actor must be an existing user with an active PLATFORM assignment.', 1;
 IF N'$(KLOP_ENVIRONMENT)'<>N'Development' OR @@SERVERNAME<>N'DEV-PC\SQLEXPRESS'
     THROW 53142, 'Refused: this template is restricted to the reviewed Development environment.', 1;
 IF N'$(KLOP_EXPECTED_DATABASE)'<>N'KlopPlatformDB' OR DB_NAME()<>N'$(KLOP_EXPECTED_DATABASE)'
@@ -89,6 +102,14 @@ BEGIN TRY
              MinNumericValue,MaxNumericValue,RequiresApproval)
         VALUES('notification.email_verification_templates.enabled',N'false','BOOLEAN','Notifications',
                1,0,NULL,NULL,1);
+    IF NOT EXISTS
+        (SELECT 1 FROM cfg.SystemConfigurations
+         WHERE ConfigurationKey='notification.email_verification_delivery_audit.enabled')
+        INSERT cfg.SystemConfigurations
+            (ConfigurationKey,ConfigurationValue,ValueType,Category,IsSystem,IsEditable,
+             MinNumericValue,MaxNumericValue,RequiresApproval)
+        VALUES('notification.email_verification_delivery_audit.enabled',N'false','BOOLEAN','Notifications',
+               1,0,NULL,NULL,1);
 
     DECLARE @ChannelId INT=(SELECT ChannelId FROM ntf.NotificationChannels WHERE ChannelCode='EMAIL');
     DECLARE @TemplateId UNIQUEIDENTIFIER;
@@ -107,8 +128,8 @@ BEGIN TRY
                                     FROM ntf.NotificationTemplateVersions WITH(UPDLOCK,HOLDLOCK)
                                     WHERE TemplateId=@TemplateId);
         INSERT ntf.NotificationTemplateVersions
-            (TemplateVersionId,TemplateId,VersionNumber,StatusCode,Subject,Body,CreatedByUserId)
-        VALUES(@VersionId,@TemplateId,@VersionNumber,'DRAFT',
+            (TemplateVersionId,TemplateId,TemplateCode,VersionNumber,StatusCode,Subject,Body,CreatedByUserId)
+        VALUES(@VersionId,@TemplateId,'EMAIL_VERIFICATION',@VersionNumber,'DRAFT',
                N'KLOP - Email verification',
                N'Complete email verification using this single-use link:' + NCHAR(10) +
                N'{{verification_link}}' + NCHAR(10) +

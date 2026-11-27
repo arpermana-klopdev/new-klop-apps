@@ -37,8 +37,25 @@ public sealed class NotificationTemplateRendererTests
     [InlineData("{{verification_link}}", "This template omits the expiry value.")]
     [InlineData("Verify\r\nBcc: attacker@example.test", Body)]
     [InlineData("{{verification_link}}", "{{unknown_value}} {{expiry_hours}}")]
+    [InlineData("{{expiry_hours}}", Body)]
+    [InlineData("Verify {{expiry_hours}}", Body)]
     public void PreviewRejectsMissingUnknownOrHeaderInjection(string subject, string body)
     {
         Assert.Throws<ArgumentException>(() => NotificationTemplateRenderer.Preview(subject, body));
+    }
+
+    [Fact]
+    public void RenderedSubjectIsValidatedAfterPlaceholderExpansion()
+    {
+        var subject = new string('a', 299) + "{{expiry_hours}}";
+        Assert.Throws<ArgumentException>(() => NotificationTemplateRenderer.RenderVerification(
+            subject, Body, "https://app.example.test/verify-email", 24));
+    }
+
+    [Fact]
+    public void PreviewUsesOrdinalPlaceholderNames()
+    {
+        Assert.Throws<ArgumentException>(() => NotificationTemplateRenderer.Preview(
+            Subject, "{{Verification_link}} {{expiry_hours}}"));
     }
 }

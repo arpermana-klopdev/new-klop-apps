@@ -95,22 +95,25 @@ BEGIN
     EXEC iam.usp_ValidatePlatformPermission @ActorUserId,@PublicSessionId,'platform.notifications.history';
     IF @PageNumber NOT BETWEEN 1 AND 100000 OR @PageSize NOT BETWEEN 1 AND 100
         THROW 53120, 'Notification history page is invalid.', 1;
+    SELECT COUNT_BIG(*) AS TotalCount
+    FROM ntf.NotificationDeliveries d
+    JOIN ntf.NotificationDeliveryAttempts a ON a.DeliveryId=d.DeliveryId;
     ;WITH History AS
     (
-        SELECT d.DeliveryId,COALESCE(t.TemplateCode,d.TemplateCodeSnapshot) AS TemplateCode,
+        SELECT a.AttemptId,d.DeliveryId,COALESCE(t.TemplateCode,d.TemplateCodeSnapshot) AS TemplateCode,
                COALESCE(CONVERT(VARCHAR(20),v.VersionNumber),
                         CONVERT(VARCHAR(20),d.TemplateVersionSnapshot),'LEGACY') AS TemplateVersion,
                c.ChannelCode,a.OutcomeCode AS Outcome,a.ErrorCategoryCode AS SafeErrorCategory,
-               a.OccurredAtUtc,d.CorrelationId,COUNT_BIG(*) OVER() AS TotalCount,
-               ROW_NUMBER() OVER(ORDER BY a.OccurredAtUtc DESC,d.DeliveryId DESC) AS RowNumber
+               a.OccurredAtUtc,d.CorrelationId,
+               ROW_NUMBER() OVER(ORDER BY a.OccurredAtUtc DESC,a.AttemptId DESC) AS RowNumber
         FROM ntf.NotificationDeliveries d
         LEFT JOIN ntf.NotificationTemplateVersions v ON v.TemplateVersionId=d.TemplateVersionId
         LEFT JOIN ntf.NotificationTemplates t ON t.TemplateId=v.TemplateId
         JOIN ntf.NotificationChannels c ON c.ChannelId=d.ChannelId
         JOIN ntf.NotificationDeliveryAttempts a ON a.DeliveryId=d.DeliveryId
     )
-    SELECT DeliveryId,TemplateCode,TemplateVersion,ChannelCode,Outcome,SafeErrorCategory,
-           OccurredAtUtc,CorrelationId,TotalCount
+    SELECT AttemptId,DeliveryId,TemplateCode,TemplateVersion,ChannelCode,Outcome,SafeErrorCategory,
+           OccurredAtUtc,CorrelationId
     FROM History
     WHERE RowNumber BETWEEN ((@PageNumber-1)*@PageSize)+1 AND @PageNumber*@PageSize
     ORDER BY RowNumber;
@@ -130,27 +133,37 @@ BEGIN
        OR @Subject LIKE N'%' + NCHAR(13) + N'%' OR @Subject LIKE N'%' + NCHAR(10) + N'%'
        OR NULLIF(LTRIM(RTRIM(@Body)),N'') IS NULL OR LEN(@Body)>20000
         THROW 53121, 'Notification draft content is invalid.', 1;
+    IF @TemplateCode COLLATE Latin1_General_100_BIN2=N'EMAIL_VERIFICATION'
+       AND (@ChannelCode COLLATE Latin1_General_100_BIN2<>N'EMAIL'
+            OR @LocaleCode COLLATE Latin1_General_100_BIN2<>N'en')
+        THROW 53136, 'Email verification templates support only the EMAIL channel and en locale.', 1;
+    IF @Subject LIKE N'%{{%' OR @Subject LIKE N'%}}%'
+        THROW 53137, 'Notification variables are permitted only in the plain-text body.', 1;
 
     DECLARE @TemplateId UNIQUEIDENTIFIER,@VersionId UNIQUEIDENTIFIER=NEWID(),@VersionNumber INT;
-    DECLARE @ChannelId INT,@ContentToCheck NVARCHAR(MAX)=@Subject+NCHAR(10)+@Body;
+    DECLARE @ChannelId INT,@ContentToCheck NVARCHAR(MAX)=@Body COLLATE Latin1_General_100_BIN2;
     BEGIN TRY
         BEGIN TRANSACTION;
         SELECT @ChannelId=ChannelId FROM ntf.NotificationChannels WITH(UPDLOCK,HOLDLOCK)
-        WHERE ChannelCode=@ChannelCode AND IsEnabled=1;
+        WHERE ChannelCode=@ChannelCode COLLATE Latin1_General_100_BIN2 AND IsEnabled=1;
         IF @ChannelId IS NULL OR NOT EXISTS
-            (SELECT 1 FROM ntf.NotificationTemplateTypes WHERE TemplateCode=@TemplateCode AND IsEnabled=1)
+            (SELECT 1 FROM ntf.NotificationTemplateTypes
+             WHERE TemplateCode=@TemplateCode COLLATE Latin1_General_100_BIN2 AND IsEnabled=1)
             THROW 53122, 'Notification template type or channel is unavailable.', 1;
         IF EXISTS
             (SELECT 1 FROM ntf.NotificationVariableDefinitions
              WHERE TemplateCode=@TemplateCode AND IsRequired=1
-               AND CHARINDEX(N'{{'+VariableCode+N'}}',@ContentToCheck)=0)
+               AND CHARINDEX((N'{{'+VariableCode+N'}}') COLLATE Latin1_General_100_BIN2,
+                             @ContentToCheck COLLATE Latin1_General_100_BIN2)=0)
             THROW 53128, 'The template is missing a required variable.', 1;
-        SELECT @ContentToCheck=REPLACE(@ContentToCheck,N'{{'+VariableCode+N'}}',N'')
+        SELECT @ContentToCheck=REPLACE(@ContentToCheck COLLATE Latin1_General_100_BIN2,
+                                       (N'{{'+VariableCode+N'}}') COLLATE Latin1_General_100_BIN2,N'')
         FROM ntf.NotificationVariableDefinitions WHERE TemplateCode=@TemplateCode;
         IF CHARINDEX(N'{{',@ContentToCheck)>0 OR CHARINDEX(N'}}',@ContentToCheck)>0
             THROW 53134, 'The template contains an unsupported or malformed variable.', 1;
         SELECT @TemplateId=TemplateId FROM ntf.NotificationTemplates WITH(UPDLOCK,HOLDLOCK)
-        WHERE TemplateCode=@TemplateCode AND ChannelId=@ChannelId AND LocaleCode=@LocaleCode;
+        WHERE TemplateCode=@TemplateCode COLLATE Latin1_General_100_BIN2 AND ChannelId=@ChannelId
+          AND LocaleCode=@LocaleCode COLLATE Latin1_General_100_BIN2;
         IF @TemplateId IS NULL
         BEGIN
             SET @TemplateId=NEWID();
@@ -160,8 +173,8 @@ BEGIN
         SELECT @VersionNumber=ISNULL(MAX(VersionNumber),0)+1
         FROM ntf.NotificationTemplateVersions WITH(UPDLOCK,HOLDLOCK) WHERE TemplateId=@TemplateId;
         INSERT ntf.NotificationTemplateVersions
-            (TemplateVersionId,TemplateId,VersionNumber,StatusCode,Subject,Body,CreatedByUserId)
-        VALUES(@VersionId,@TemplateId,@VersionNumber,'DRAFT',@Subject,@Body,@ActorUserId);
+            (TemplateVersionId,TemplateId,TemplateCode,VersionNumber,StatusCode,Subject,Body,CreatedByUserId)
+        VALUES(@VersionId,@TemplateId,@TemplateCode,@VersionNumber,'DRAFT',@Subject,@Body,@ActorUserId);
         INSERT ntf.NotificationTemplateVersionVariables(TemplateVersionId,TemplateCode,VariableCode,IsRequired)
         SELECT @VersionId,TemplateCode,VariableCode,IsRequired
         FROM ntf.NotificationVariableDefinitions WHERE TemplateCode=@TemplateCode;
@@ -193,12 +206,14 @@ BEGIN
     SET NOCOUNT ON;
     SET XACT_ABORT ON;
     DECLARE @TemplateCode VARCHAR(50),
-            @ContentToCheck NVARCHAR(MAX)=@Subject+NCHAR(10)+@Body;
+            @ContentToCheck NVARCHAR(MAX)=@Body COLLATE Latin1_General_100_BIN2;
     EXEC iam.usp_ValidatePlatformPermission @ActorUserId,@PublicSessionId,'platform.notifications.draft.edit';
     IF NULLIF(LTRIM(RTRIM(@Subject)),N'') IS NULL OR LEN(@Subject)>300
        OR @Subject LIKE N'%' + NCHAR(13) + N'%' OR @Subject LIKE N'%' + NCHAR(10) + N'%'
        OR NULLIF(LTRIM(RTRIM(@Body)),N'') IS NULL OR LEN(@Body)>20000
         THROW 53124, 'Notification draft content is invalid.', 1;
+    IF @Subject LIKE N'%{{%' OR @Subject LIKE N'%}}%'
+        THROW 53137, 'Notification variables are permitted only in the plain-text body.', 1;
     BEGIN TRY
         BEGIN TRANSACTION;
         SELECT @TemplateCode=t.TemplateCode
@@ -206,12 +221,22 @@ BEGIN
         JOIN ntf.NotificationTemplates t ON t.TemplateId=v.TemplateId
         WHERE v.TemplateVersionId=@TemplateVersionId;
         IF @TemplateCode IS NULL THROW 53201, 'Notification version changed or does not exist.', 1;
+        IF @TemplateCode COLLATE Latin1_General_100_BIN2=N'EMAIL_VERIFICATION' AND EXISTS
+            (SELECT 1 FROM ntf.NotificationTemplateVersions v
+             JOIN ntf.NotificationTemplates t ON t.TemplateId=v.TemplateId
+             JOIN ntf.NotificationChannels c ON c.ChannelId=t.ChannelId
+             WHERE v.TemplateVersionId=@TemplateVersionId
+               AND (c.ChannelCode COLLATE Latin1_General_100_BIN2<>N'EMAIL'
+                    OR t.LocaleCode COLLATE Latin1_General_100_BIN2<>N'en'))
+            THROW 53136, 'Email verification templates support only the EMAIL channel and en locale.', 1;
         IF EXISTS
             (SELECT 1 FROM ntf.NotificationVariableDefinitions
              WHERE TemplateCode=@TemplateCode AND IsRequired=1
-               AND CHARINDEX(N'{{'+VariableCode+N'}}',@ContentToCheck)=0)
+               AND CHARINDEX((N'{{'+VariableCode+N'}}') COLLATE Latin1_General_100_BIN2,
+                             @ContentToCheck COLLATE Latin1_General_100_BIN2)=0)
             THROW 53128, 'The template is missing a required variable.', 1;
-        SELECT @ContentToCheck=REPLACE(@ContentToCheck,N'{{'+VariableCode+N'}}',N'')
+        SELECT @ContentToCheck=REPLACE(@ContentToCheck COLLATE Latin1_General_100_BIN2,
+                                       (N'{{'+VariableCode+N'}}') COLLATE Latin1_General_100_BIN2,N'')
         FROM ntf.NotificationVariableDefinitions WHERE TemplateCode=@TemplateCode;
         IF CHARINDEX(N'{{',@ContentToCheck)>0 OR CHARINDEX(N'}}',@ContentToCheck)>0
             THROW 53134, 'The template contains an unsupported or malformed variable.', 1;
@@ -259,14 +284,27 @@ BEGIN
     DECLARE @CurrentStatus VARCHAR(30),@TemplateId UNIQUEIDENTIFIER,@TemplateCode VARCHAR(50),
             @TargetStatus VARCHAR(30),@ActionType VARCHAR(20)='UPDATE',
             @ContentToCheck NVARCHAR(MAX);
+    DECLARE @AutoArchived TABLE(TemplateVersionId UNIQUEIDENTIFIER PRIMARY KEY);
     BEGIN TRY
         BEGIN TRANSACTION;
         SELECT @CurrentStatus=v.StatusCode,@TemplateId=v.TemplateId,@TemplateCode=t.TemplateCode,
-               @ContentToCheck=v.Subject+NCHAR(10)+v.Body
+               @ContentToCheck=v.Body COLLATE Latin1_General_100_BIN2
         FROM ntf.NotificationTemplateVersions v WITH(UPDLOCK,HOLDLOCK)
         JOIN ntf.NotificationTemplates t ON t.TemplateId=v.TemplateId
         WHERE v.TemplateVersionId=@TemplateVersionId AND v.RowVersion=@ExpectedVersion;
         IF @TemplateId IS NULL THROW 53201, 'Notification version changed or does not exist.', 1;
+        IF @ContentToCheck IS NULL OR @ContentToCheck='' THROW 53124, 'Notification draft content is invalid.', 1;
+        IF EXISTS
+            (SELECT 1 FROM ntf.NotificationTemplateVersions
+             WHERE TemplateVersionId=@TemplateVersionId AND (Subject LIKE N'%{{%' OR Subject LIKE N'%}}%'))
+            THROW 53137, 'Notification variables are permitted only in the plain-text body.', 1;
+        IF @TemplateCode COLLATE Latin1_General_100_BIN2=N'EMAIL_VERIFICATION' AND EXISTS
+            (SELECT 1 FROM ntf.NotificationTemplates t
+             JOIN ntf.NotificationChannels c ON c.ChannelId=t.ChannelId
+             WHERE t.TemplateId=@TemplateId
+               AND (c.ChannelCode COLLATE Latin1_General_100_BIN2<>N'EMAIL'
+                    OR t.LocaleCode COLLATE Latin1_General_100_BIN2<>N'en'))
+            THROW 53136, 'Email verification templates support only the EMAIL channel and en locale.', 1;
 
         IF @ActionCode='SUBMIT' AND @CurrentStatus='DRAFT'
         BEGIN
@@ -278,8 +316,16 @@ BEGIN
                 (SELECT 1 FROM ntf.NotificationTemplateVersionVariables vv
                  JOIN ntf.NotificationTemplateVersions v ON v.TemplateVersionId=vv.TemplateVersionId
                  WHERE vv.TemplateVersionId=@TemplateVersionId AND vv.IsRequired=1
-                   AND CHARINDEX(N'{{'+vv.VariableCode+N'}}',v.Subject+NCHAR(10)+v.Body)=0)
+                   AND CHARINDEX((N'{{'+vv.VariableCode+N'}}') COLLATE Latin1_General_100_BIN2,
+                                 v.Body COLLATE Latin1_General_100_BIN2)=0)
                 THROW 53128, 'The template is missing a required variable.', 1;
+            SELECT @ContentToCheck=REPLACE(@ContentToCheck COLLATE Latin1_General_100_BIN2,
+                                           (N'{{'+vv.VariableCode+N'}}') COLLATE Latin1_General_100_BIN2,N'')
+            FROM ntf.NotificationTemplateVersionVariables vv
+            WHERE vv.TemplateVersionId=@TemplateVersionId;
+            IF CHARINDEX(N'{{',@ContentToCheck COLLATE Latin1_General_100_BIN2)>0
+               OR CHARINDEX(N'}}',@ContentToCheck COLLATE Latin1_General_100_BIN2)>0
+                THROW 53134, 'The template contains an unsupported or malformed variable.', 1;
             UPDATE ntf.NotificationTemplateVersions
             SET StatusCode='PENDING_APPROVAL',SubmittedAtUtc=SYSUTCDATETIME()
             WHERE TemplateVersionId=@TemplateVersionId;
@@ -300,6 +346,7 @@ BEGIN
         BEGIN
             UPDATE ntf.NotificationTemplateVersions
             SET StatusCode='ARCHIVED',ArchivedAtUtc=SYSUTCDATETIME()
+            OUTPUT inserted.TemplateVersionId INTO @AutoArchived(TemplateVersionId)
             WHERE TemplateId=@TemplateId AND StatusCode='ACTIVE';
             UPDATE ntf.NotificationTemplateVersions
             SET StatusCode='ACTIVE',ActivatedAtUtc=SYSUTCDATETIME()
@@ -326,6 +373,18 @@ BEGIN
         FROM mst.AuditActionTypes act CROSS JOIN mst.AuditResultTypes res
         WHERE act.Code=@ActionType AND act.IsActive=1 AND res.Code='SUCCESS' AND res.IsActive=1;
         IF @@ROWCOUNT<>1 THROW 53130, 'Notification audit metadata is unavailable.', 1;
+        INSERT aud.AuditEvents(ActorUserId,AuditActionTypeId,AuditResultTypeId,TargetType,TargetId,
+                               ChangeSummaryJson,RequestId,CorrelationId)
+        SELECT @ActorUserId,act.AuditActionTypeId,res.AuditResultTypeId,'NOTIFICATION_TEMPLATE_VERSION',
+               CONVERT(NVARCHAR(150),archived.TemplateVersionId),
+               N'{"action":"AUTO_ARCHIVED_BY_ACTIVATION"}',@RequestId,@CorrelationId
+        FROM @AutoArchived archived
+        CROSS JOIN mst.AuditActionTypes act CROSS JOIN mst.AuditResultTypes res
+        WHERE act.Code='UPDATE' AND act.IsActive=1 AND res.Code='SUCCESS' AND res.IsActive=1;
+        DECLARE @AutoArchiveAuditRows INT=@@ROWCOUNT;
+        IF (SELECT COUNT(*) FROM @AutoArchived)>0
+           AND @AutoArchiveAuditRows<>(SELECT COUNT(*) FROM @AutoArchived)
+            THROW 53130, 'Notification archival audit metadata is unavailable.', 1;
         COMMIT TRANSACTION;
 
         SELECT v.TemplateVersionId AS VersionId,t.TemplateCode,t.DisplayName,v.VersionNumber,
@@ -353,7 +412,9 @@ BEGIN
     FROM ntf.NotificationTemplates t
     JOIN ntf.NotificationTemplateVersions v ON v.TemplateId=t.TemplateId AND v.StatusCode='ACTIVE'
     JOIN ntf.NotificationChannels c ON c.ChannelId=t.ChannelId AND c.IsEnabled=1
-    WHERE t.TemplateCode='EMAIL_VERIFICATION' AND c.ChannelCode='EMAIL'
+    WHERE t.TemplateCode COLLATE Latin1_General_100_BIN2=N'EMAIL_VERIFICATION'
+      AND c.ChannelCode COLLATE Latin1_General_100_BIN2=N'EMAIL'
+      AND t.LocaleCode COLLATE Latin1_General_100_BIN2=N'en'
     ORDER BY v.ActivatedAtUtc DESC;
 END;
 GO
@@ -387,9 +448,9 @@ BEGIN
             THROW 53133, 'Delivery error category is not registered.', 1;
         INSERT ntf.NotificationDeliveries
             (DeliveryId,TemplateVersionId,TemplateCodeSnapshot,TemplateVersionSnapshot,
-             ChannelId,CorrelationId,RecipientMetadata)
+             ChannelId,CorrelationId)
         VALUES(@DeliveryId,@TemplateVersionId,@TemplateCodeSnapshot,@TemplateVersionSnapshot,
-               @ChannelId,@CorrelationId,NULL);
+               @ChannelId,@CorrelationId);
         INSERT ntf.NotificationDeliveryAttempts
             (DeliveryId,AttemptNumber,OutcomeCode,ErrorCategoryCode,ProviderAccepted)
         VALUES(@DeliveryId,1,CASE WHEN @ProviderAccepted=1 THEN 'PROVIDER_ACCEPTED' ELSE 'PROVIDER_REJECTED' END,

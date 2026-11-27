@@ -16,6 +16,25 @@ WHERE grantee.name=N'klop_app_runtime'
   AND object_schema_name(permission.major_id)=N'ntf'
 ORDER BY object_name(permission.major_id);
 
+DECLARE @RequiredProcedures TABLE(ProcedureName SYSNAME PRIMARY KEY);
+INSERT @RequiredProcedures(ProcedureName) VALUES
+(N'usp_ListTemplates'),(N'usp_GetTemplate'),(N'usp_GetTemplateVersionForPreview'),
+(N'usp_ListChannels'),(N'usp_ListDeliveryHistory'),(N'usp_CreateTemplateDraft'),
+(N'usp_UpdateTemplateDraft'),(N'usp_TransitionTemplateVersion'),
+(N'usp_GetActiveVerificationTemplate'),(N'usp_RecordDeliveryAttempt');
+SELECT required.ProcedureName,
+       CASE WHEN procedureInfo.object_id IS NULL THEN N'MISSING PROCEDURE'
+            WHEN permission.state IN('G','W') THEN permission.state_desc
+            ELSE N'MISSING EXECUTE GRANT' END AS GrantStatus
+FROM @RequiredProcedures required
+LEFT JOIN sys.procedures procedureInfo
+  ON procedureInfo.schema_id=SCHEMA_ID(N'ntf') AND procedureInfo.name=required.ProcedureName
+LEFT JOIN sys.database_permissions permission
+  ON permission.class=1 AND permission.major_id=procedureInfo.object_id
+ AND permission.grantee_principal_id=DATABASE_PRINCIPAL_ID(N'klop_app_runtime')
+ AND permission.permission_name=N'EXECUTE'
+ORDER BY required.ProcedureName;
+
 SELECT COUNT(*) AS NotificationRoleAssignments
 FROM mst.RolePermissions mapping
 JOIN mst.Permissions permission ON permission.PermissionId=mapping.PermissionId

@@ -28,4 +28,5 @@ public interface IPlatformRuntimeSettings : IPasswordPolicy
     bool PersonalRegistrationEnabled { get; }
     bool OrganizationRegistrationEnabled { get; }
     bool NotificationTemplatesEnabled { get; }
+    bool NotificationDeliveryAuditEnabled { get; }
 }

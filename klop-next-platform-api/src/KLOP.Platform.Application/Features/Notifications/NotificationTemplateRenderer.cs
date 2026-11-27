@@ -42,11 +42,14 @@ public static partial class NotificationTemplateRenderer
         if (string.IsNullOrWhiteSpace(body) || body.Length > 20_000 || body.Contains('\0'))
             throw new ArgumentException("The plain-text notification body is invalid.", nameof(body));
 
-        var matches = PlaceholderPattern().Matches(subject + "\n" + body);
+        if (PlaceholderPattern().Matches(subject).Count > 0)
+            throw new ArgumentException("Notification variables are permitted only in the plain-text body.", nameof(subject));
+
+        var matches = PlaceholderPattern().Matches(body);
         var names = matches.Select(match => match.Groups[1].Value).ToHashSet(StringComparer.Ordinal);
         if (names.Any(name => !values.ContainsKey(name)))
             throw new ArgumentException("The template contains an unsupported variable.", nameof(body));
-        var unresolved = PlaceholderPattern().Replace(subject + "\n" + body, "");
+        var unresolved = PlaceholderPattern().Replace(body, "");
         if (unresolved.Contains("{{", StringComparison.Ordinal) ||
             unresolved.Contains("}}", StringComparison.Ordinal))
             throw new ArgumentException("The template contains a malformed variable.", nameof(body));
@@ -58,7 +61,11 @@ public static partial class NotificationTemplateRenderer
                 ? replacement
                 : throw new ArgumentException("The template contains an unsupported variable.", nameof(body)));
 
-        return new RenderedNotification(Replace(subject), Replace(body));
+        var renderedSubject = Replace(subject);
+        if (string.IsNullOrWhiteSpace(renderedSubject) || renderedSubject.Length > 300 ||
+            renderedSubject.Contains('\r') || renderedSubject.Contains('\n') || renderedSubject.Contains('\0'))
+            throw new ArgumentException("The rendered notification subject is invalid.", nameof(subject));
+        return new RenderedNotification(renderedSubject, Replace(body));
     }
 
     [GeneratedRegex(@"\{\{([a-z][a-z0-9_]*)\}\}", RegexOptions.CultureInvariant)]

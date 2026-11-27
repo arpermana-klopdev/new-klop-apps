@@ -27,7 +27,8 @@ public sealed record RuntimeSettings(
     bool DevelopmentTermsBypassEnabled = false,
     bool PersonalRegistrationEnabled = true,
     bool OrganizationRegistrationEnabled = true,
-    bool NotificationTemplatesEnabled = false) : IPlatformRuntimeSettings
+    bool NotificationTemplatesEnabled = false,
+    bool NotificationDeliveryAuditEnabled = false) : IPlatformRuntimeSettings
 {
     private sealed class ConfigRow
     {
@@ -151,6 +152,7 @@ public sealed record RuntimeSettings(
             developmentTermsBypassEnabled,
             await Flag("registration.personal.enabled"),
             await Flag("registration.organization.enabled"),
-            await OptionalFlag("notification.email_verification_templates.enabled", false));
+            await OptionalFlag("notification.email_verification_templates.enabled", false),
+            await OptionalFlag("notification.email_verification_delivery_audit.enabled", false));
     }
 }

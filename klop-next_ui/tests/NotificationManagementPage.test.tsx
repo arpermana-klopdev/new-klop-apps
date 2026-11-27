@@ -53,7 +53,8 @@ describe("Notification management setup", () => {
     });
     vi.mocked(getNotificationReadiness).mockReset().mockResolvedValue({
       smtpHostConfigured: true, smtpPortConfigured: true, senderConfigured: true, tlsRequired: true,
-      credentialsConfigured: false, templateRolloutEnabled: false, verificationLifetimeStatus: "VALID",
+      credentialsConfigured: false, templateRolloutEnabled: false, deliveryAuditEnabled: false,
+      verificationLifetimeStatus: "VALID",
     });
     vi.mocked(getNotificationTemplate).mockReset();
     vi.mocked(previewNotificationDraft).mockReset();
@@ -91,6 +92,47 @@ describe("Notification management setup", () => {
     await waitFor(() => expect(getNotificationTemplates).not.toHaveBeenCalled());
     fireEvent.click(screen.getByRole("tab", { name: "Channels" }));
     expect(getNotificationChannels).not.toHaveBeenCalled();
+  });
+
+  it("uses stable history pages and exposes previous and next controls", async () => {
+    const firstPage = Array.from({ length: 20 }, (_, index) => ({
+      attemptId: index + 1,
+      deliveryId: `delivery-${index + 1}`,
+      templateCode: "EMAIL_VERIFICATION",
+      templateVersion: "1",
+      channelCode: "EMAIL",
+      outcome: "PROVIDER_ACCEPTED",
+      safeErrorCategory: null,
+      occurredAtUtc: "2026-01-01T00:00:00Z",
+      correlationId: `correlation-${index + 1}`,
+    }));
+    const secondPage = [{
+      attemptId: 21,
+      deliveryId: "delivery-21",
+      templateCode: "ROW_21",
+      templateVersion: "1",
+      channelCode: "EMAIL",
+      outcome: "PROVIDER_ACCEPTED",
+      safeErrorCategory: null,
+      occurredAtUtc: "2026-01-01T00:00:00Z",
+      correlationId: "correlation-21",
+    }];
+    vi.mocked(getNotificationHistory).mockImplementation(async (pageNumber = 1, pageSize = 20) => ({
+      items: pageNumber === 1 ? firstPage : secondPage,
+      pageNumber,
+      pageSize,
+      totalCount: 21,
+    }));
+    renderPage();
+    fireEvent.click(screen.getByRole("tab", { name: "History" }));
+
+    expect(await screen.findByText("Page 1 · 21 attempts")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+
+    expect(await screen.findByText("ROW_21 · 1")).toBeInTheDocument();
+    expect(screen.getByText("Page 2 · 21 attempts")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Previous" }));
+    expect(await screen.findByText("Page 1 · 21 attempts")).toBeInTheDocument();
   });
 
   it("previews selected versions only with synthetic values", async () => {

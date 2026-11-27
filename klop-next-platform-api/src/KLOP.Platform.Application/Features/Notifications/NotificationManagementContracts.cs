@@ -73,9 +73,11 @@ public sealed record NotificationSettingsReadiness(
     bool TlsRequired,
     bool CredentialsConfigured,
     bool TemplateRolloutEnabled,
+    bool DeliveryAuditEnabled,
     string VerificationLifetimeStatus);
 
 public sealed record NotificationDeliveryHistoryItem(
+    long AttemptId,
     Guid DeliveryId,
     string TemplateCode,
     string TemplateVersion,
@@ -93,6 +95,7 @@ public sealed record NotificationDeliveryHistoryPage(
 
 public sealed record NotificationTemplateDraftResult(Guid TemplateId, Guid VersionId);
 public sealed record NotificationDeliveryHistoryRow(
+    long AttemptId,
     Guid DeliveryId,
     string TemplateCode,
     string TemplateVersion,
@@ -100,8 +103,7 @@ public sealed record NotificationDeliveryHistoryRow(
     string Outcome,
     string? SafeErrorCategory,
     DateTime OccurredAtUtc,
-    Guid CorrelationId,
-    long TotalCount);
+    Guid CorrelationId);
 
 public interface INotificationManagementRepository
 {
@@ -113,7 +115,7 @@ public interface INotificationManagementRepository
         Guid versionId, long actorUserId, Guid sessionId, CancellationToken cancellationToken);
     Task<IReadOnlyList<NotificationChannelStatus>> ListChannels(
         long actorUserId, Guid sessionId, CancellationToken cancellationToken);
-    Task<IReadOnlyList<NotificationDeliveryHistoryRow>> ListDeliveryHistory(
+    Task<NotificationDeliveryHistoryPage> ListDeliveryHistory(
         int pageNumber, int pageSize, long actorUserId, Guid sessionId, CancellationToken cancellationToken);
     Task<NotificationTemplateDraftResult> CreateDraft(
         string templateCode, string displayName, string channelCode, string localeCode,

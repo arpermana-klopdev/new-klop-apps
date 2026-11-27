@@ -2,9 +2,9 @@
 
 ## Status and boundaries
 
-This is a source implementation and an owner-held SQL proposal, not a production-ready or frozen artifact. No SQL was executed, no live database was accessed, no SMTP send or network probe was performed, and no deployment was made. Owner SQL approval, least-privilege runtime identity, role mapping approval, and live Development UAT remain on HOLD.
+This is a source implementation and an owner-held SQL proposal, not a production-ready or frozen artifact. Work is on the dedicated Copilot working branch `copilot/notification-management-email-templates`, synced with main commit `2d08a97329fff7709664dd8341bd54b9c91985f3`; the similarly named feature branch is not used. No SQL was executed, no live database was accessed, no SMTP send or network probe was performed, and no deployment was made. Owner SQL approval, least-privilege runtime identity, role mapping approval, and live Development UAT remain on HOLD.
 
-The only initially supported channel and flow is email verification through the existing registration/resend flow. SMS, WhatsApp, in-app notifications, password reset, registrations beyond existing verification delivery, invitations, and welcome messages are planned, not enabled. The existing sender stays in use while `notification.email_verification_templates.enabled` is absent or false. If the owner enables the gate but no valid active verification version is available, the sender fails safely and does not fall back to the legacy message.
+The only initially supported channel and flow is email verification through the existing registration/resend flow. SMS, WhatsApp, in-app notifications, password reset, registrations beyond existing verification delivery, invitations, and welcome messages are planned, not enabled. The existing sender stays in use while `notification.email_verification_templates.enabled` is absent or false. In this default path it makes no calls to the v1.11 notification schema. A separate `notification.email_verification_delivery_audit.enabled` setting also defaults to false; turn it on only after the owner-reviewed schema and exact stored-procedure grants are installed. Audit persistence is best effort and cannot change the reported SMTP outcome. If the owner enables template rollout but no valid active English verification version is available, the sender fails safely and does not fall back to the legacy message.
 
 The application still generates HTTPS verification links from `web.allowed_origin`; SQL stores only the template with typed placeholders, never rendered content, verification tokens, or full links. Existing token hashing, expiry, single-use, and generic registration/resend responses are unchanged. No automated retry is added.
 
@@ -21,6 +21,8 @@ The additive v1.11 proposal uses schema `ntf` and these tables:
 Channel, template type, status, variable, outcome, and safe error-category definitions are data rows, not API/UI business defaults. The initial seed proposal defines EMAIL and the existing verification wording as a DRAFT only. It does not create an active template, enable template rollout, alter existing SMTP settings, create role assignments, or introduce other active channels. The seed requires an explicitly supplied approved actor ID; no user ID is guessed.
 
 The transition procedure enforces DRAFT → PENDING_APPROVAL → APPROVED → ACTIVE → ARCHIVED. Rejection returns a submitted version to DRAFT and records the decision. SQL transaction locks and expected `rowversion` enforce optimistic concurrency; a filtered unique index permits at most one active version per template/channel/locale, and activation archives the prior active version atomically. An update trigger blocks edits to an activated version's contents. Administrative changes and approval decisions write to the existing `aud.AuditEvents` model in their transaction.
+
+Active and archived versions cannot be edited or deleted. Version rows retain the template code and use composite foreign keys to prevent a version's variable set from referencing another template's definitions. Delivery records contain no recipient metadata column; attempts enforce positive attempt numbers and provider-accepted/rejected outcome consistency. Automatic archival of the previous active version is audited in the activation transaction.
 
 Delivery history records the provider attempt outcome, template/version (or the explicit `LEGACY` label while the rollout gate is off), channel, UTC timestamp, correlation ID, and an allowlisted safe error category. The schema deliberately omits recipient metadata. It does not record an email address, token, URL, body, SMTP secret, or exception payload. `PROVIDER_ACCEPTED` means accepted by the SMTP provider only; it is not evidence of inbox delivery. There is no automatic retry policy.
 
@@ -42,6 +44,8 @@ All proposed capabilities are PLATFORM-scoped. The permission catalog proposal a
 | `platform.notifications.settings.read` | Read safe readiness metadata | UNASSIGNED — owner review |
 
 Every administrative endpoint requires a validated authenticated platform session and its exact SQL-backed permission. The UI shows mutation controls only after the permission API verifies the capability. No role-label shortcut or client-only authorization is used; missing permission mappings fail closed.
+
+The v1.11 authorization delta restores the ten notification codes to both explicit allowlists in `iam.usp_ValidatePlatformPermission` and `iam.usp_GetPlatformPermissions`. It preserves the v1.10 session validation, PLATFORM-only role checks, permission scope, and `AllowsEffective=1` readiness check. It requires the v1.10 matrix tables and inserts missing notification matrix metadata as `HOLD` (`AllowsEffective=0`, `AllowsMatrixEdit=0`); it refuses pre-existing non-HOLD rows or any notification role mapping. It does not assign roles. Owner-approved matrix readiness changes and role mappings remain separate gated decisions.
 
 ## SMTP inventory and manual checklist
 
@@ -76,10 +80,12 @@ The scripts are proposals only. No script is run by application startup, CI, or 
 1. `database/migrations/v1.11/000_notification_preflight_READONLY.sql` — inspect prerequisites and collisions; read-only.
 2. `database/migrations/v1.11/001_notification_schema_APPROVAL_TEMPLATE.sql` — create the additive schema/tables/index/immutability trigger after explicit owner/DBA approval.
 3. `database/migrations/v1.11/002_notification_procedures_APPROVAL_TEMPLATE.sql` — install the stored-procedure boundary after the schema.
-4. `database/migrations/v1.11/003_notification_seed_APPROVAL_TEMPLATE.sql` — seed the EMAIL channel, database definitions, rollout-off setting if absent, and a DRAFT verification template. Supply the actual approved actor user ID; never infer one.
-5. `database/migrations/v1.11/004_notification_permissions_APPROVAL_TEMPLATE.sql` — add PLATFORM permission definitions only. It deliberately adds no role mappings.
-6. `database/security/v1.11_notifications_runtime_grants_APPROVAL_TEMPLATE.sql` — exact `EXECUTE` grants to the already-existing `klop_app_runtime` database role only after the identity is least-privilege ready. It creates no users, roles, or memberships.
-7. `database/security/v1.11_notifications_runtime_validation_READONLY.sql`, then `database/migrations/v1.11/005_notification_postdeploy_READONLY.sql` — verify exact object grants and resulting schema/state read-only.
+4. Apply the owner-approved v1.10 RBAC migration (`v1.10/003_tenant_permission_policy_APPROVAL_TEMPLATE.sql`) before notification authorization integration; never edit the v1.10 files.
+5. `database/migrations/v1.11/003_notification_seed_APPROVAL_TEMPLATE.sql` — seed the EMAIL channel, database definitions, both off-by-default notification settings if absent, and an English DRAFT verification template. Supply an existing user ID with an active PLATFORM assignment; never infer one.
+6. `database/migrations/v1.11/004_notification_permissions_APPROVAL_TEMPLATE.sql` — add PLATFORM permission definitions only. It deliberately adds no role mappings.
+7. `database/migrations/v1.11/006_notification_authorization_delta_APPROVAL_TEMPLATE.sql` — after v1.10 and permission definitions, add matrix metadata and replace both authorization procedure allowlists. Notification rows remain HOLD and UNASSIGNED. No v1.10 files are changed.
+8. `database/security/v1.11_notifications_runtime_grants_APPROVAL_TEMPLATE.sql` — exact `EXECUTE` grants to the already-existing `klop_app_runtime` database role only after the identity is least-privilege ready. It creates no users, roles, or memberships.
+9. `database/security/v1.11_notifications_runtime_validation_READONLY.sql`, then `database/migrations/v1.11/005_notification_postdeploy_READONLY.sql` — verify exact object grants, all 13 notification tables, authorization dependencies, matrix definitions/mappings, rollout gate state, and resulting schema/state read-only.
 
 Keep the owner-approved change ticket, script outputs, backup/restore point, and SQLCMD variables with the DBA change record. Stop at the first unexpected object, duplicate key, failed audit prerequisite, or validation mismatch. Do not blindly rerun non-idempotent DDL/procedure installation or manually patch a partially applied migration. Record the exact failing statement and transaction outcome, keep the rollout disabled, and have the DBA compare current object definitions with the approved script before preparing an owner-approved corrective/forward migration or restoring the authorized backup. There is intentionally no automatic rollback script and no migration version ledger; the deployment record must be maintained externally.
 
@@ -95,3 +101,15 @@ Perform only after the owner lifts the SQL/UAT hold, approves permission-to-role
 - Confirm generated OpenAPI/TypeScript, backend tests/build, frontend typecheck/tests/build, and the repository KLOP CI all pass for the reviewed head/base.
 
 Do not use live Playwright, a live database, a new test database, real SMTP, or a deployment until separately authorized.
+
+## Validation evidence and remaining gates
+
+The source-level tests use fake SMTP transport, fake repositories, and local SQL-contract inspection; they do not execute SQL or contact SMTP. The targeted notification unit tests pass. Required offline checks for the reviewed source include:
+
+- `dotnet test tests/KLOP.Platform.UnitTests/KLOP.Platform.UnitTests.csproj`
+- `npm test -- --run`
+- `npm run typecheck`
+- `npm run build`
+- `npm run api:types` followed by a clean diff check
+
+The complete backend unit suite, frontend tests/build/typecheck, generated API type check, and current-head KLOP CI are still required after these review changes. SQL syntax and procedure installation remain unverified because SQL Server execution is explicitly held. The live v1.10/v1.11 migration order, owner role-matrix decisions, permission effective-state changes, SMTP setup, manual UAT, and deployment remain owner-held gates.

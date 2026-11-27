@@ -36,6 +36,7 @@ public sealed class NotificationManagementService(
         var version = rows.FirstOrDefault();
         if (version is null)
             return null;
+        EnsureSupportedVerificationLocale(version.TemplateCode, version.ChannelCode, version.LocaleCode);
         var rendered = NotificationTemplateRenderer.Preview(version.Subject, version.Body);
         return new NotificationTemplatePreviewResponse(rendered.Subject, rendered.Body);
     }
@@ -47,7 +48,8 @@ public sealed class NotificationManagementService(
     public async Task<NotificationSettingsReadiness> SettingsReadiness(
         long actorUserId, Guid sessionId, CancellationToken cancellationToken)
     {
-        _ = await permissionRepository.GetPlatformPermissions(actorUserId, sessionId, cancellationToken);
+        await permissionRepository.ValidatePlatformPermission(actorUserId, sessionId,
+            NotificationPermissions.SettingsRead, cancellationToken);
         return new NotificationSettingsReadiness(
             !string.IsNullOrWhiteSpace(settings.SmtpHost),
             settings.SmtpPort is > 0 and <= 65535,
@@ -56,6 +58,7 @@ public sealed class NotificationManagementService(
             !string.IsNullOrWhiteSpace(settings.SmtpUsername) &&
                 !string.IsNullOrWhiteSpace(settings.SmtpPasswordReference),
             settings.NotificationTemplatesEnabled,
+            settings.NotificationDeliveryAuditEnabled,
             settings.EmailVerificationHours is >= 1 and <= 24 ? "VALID" : "INVALID");
     }
 
@@ -65,12 +68,17 @@ public sealed class NotificationManagementService(
     {
         if (pageNumber is < 1 or > 100_000 || pageSize is < 1 or > 100)
             throw new ArgumentOutOfRangeException(nameof(pageNumber));
-        var rows = await repository.ListDeliveryHistory(pageNumber, pageSize, actorUserId, sessionId,
+        var result = await repository.ListDeliveryHistory(pageNumber, pageSize, actorUserId, sessionId,
             cancellationToken);
-        return new NotificationDeliveryHistoryPage(rows.Select(row => new NotificationDeliveryHistoryItem(
-            row.DeliveryId, row.TemplateCode, row.TemplateVersion, row.ChannelCode, row.Outcome,
-            row.SafeErrorCategory, DateTime.SpecifyKind(row.OccurredAtUtc, DateTimeKind.Utc),
-            row.CorrelationId)).ToArray(), pageNumber, pageSize, rows.FirstOrDefault()?.TotalCount ?? 0);
+        return result with
+        {
+            Items = result.Items.Select(item => item with
+            {
+                OccurredAtUtc = DateTime.SpecifyKind(item.OccurredAtUtc, DateTimeKind.Utc)
+            }).ToArray(),
+            PageNumber = pageNumber,
+            PageSize = pageSize
+        };
     }
 
     public Task<NotificationTemplateDraftResult> CreateDraft(
@@ -82,6 +90,7 @@ public sealed class NotificationManagementService(
         ValidateCode(templateCode, nameof(templateCode));
         ValidateCode(channelCode, nameof(channelCode));
         ValidateCode(localeCode, nameof(localeCode));
+        EnsureSupportedVerificationLocale(templateCode, channelCode, localeCode);
         if (string.IsNullOrWhiteSpace(displayName) || displayName.Length > 200)
             throw new ArgumentException("The template display name is invalid.", nameof(displayName));
         return repository.CreateDraft(templateCode, displayName.Trim(), channelCode, localeCode,
@@ -122,6 +131,12 @@ public sealed class NotificationManagementService(
         if (string.IsNullOrWhiteSpace(value) || value.Length > 50 ||
             value.Any(character => !char.IsAsciiLetterOrDigit(character) && character != '_' && character != '-'))
             throw new ArgumentException("A notification code is invalid.", parameter);
+    }
+
+    private static void EnsureSupportedVerificationLocale(string templateCode, string channelCode, string localeCode)
+    {
+        if (templateCode == "EMAIL_VERIFICATION" && (channelCode != "EMAIL" || localeCode != "en"))
+            throw new ArgumentException("Email verification templates support only the EMAIL channel and en locale.");
     }
 
     private static byte[] DecodeConcurrencyVersion(string value)

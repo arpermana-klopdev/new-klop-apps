@@ -54,6 +54,7 @@ export function NotificationManagementPage() {
   const [body, setBody] = useState("");
   const [preview, setPreview] = useState<{ subject: string; body: string } | null>(null);
   const [operationMessage, setOperationMessage] = useState<string | null>(null);
+  const [historyPage, setHistoryPage] = useState(1);
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const queryClient = useQueryClient();
 
@@ -72,6 +73,8 @@ export function NotificationManagementPage() {
   });
   const templates = templatesQuery.data ?? [];
   const selectedTemplate = templates.find((template) => template.templateId === selectedTemplateId) ?? null;
+  const selectedTemplateSupported = selectedTemplate?.templateCode !== "EMAIL_VERIFICATION" ||
+    (selectedTemplate.channelCode === "EMAIL" && selectedTemplate.localeCode === "en");
   const detailQuery = useQuery({
     queryKey: ["platform-notifications", "template", selectedTemplateId],
     queryFn: () => getNotificationTemplate(selectedTemplateId!),
@@ -79,6 +82,8 @@ export function NotificationManagementPage() {
     retry: false,
   });
   const selectedVersion = detailQuery.data?.versions.find((version) => version.versionId === selectedVersionId) ?? null;
+  const selectedVersionSupported = selectedVersion?.templateCode !== "EMAIL_VERIFICATION" ||
+    (selectedVersion.channelCode === "EMAIL" && selectedVersion.localeCode === "en");
   const channelsQuery = useQuery({
     queryKey: ["platform-notifications", "channels"],
     queryFn: getNotificationChannels,
@@ -86,8 +91,8 @@ export function NotificationManagementPage() {
     retry: false,
   });
   const historyQuery = useQuery({
-    queryKey: ["platform-notifications", "history"],
-    queryFn: () => getNotificationHistory(),
+    queryKey: ["platform-notifications", "history", historyPage],
+    queryFn: () => getNotificationHistory(historyPage),
     enabled: activeTab === "history" && can("platform.notifications.history"),
     retry: false,
   });
@@ -282,6 +287,9 @@ export function NotificationManagementPage() {
               {selectedTemplate && detailQuery.data && (
                 <div className="space-y-4 rounded-xl border border-slate-200 p-4 dark:border-slate-700">
                   <h3 className="font-semibold">{detailQuery.data.displayName} versions</h3>
+                  {!selectedTemplateSupported && (
+                    <Notice kind="error">Email verification templates are supported only for EMAIL / en. Mutations are disabled.</Notice>
+                  )}
                   {versionOrder.length === 0 && <p className="text-sm text-slate-500">No versions are available.</p>}
                   <div className="flex flex-wrap gap-2">
                     {versionOrder.map((version) => (
@@ -296,7 +304,7 @@ export function NotificationManagementPage() {
                   </div>
                   {selectedVersion && (
                     <div className="space-y-3">
-                      {selectedVersion.status === "DRAFT" && can("platform.notifications.draft.edit") ? (
+                      {selectedVersion.status === "DRAFT" && can("platform.notifications.draft.edit") && selectedVersionSupported ? (
                         <form className="space-y-3" onSubmit={(event) => {
                           event.preventDefault();
                           mutation.mutate({ action: "update", version: selectedVersion, subject, body });
@@ -318,7 +326,7 @@ export function NotificationManagementPage() {
                         </div>
                       )}
                       <div className="flex flex-wrap gap-2">
-                        {can("platform.notifications.draft.preview") && (
+                        {can("platform.notifications.draft.preview") && selectedVersionSupported && (
                           <Button variant="secondary" disabled={mutation.isPending} onClick={async () => {
                             try {
                               setPreview(await previewNotificationDraft(selectedVersion.versionId));
@@ -328,12 +336,12 @@ export function NotificationManagementPage() {
                             }
                           }}>Preview with synthetic values</Button>
                         )}
-                        {selectedVersion.status === "DRAFT" && can("platform.notifications.submit") && (
+                        {selectedVersion.status === "DRAFT" && can("platform.notifications.submit") && selectedVersionSupported && (
                           <Button disabled={mutation.isPending} onClick={() => mutation.mutate({
                             action: "transition", version: selectedVersion, transition: "submit", decision: "SUBMIT",
                           })}>Submit for approval</Button>
                         )}
-                        {selectedVersion.status === "PENDING_APPROVAL" && can("platform.notifications.approve") && (
+                        {selectedVersion.status === "PENDING_APPROVAL" && can("platform.notifications.approve") && selectedVersionSupported && (
                           <>
                             <Button disabled={mutation.isPending} onClick={() => mutation.mutate({
                               action: "transition", version: selectedVersion, transition: "approval", decision: "APPROVE",
@@ -343,12 +351,12 @@ export function NotificationManagementPage() {
                             })}>Reject to draft</Button>
                           </>
                         )}
-                        {selectedVersion.status === "APPROVED" && can("platform.notifications.activate") && (
+                        {selectedVersion.status === "APPROVED" && can("platform.notifications.activate") && selectedVersionSupported && (
                           <Button disabled={mutation.isPending} onClick={() => mutation.mutate({
                             action: "transition", version: selectedVersion, transition: "activate", decision: "ACTIVATE",
                           })}>Activate</Button>
                         )}
-                        {selectedVersion.status === "ACTIVE" && can("platform.notifications.archive") && (
+                        {selectedVersion.status === "ACTIVE" && can("platform.notifications.archive") && selectedVersionSupported && (
                           <Button variant="secondary" disabled={mutation.isPending} onClick={() => mutation.mutate({
                             action: "transition", version: selectedVersion, transition: "archive", decision: "ARCHIVE",
                           })}>Archive</Button>
@@ -356,7 +364,7 @@ export function NotificationManagementPage() {
                       </div>
                     </div>
                   )}
-                  {can("platform.notifications.draft.create") && (
+                  {can("platform.notifications.draft.create") && selectedTemplateSupported && (
                     <form className="space-y-3 border-t border-slate-200 pt-4 dark:border-slate-700" onSubmit={(event) => {
                       event.preventDefault();
                       if (selectedTemplate) mutation.mutate({ action: "create", template: selectedTemplate, subject, body });
@@ -406,13 +414,16 @@ export function NotificationManagementPage() {
             <>
               {historyQuery.isPending && <div role="status" aria-label="Loading delivery history"><Skeleton className="h-20" /></div>}
               {historyQuery.isError && renderLoadError("Delivery history", () => void historyQuery.refetch())}
-              {historyQuery.data?.items.length === 0 && <Notice kind="info">No delivery attempts are recorded.</Notice>}
+              {historyQuery.data?.totalCount === 0 && <Notice kind="info">No delivery attempts are recorded.</Notice>}
+              {historyQuery.data && historyQuery.data.totalCount > 0 && historyQuery.data.items.length === 0 && (
+                <Notice kind="info">No delivery attempts are on this page.</Notice>
+              )}
               {historyQuery.data && historyQuery.data.items.length > 0 && (
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-sm">
                     <thead><tr><th className="p-2">Template</th><th className="p-2">Channel</th><th className="p-2">Outcome</th><th className="p-2">Time (UTC)</th><th className="p-2">Correlation</th></tr></thead>
                     <tbody>{historyQuery.data.items.map((item) => (
-                      <tr key={item.deliveryId} className="border-t border-slate-200 dark:border-slate-700">
+                      <tr key={item.attemptId} className="border-t border-slate-200 dark:border-slate-700">
                         <td className="p-2">{item.templateCode} · {item.templateVersion}</td>
                         <td className="p-2">{item.channelCode}</td>
                         <td className="p-2">{item.outcome}{item.safeErrorCategory ? ` · ${item.safeErrorCategory}` : ""}</td>
@@ -423,6 +434,20 @@ export function NotificationManagementPage() {
                   </table>
                   <p className="mt-3 text-xs text-slate-500">Provider acceptance is not confirmation of inbox delivery. Recipient addresses and message content are not shown.</p>
                 </div>
+              )}
+              {historyQuery.data && historyQuery.data.totalCount > 0 && (
+                <nav aria-label="Delivery history pagination" className="flex items-center justify-between gap-3">
+                  <p aria-live="polite" className="text-sm text-slate-500">
+                    Page {historyPage} · {historyQuery.data.totalCount} attempts
+                  </p>
+                  <div className="flex gap-2">
+                    <Button variant="secondary" disabled={historyPage === 1 || historyQuery.isFetching}
+                      onClick={() => setHistoryPage((page) => Math.max(1, page - 1))}>Previous</Button>
+                    <Button variant="secondary"
+                      disabled={historyPage * historyQuery.data.pageSize >= historyQuery.data.totalCount || historyQuery.isFetching}
+                      onClick={() => setHistoryPage((page) => page + 1)}>Next</Button>
+                  </div>
+                </nav>
               )}
             </>
           )}
@@ -440,6 +465,7 @@ export function NotificationManagementPage() {
                     { label: "TLS required", ready: readinessQuery.data.tlsRequired },
                     { label: "Key Vault credentials configured", ready: readinessQuery.data.credentialsConfigured },
                     { label: "Template rollout enabled", ready: readinessQuery.data.templateRolloutEnabled },
+                    { label: "Delivery audit enabled", ready: readinessQuery.data.deliveryAuditEnabled },
                   ].map(({ label, ready }) => (
                     <div key={label} className="rounded-lg border border-slate-200 p-3 dark:border-slate-700">
                       <dt className="text-xs text-slate-500">{label}</dt>

@@ -33,6 +33,63 @@ public sealed class NotificationManagementServiceTests
         Assert.False(repository.UpdateDraftCalled);
     }
 
+    [Fact]
+    public async Task SettingsReadinessValidatesTheExactSettingsPermission()
+    {
+        var permissions = new FakePlatformPermissionRepository([]);
+        var service = CreateService(new FakeNotificationRepository(), permissions);
+
+        await service.SettingsReadiness(4, Guid.NewGuid(), CancellationToken.None);
+
+        Assert.Equal([NotificationPermissions.SettingsRead], permissions.ValidatedPermissions);
+    }
+
+    [Fact]
+    public async Task SettingsReadinessDoesNotReturnMetadataWhenExactPermissionIsDenied()
+    {
+        var permissions = new FakePlatformPermissionRepository([])
+        {
+            ValidationFailure = new UnauthorizedAccessException()
+        };
+        var service = CreateService(new FakeNotificationRepository(), permissions);
+
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+            service.SettingsReadiness(4, Guid.NewGuid(), CancellationToken.None));
+    }
+
+    [Theory]
+    [InlineData("EMAIL_VERIFICATION", "EMAIL", "fr")]
+    [InlineData("EMAIL_VERIFICATION", "SMS", "en")]
+    public async Task DraftCreationRejectsUnsupportedVerificationChannelOrLocale(
+        string templateCode, string channelCode, string localeCode)
+    {
+        var repository = new FakeNotificationRepository();
+        var service = CreateService(repository, new FakePlatformPermissionRepository([]));
+
+        await Assert.ThrowsAsync<ArgumentException>(() => service.CreateDraft(
+            templateCode, "Verification", channelCode, localeCode, "Verify",
+            "{{verification_link}} {{expiry_hours}}", 4, Guid.NewGuid(),
+            new RequestMetadata("request", Guid.NewGuid()), CancellationToken.None));
+
+        Assert.False(repository.CreateDraftCalled);
+    }
+
+    [Fact]
+    public async Task PreviewRejectsVerificationTemplatesOutsideTheSeededLocale()
+    {
+        var repository = new FakeNotificationRepository
+        {
+            PreviewVersion = new NotificationTemplateVersion(
+                Guid.NewGuid(), "EMAIL_VERIFICATION", "Verification", 1, "DRAFT",
+                "Verify", "{{verification_link}} {{expiry_hours}}", "EMAIL", "fr",
+                DateTime.UtcNow, new byte[8])
+        };
+        var service = CreateService(repository, new FakePlatformPermissionRepository([]));
+
+        await Assert.ThrowsAsync<ArgumentException>(() => service.Preview(
+            repository.PreviewVersion.VersionId, 4, Guid.NewGuid(), CancellationToken.None));
+    }
+
     private static NotificationManagementService CreateService(
         INotificationManagementRepository repository, IPlatformPermissionRepository permissionRepository) =>
         new(repository, permissionRepository, new RuntimeSettings(
@@ -43,8 +100,15 @@ public sealed class NotificationManagementServiceTests
     private sealed class FakePlatformPermissionRepository(IReadOnlyList<string> permissions)
         : IPlatformPermissionRepository
     {
+        public List<string> ValidatedPermissions { get; } = [];
+        public Exception? ValidationFailure { get; init; }
+
         public Task ValidatePlatformPermission(long userId, Guid sessionId, string permissionCode,
-            CancellationToken cancellationToken) => Task.CompletedTask;
+            CancellationToken cancellationToken)
+        {
+            ValidatedPermissions.Add(permissionCode);
+            return ValidationFailure is null ? Task.CompletedTask : Task.FromException(ValidationFailure);
+        }
 
         public Task<IReadOnlyList<string>> GetPlatformPermissions(
             long userId, Guid sessionId, CancellationToken cancellationToken) =>
@@ -54,21 +118,29 @@ public sealed class NotificationManagementServiceTests
     private sealed class FakeNotificationRepository : INotificationManagementRepository
     {
         public bool UpdateDraftCalled { get; private set; }
+        public bool CreateDraftCalled { get; private set; }
+        public NotificationTemplateVersion? PreviewVersion { get; init; }
 
         public Task<IReadOnlyList<NotificationTemplateSummary>> ListTemplates(
             long actorUserId, Guid sessionId, CancellationToken cancellationToken) => throw new NotImplementedException();
         public Task<IReadOnlyList<NotificationTemplateVersion>> ListTemplateVersions(
             Guid templateId, long actorUserId, Guid sessionId, CancellationToken cancellationToken) => throw new NotImplementedException();
         public Task<IReadOnlyList<NotificationTemplateVersion>> ListTemplateVersionsForPreview(
-            Guid versionId, long actorUserId, Guid sessionId, CancellationToken cancellationToken) => throw new NotImplementedException();
+            Guid versionId, long actorUserId, Guid sessionId, CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyList<NotificationTemplateVersion>>(
+                PreviewVersion is null ? [] : [PreviewVersion]);
         public Task<IReadOnlyList<NotificationChannelStatus>> ListChannels(
             long actorUserId, Guid sessionId, CancellationToken cancellationToken) => throw new NotImplementedException();
-        public Task<IReadOnlyList<NotificationDeliveryHistoryRow>> ListDeliveryHistory(
+        public Task<NotificationDeliveryHistoryPage> ListDeliveryHistory(
             int pageNumber, int pageSize, long actorUserId, Guid sessionId, CancellationToken cancellationToken) => throw new NotImplementedException();
         public Task<NotificationTemplateDraftResult> CreateDraft(
             string templateCode, string displayName, string channelCode, string localeCode, string subject,
             string body, long actorUserId, Guid sessionId, RequestMetadata metadata,
-            CancellationToken cancellationToken) => throw new NotImplementedException();
+            CancellationToken cancellationToken)
+        {
+            CreateDraftCalled = true;
+            throw new NotImplementedException();
+        }
         public Task<NotificationTemplateDraftResult> UpdateDraft(
             Guid versionId, string subject, string body, byte[] expectedVersion, long actorUserId, Guid sessionId,
             RequestMetadata metadata, CancellationToken cancellationToken)

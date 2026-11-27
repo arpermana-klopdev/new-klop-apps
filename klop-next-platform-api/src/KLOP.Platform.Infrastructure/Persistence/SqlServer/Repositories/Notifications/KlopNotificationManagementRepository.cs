@@ -27,12 +27,29 @@ public sealed partial class KlopRepository
         Many<NotificationChannelStatus>("ntf.usp_ListChannels",
             NotificationActorParameters(actorUserId, sessionId), cancellationToken);
 
-    public Task<IReadOnlyList<NotificationDeliveryHistoryRow>> ListDeliveryHistory(
+    public async Task<NotificationDeliveryHistoryPage> ListDeliveryHistory(
         int pageNumber, int pageSize, long actorUserId, Guid sessionId, CancellationToken cancellationToken) =>
-        Many<NotificationDeliveryHistoryRow>("ntf.usp_ListDeliveryHistory",
-            NotificationParameters(actorUserId, sessionId,
-                ("PageNumber", pageNumber, DbType.Int32),
-                ("PageSize", pageSize, DbType.Int32)), cancellationToken);
+        await ReadDeliveryHistoryPage(pageNumber, pageSize, actorUserId, sessionId, cancellationToken);
+
+    private async Task<NotificationDeliveryHistoryPage> ReadDeliveryHistoryPage(
+        int pageNumber, int pageSize, long actorUserId, Guid sessionId, CancellationToken cancellationToken)
+    {
+        using var connection = factory.Open();
+        using var results = await connection.QueryMultipleAsync(
+            new CommandDefinition("ntf.usp_ListDeliveryHistory",
+                NotificationParameters(actorUserId, sessionId,
+                    ("PageNumber", pageNumber, DbType.Int32),
+                    ("PageSize", pageSize, DbType.Int32)),
+                commandType: CommandType.StoredProcedure,
+                commandTimeout: settings.CommandTimeoutSeconds,
+                cancellationToken: cancellationToken));
+        var totalCount = await results.ReadSingleAsync<long>();
+        var rows = (await results.ReadAsync<NotificationDeliveryHistoryRow>()).ToArray();
+        var items = rows.Select(row => new NotificationDeliveryHistoryItem(
+            row.AttemptId, row.DeliveryId, row.TemplateCode, row.TemplateVersion, row.ChannelCode,
+            row.Outcome, row.SafeErrorCategory, row.OccurredAtUtc, row.CorrelationId)).ToArray();
+        return new NotificationDeliveryHistoryPage(items, pageNumber, pageSize, totalCount);
+    }
 
     public async Task<NotificationTemplateDraftResult> CreateDraft(
         string templateCode, string displayName, string channelCode, string localeCode,
