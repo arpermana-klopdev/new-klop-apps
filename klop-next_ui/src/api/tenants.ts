@@ -8,6 +8,7 @@ import type {
   TenantCreateResult,
   TenantPermissionsResponse,
   TenantSummary,
+  TenantTypeReference,
 } from "./contracts";
 
 export async function getTenantPermissions(
@@ -28,6 +29,11 @@ export async function getOrganizationTypes(): Promise<OrganizationType[]> {
   const response = await api.get<ApiEnvelope<OrganizationType[]>>(
     "master/organization-types",
   );
+  return responseData(response);
+}
+
+export async function getTenantTypes(): Promise<TenantTypeReference[]> {
+  const response = await api.get<ApiEnvelope<TenantTypeReference[]>>("master/tenant-types");
   return responseData(response);
 }
 
