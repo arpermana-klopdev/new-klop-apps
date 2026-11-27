@@ -1,0 +1,38 @@
+import type { components } from "./schema";
+
+export type Schemas = components["schemas"];
+export type ApiMeta = Schemas["ApiMeta"];
+export type ApiErrorBody = Schemas["ApiError"];
+export type RegistrationRequest = Schemas["RegistrationRequest"];
+export type TermsRequiredRegistrationRequest = Schemas["TermsRequiredRegistrationRequest"];
+export type RegistrationPolicyResponse = Schemas["RegistrationPolicyResponse"];
+export type LegalTermsMetadata = Schemas["LegalTermsMetadata"];
+export type ResendVerificationRequest = Schemas["ResendVerificationRequest"];
+export type VerifyEmailRequest = Schemas["VerifyEmailRequest"];
+export type LoginRequest = Schemas["LoginRequest"];
+export type TenantCreateRequest = Schemas["TenantCreateRequest"];
+export type InviteRequest = Schemas["InviteRequest"];
+export type RoleRequest = Schemas["RoleRequest"];
+export type Profile = Schemas["Profile"];
+export type TenantSummary = Schemas["TenantSummary"];
+export type TenantPermissionsResponse = Schemas["TenantPermissionsResponse"];
+export type RolePermissionMatrixAccessResponse = Schemas["RolePermissionMatrixAccessResponse"];
+export type RolePermissionMatrixResponse = Schemas["RolePermissionMatrixResponse"];
+export type RolePermissionMatrixColumn = Schemas["RolePermissionMatrixColumn"];
+export type RolePermissionMatrixBatchRequest = Schemas["RolePermissionMatrixBatchRequest"];
+export type RolePermissionMatrixChange = Schemas["RolePermissionMatrixChange"];
+export type RolePermissionMatrixCell = Schemas["RolePermissionMatrixCell"];
+export type RolePermissionMatrixRow = Schemas["RolePermissionMatrixRow"];
+export type RolePermissionMatrixValidationResponse = Schemas["RolePermissionMatrixValidationResponse"];
+export type RolePermissionMatrixSaveResponse = Schemas["RolePermissionMatrixSaveResponse"];
+export type RolePermissionMatrixHistoryEntry = Schemas["RolePermissionMatrixHistoryEntry"];
+export type OrganizationType = Schemas["OrganizationType"];
+export type AccessResult = Schemas["AccessResult"];
+export type TenantCreateResult = Schemas["TenantCreateResult"];
+export type MessageResponse = Schemas["MessageResponse"];
+export type ApiEnvelope<T> = {
+  success: boolean;
+  data: T | null;
+  error: ApiErrorBody | null;
+  meta: ApiMeta;
+};

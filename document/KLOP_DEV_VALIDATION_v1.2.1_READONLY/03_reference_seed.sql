@@ -1,0 +1,27 @@
+-- KLOP DEVELOPMENT - READ-ONLY VALIDATION
+-- Based on original v1.1, v1.2 and v1.2.1 artifacts.
+-- READ-ONLY: no INSERT / UPDATE / DELETE / CREATE / ALTER / DROP on user objects, no stored procedure invocation.
+-- Run via SSMS or sqlcmd, against the intended DEVELOPMENT database, with metadata/read privileges.
+-- IMPORTANT: output is evidence only when executed and saved from the actual SQL Server.
+SET NOCOUNT ON;
+GO
+-- Read-only check for critical master codes. Only code existence, not secrets or business data.
+SELECT N'mst.TenantTypes' AS MasterTable, N'PERSONAL' AS ExpectedCode,
+ CASE WHEN EXISTS (SELECT 1 FROM mst.TenantTypes WHERE Code='PERSONAL' AND IsActive=1) THEN N'PASS' ELSE N'FAIL_MISSING' END AS CheckResult
+UNION ALL SELECT N'mst.TenantTypes',N'ORGANIZATION',CASE WHEN EXISTS(SELECT 1 FROM mst.TenantTypes WHERE Code='ORGANIZATION' AND IsActive=1) THEN N'PASS' ELSE N'FAIL_MISSING' END
+UNION ALL SELECT N'mst.TenantStatuses',N'ACTIVE',CASE WHEN EXISTS(SELECT 1 FROM mst.TenantStatuses WHERE Code='ACTIVE' AND IsActive=1) THEN N'PASS' ELSE N'FAIL_MISSING' END
+UNION ALL SELECT N'mst.TenantStatuses',N'PENDING',CASE WHEN EXISTS(SELECT 1 FROM mst.TenantStatuses WHERE Code='PENDING' AND IsActive=1) THEN N'PASS' ELSE N'FAIL_MISSING' END
+UNION ALL SELECT N'mst.MembershipStatuses',N'INVITED',CASE WHEN EXISTS(SELECT 1 FROM mst.MembershipStatuses WHERE Code='INVITED' AND IsActive=1) THEN N'PASS' ELSE N'FAIL_MISSING' END
+UNION ALL SELECT N'mst.MembershipStatuses',N'ACTIVE',CASE WHEN EXISTS(SELECT 1 FROM mst.MembershipStatuses WHERE Code='ACTIVE' AND IsActive=1) THEN N'PASS' ELSE N'FAIL_MISSING' END
+UNION ALL SELECT N'mst.RoleScopes',N'PLATFORM',CASE WHEN EXISTS(SELECT 1 FROM mst.RoleScopes WHERE Code='PLATFORM' AND IsActive=1) THEN N'PASS' ELSE N'FAIL_MISSING' END
+UNION ALL SELECT N'mst.RoleScopes',N'TENANT',CASE WHEN EXISTS(SELECT 1 FROM mst.RoleScopes WHERE Code='TENANT' AND IsActive=1) THEN N'PASS' ELSE N'FAIL_MISSING' END
+UNION ALL SELECT N'mst.Roles',N'OWNER/TENANT',CASE WHEN EXISTS(SELECT 1 FROM mst.Roles r JOIN mst.RoleScopes s ON r.RoleScopeId=s.RoleScopeId WHERE r.Code='OWNER' AND s.Code='TENANT' AND r.IsActive=1) THEN N'PASS' ELSE N'FAIL_MISSING' END
+UNION ALL SELECT N'mst.Roles',N'MEMBER/TENANT',CASE WHEN EXISTS(SELECT 1 FROM mst.Roles r JOIN mst.RoleScopes s ON r.RoleScopeId=s.RoleScopeId WHERE r.Code='MEMBER' AND s.Code='TENANT' AND r.IsActive=1) THEN N'PASS' ELSE N'FAIL_MISSING' END
+UNION ALL SELECT N'mst.IdentityProviders',N'AZURE_ENTRA',CASE WHEN EXISTS(SELECT 1 FROM mst.IdentityProviders WHERE Code='AZURE_ENTRA' AND IsActive=1) THEN N'PASS' ELSE N'FAIL_MISSING' END
+UNION ALL SELECT N'mst.VerificationPurposes',N'EMAIL_CONFIRMATION',CASE WHEN EXISTS(SELECT 1 FROM mst.VerificationPurposes WHERE Code='EMAIL_CONFIRMATION' AND IsActive=1) THEN N'PASS' ELSE N'FAIL_MISSING' END
+UNION ALL SELECT N'mst.VerificationPurposes',N'PASSWORD_RESET',CASE WHEN EXISTS(SELECT 1 FROM mst.VerificationPurposes WHERE Code='PASSWORD_RESET' AND IsActive=1) THEN N'PASS' ELSE N'FAIL_MISSING' END
+UNION ALL SELECT N'mst.BusinessEventTypes',N'TENANT_CREATED',CASE WHEN EXISTS(SELECT 1 FROM mst.BusinessEventTypes WHERE Code='TENANT_CREATED' AND IsActive=1) THEN N'PASS' ELSE N'FAIL_MISSING' END
+UNION ALL SELECT N'mst.BusinessEventTypes',N'MEMBERSHIP_CHANGED',CASE WHEN EXISTS(SELECT 1 FROM mst.BusinessEventTypes WHERE Code='MEMBERSHIP_CHANGED' AND IsActive=1) THEN N'PASS' ELSE N'FAIL_MISSING' END
+UNION ALL SELECT N'mst.BusinessEventTypes',N'ORGANIZATION_VERIFICATION_CHANGED',CASE WHEN EXISTS(SELECT 1 FROM mst.BusinessEventTypes WHERE Code='ORGANIZATION_VERIFICATION_CHANGED' AND IsActive=1) THEN N'PASS' ELSE N'FAIL_MISSING' END;
+GO
+-- Deliberately do not query cfg.SystemConfigurations.ConfigurationValue or any hashed credential/token columns.

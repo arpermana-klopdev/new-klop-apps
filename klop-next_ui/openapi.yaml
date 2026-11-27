@@ -1,0 +1,3081 @@
+openapi: 3.1.1
+info:
+  title: KLOP Platform API
+  version: 1.0.0
+servers:
+  - url: http://localhost:5041/
+paths:
+  /health/live:
+    get:
+      tags:
+        - Health
+      summary: Check process liveness
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+  /.well-known/jwks.json:
+    get:
+      tags:
+        - Authentication
+      summary: Get public signing keys
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JwksResponse'
+  /api/v1/master/organization-types:
+    get:
+      tags:
+        - Master Data
+      summary: List organization types
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiEnvelopeOfIReadOnlyListOfOrganizationType'
+  /api/v1/public/legal/terms/current:
+    get:
+      tags:
+        - Public Legal Documents
+      summary: Get current published Terms and Conditions for registration
+      parameters:
+        - name: registrationType
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - PERSONAL
+              - ORGANIZATION
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiEnvelopeOfLegalTermsMetadata'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '404':
+          description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '503':
+          description: Service Unavailable
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+  /api/v1/public/legal/terms/{documentVersionId}/file:
+    get:
+      tags:
+        - Public Legal Documents
+      summary: Get a published Terms and Conditions PDF
+      parameters:
+        - name: documentVersionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Published PDF document
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '503':
+          description: Service Unavailable
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+  /api/v1/platform/legal-documents/permissions:
+    get:
+      tags:
+        - Platform Legal Documents
+      summary: Get the authenticated user's effective legal document permissions
+      responses:
+        '200':
+          description: Effective PLATFORM-scoped capabilities
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiEnvelopeOfPlatformLegalDocumentPermissions'
+        '401':
+          description: Unauthorized
+        '503':
+          description: Permission service unavailable
+      security:
+        - Bearer: []
+  /api/v1/platform/legal-documents:
+    get:
+      tags:
+        - Platform Legal Documents
+      summary: List legal documents and versions
+      responses:
+        '200':
+          description: Legal documents
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiEnvelopeOfLegalDocumentList'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Missing PLATFORM legal-document read capability
+      security:
+        - Bearer: []
+    post:
+      tags:
+        - Platform Legal Documents
+      summary: Upload a PDF as a new legal document draft version
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LegalDocumentDraftUpload'
+      responses:
+        '201':
+          description: Draft created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiEnvelopeOfLegalDocument'
+        '400':
+          description: Invalid metadata or PDF
+        '401':
+          description: Unauthorized
+        '403':
+          description: Missing PLATFORM draft-create capability
+        '503':
+          description: Private document storage unavailable
+      security:
+        - Bearer: []
+  /api/v1/platform/legal-documents/{legalDocumentId}:
+    get:
+      tags:
+        - Platform Legal Documents
+      summary: Get a legal document and its version history
+      parameters:
+        - name: legalDocumentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Legal document details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiEnvelopeOfLegalDocument'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Missing PLATFORM legal-document read capability
+        '404':
+          description: Legal document not found
+      security:
+        - Bearer: []
+  /api/v1/platform/legal-documents/versions/{documentVersionId}:
+    put:
+      tags:
+        - Platform Legal Documents
+      summary: Update DRAFT metadata and registration scopes
+      parameters:
+        - $ref: '#/components/parameters/DocumentVersionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LegalDocumentDraftUpdate'
+      responses:
+        '200':
+          description: Updated draft
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiEnvelopeOfLegalDocument'
+        '400':
+          description: Invalid draft metadata or row version
+        '401':
+          description: Unauthorized
+        '403':
+          description: Missing PLATFORM draft-edit capability
+        '404':
+          description: Legal document version not found
+        '409':
+          description: Version changed or is not DRAFT
+      security:
+        - Bearer: []
+  /api/v1/platform/legal-documents/versions/{documentVersionId}/preview:
+    get:
+      tags:
+        - Platform Legal Documents
+      summary: Preview a private DRAFT, PENDING_APPROVAL, or APPROVED PDF
+      parameters:
+        - $ref: '#/components/parameters/DocumentVersionId'
+      responses:
+        '200':
+          description: Private PDF preview
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '401':
+          description: Unauthorized
+        '403':
+          description: Missing PLATFORM draft-preview capability
+        '404':
+          description: Preview unavailable
+        '503':
+          description: Storage integrity validation failed
+      security:
+        - Bearer: []
+  /api/v1/platform/legal-documents/versions/{documentVersionId}/submit-for-approval:
+    post:
+      tags:
+        - Platform Legal Documents
+      summary: Submit a validated DRAFT for approval
+      parameters:
+        - $ref: '#/components/parameters/DocumentVersionId'
+      responses:
+        '200':
+          description: Submitted version
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiEnvelopeOfLegalDocument'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Missing PLATFORM submit capability
+        '404':
+          description: Legal document version not found
+        '409':
+          description: Version is not DRAFT or file integrity check failed
+      security:
+        - Bearer: []
+  /api/v1/platform/legal-documents/versions/{documentVersionId}/approve:
+    post:
+      tags:
+        - Platform Legal Documents
+      summary: Approve or reject a submitted version
+      parameters:
+        - $ref: '#/components/parameters/DocumentVersionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LegalDocumentApprovalRequest'
+      responses:
+        '200':
+          description: Approval decision recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiEnvelopeOfLegalDocument'
+        '400':
+          description: Invalid decision
+        '401':
+          description: Unauthorized
+        '403':
+          description: Missing PLATFORM approval capability
+        '404':
+          description: Legal document version not found
+        '409':
+          description: Version is not pending approval
+      security:
+        - Bearer: []
+  /api/v1/platform/legal-documents/versions/{documentVersionId}/publish:
+    post:
+      tags:
+        - Platform Legal Documents
+      summary: Publish an approved version
+      parameters:
+        - $ref: '#/components/parameters/DocumentVersionId'
+      responses:
+        '200':
+          description: Published version
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiEnvelopeOfLegalDocument'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Missing PLATFORM publish capability
+        '404':
+          description: Legal document version not found
+        '409':
+          description: Version is not approved or file integrity check failed
+      security:
+        - Bearer: []
+  /api/v1/platform/legal-documents/versions/{documentVersionId}/archive:
+    post:
+      tags:
+        - Platform Legal Documents
+      summary: Archive a superseded published version
+      parameters:
+        - $ref: '#/components/parameters/DocumentVersionId'
+      responses:
+        '200':
+          description: Archived version
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiEnvelopeOfLegalDocument'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Missing PLATFORM archive capability
+        '404':
+          description: Legal document version not found
+        '409':
+          description: Version is current or is not published
+      security:
+        - Bearer: []
+  /api/v1/platform/registrations/summary:
+    get:
+      tags:
+        - Platform Registrations
+      summary: Get registration summary counts by registration type
+      parameters:
+        - name: registrationType
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - PERSONAL
+              - ORGANIZATION
+      responses:
+        '200':
+          description: Registration counts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiEnvelopeOfPlatformRegistrationSummary'
+        '400':
+          description: Invalid registration type
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '503':
+          description: Registration service unavailable
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      security:
+        - Bearer: []
+  /api/v1/platform/registrations/permissions:
+    get:
+      tags:
+        - Platform Registrations
+      summary: Get the authenticated user's effective registration permissions
+      description: Returns only the current session's database-resolved registration capabilities. This endpoint does not grant registration access.
+      responses:
+        '200':
+          description: Effective registration permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiEnvelopeOfPlatformRegistrationPermissions'
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '503':
+          description: Permission service unavailable
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      security:
+        - Bearer: []
+  /api/v1/platform/role-permissions/access:
+    get:
+      tags:
+        - Platform Role & Permission Matrix
+      summary: Get the caller's effective matrix access capabilities
+      responses:
+        '200':
+          description: Effective matrix read and update capabilities
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiEnvelopeOfRolePermissionMatrixAccessResponse'
+        '401':
+          description: Unauthorized
+        '503':
+          description: Permission service unavailable
+      security:
+        - Bearer: []
+  /api/v1/platform/role-permissions/matrix:
+    get:
+      tags:
+        - Platform Role & Permission Matrix
+      summary: Load the database-backed unified role and permission matrix
+      description: Requires platform.role_permissions.read. Configured grants are distinct from resource-level authorization.
+      responses:
+        '200':
+          description: Unified permissions, role columns, tenant contexts, and policy cells
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiEnvelopeOfRolePermissionMatrixResponse'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Missing platform matrix read permission
+        '503':
+          description: Permission service unavailable
+      security:
+        - Bearer: []
+  /api/v1/platform/role-permissions/history:
+    get:
+      tags:
+        - Platform Role & Permission Matrix
+      summary: View permission grant change history
+      parameters:
+        - name: pageNumber
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: pageSize
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: Audited successful and rejected batches
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiEnvelopeOfRolePermissionMatrixHistory'
+        '400':
+          description: Invalid page request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Missing platform matrix read permission
+      security:
+        - Bearer: []
+  /api/v1/platform/role-permissions/changes/validate:
+    post:
+      tags:
+        - Platform Role & Permission Matrix
+      summary: Validate a proposed role permission batch without applying it
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RolePermissionMatrixBatchRequest'
+      responses:
+        '200':
+          description: Validation result for the complete batch
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiEnvelopeOfRolePermissionMatrixValidationResponse'
+        '400':
+          description: Invalid request body or change reason
+        '401':
+          description: Unauthorized
+        '403':
+          description: Missing platform matrix update permission
+        '409':
+          description: One or more proposed changes violate current policy
+      security:
+        - Bearer: []
+  /api/v1/platform/role-permissions/changes:
+    post:
+      tags:
+        - Platform Role & Permission Matrix
+      summary: Atomically save a validated role permission batch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RolePermissionMatrixBatchRequest'
+      responses:
+        '200':
+          description: Batch saved and audited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiEnvelopeOfRolePermissionMatrixSaveResponse'
+        '400':
+          description: Invalid request body or change reason
+        '401':
+          description: Unauthorized
+        '403':
+          description: Missing platform matrix update permission
+        '409':
+          description: Policy validation failed or the matrix version is stale
+      security:
+        - Bearer: []
+  /api/v1/platform/registrations:
+    get:
+      tags:
+        - Platform Registrations
+      summary: Search and page registration applications
+      parameters:
+        - name: registrationType
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - PERSONAL
+              - ORGANIZATION
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 200
+        - name: emailVerificationStatus
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - PENDING
+              - VERIFIED
+        - name: applicationStatus
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 30
+        - name: pageNumber
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 1000000
+            default: 1
+        - name: pageSize
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: Registration application page
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiEnvelopeOfPlatformRegistrationPage'
+        '400':
+          description: Invalid filter or page parameters
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '503':
+          description: Registration service unavailable
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      security:
+        - Bearer: []
+  /api/v1/platform/registrations/{registrationApplicationId}:
+    get:
+      tags:
+        - Platform Registrations
+      summary: Get registration application details
+      parameters:
+        - name: registrationApplicationId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        '200':
+          description: Registration application details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiEnvelopeOfPlatformRegistrationDetail'
+        '400':
+          description: Invalid registration application identifier
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '404':
+          description: Registration application not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '503':
+          description: Registration service unavailable
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      security:
+        - Bearer: []
+  /api/v1/platform/registrations/{registrationApplicationId}/timeline:
+    get:
+      tags:
+        - Platform Registrations
+      summary: Get persisted registration and verification timeline events
+      parameters:
+        - name: registrationApplicationId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        '200':
+          description: Persisted timeline events
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiEnvelopeOfPlatformRegistrationTimeline'
+        '400':
+          description: Invalid registration application identifier
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '404':
+          description: Registration application not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '503':
+          description: Registration service unavailable
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      security:
+        - Bearer: []
+  /api/v1/auth/registration-policy:
+    get:
+      tags:
+        - Authentication
+      summary: Get effective public registration requirements
+      responses:
+        '200':
+          description: Effective registration requirements
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiEnvelopeOfRegistrationPolicyResponse'
+        '429':
+          description: Too Many Requests
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+  /api/v1/auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register a local user
+      description: If accepted, email verification instructions are sent without disclosing account existence.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegistrationRequest'
+        required: true
+      responses:
+        '202':
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiEnvelopeOfMessageResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Registration is disabled
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '409':
+          description: Terms version is outdated
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '429':
+          description: Too Many Requests
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '503':
+          description: Registration service is unavailable
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+  /api/v1/auth/resend-verification:
+    post:
+      tags:
+        - Authentication
+      summary: Resend email verification instructions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResendVerificationRequest'
+        required: true
+      responses:
+        '202':
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiEnvelopeOfMessageResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '429':
+          description: Too Many Requests
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+  /api/v1/auth/verify-email:
+    post:
+      tags:
+        - Authentication
+      summary: Verify an email address
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyEmailRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiEnvelopeOfVerifiedResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '429':
+          description: Too Many Requests
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+  /api/v1/auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Log in
+      description: Returns an access token and sets the refresh cookie for an eligible account.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiEnvelopeOfAccessResult'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '429':
+          description: Too Many Requests
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+  /api/v1/auth/refresh:
+    post:
+      tags:
+        - Authentication
+      summary: Refresh an access token
+      description: Requires the refresh cookie and the configured Origin header; does not require a bearer token.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiEnvelopeOfAccessResult'
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '429':
+          description: Too Many Requests
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+  /api/v1/auth/logout:
+    post:
+      tags:
+        - Authentication
+      summary: Log out the current session
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiEnvelopeOfLoggedOutResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      security:
+        - Bearer: []
+  /api/v1/auth/me:
+    get:
+      tags:
+        - Authentication
+      summary: Get the current user profile
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiEnvelopeOfProfile'
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '404':
+          description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      security:
+        - Bearer: []
+  /api/v1/tenants/mine:
+    get:
+      tags:
+        - Tenants
+      summary: List the current user's tenants
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiEnvelopeOfIReadOnlyListOfTenantSummary'
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      security:
+        - Bearer: []
+  /api/v1/tenants/{tenantId}/permissions:
+    get:
+      tags:
+        - Tenants
+      summary: Get the authenticated user's effective permissions for a tenant
+      parameters:
+        - name: tenantId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiEnvelopeOfTenantPermissionsResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '503':
+          description: Service Unavailable
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      security:
+        - Bearer: []
+  /api/v1/tenants:
+    post:
+      tags:
+        - Tenants
+      summary: Create a tenant
+      description: Creates a tenant with the authenticated user as owner; registration settings are enforced.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TenantCreateRequest'
+        required: true
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiEnvelopeOfTenantCreateResult'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      security:
+        - Bearer: []
+  /api/v1/tenants/{tenantId}/invitations:
+    post:
+      tags:
+        - Tenants
+      summary: Invite an existing user
+      description: Requires the tenant.members.invite permission for the tenant.
+      parameters:
+        - name: tenantId
+          in: path
+          required: true
+          schema:
+            pattern: ^-?(?:0|[1-9]\d*)$
+            type: integer
+            format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InviteRequest'
+        required: true
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiEnvelopeOfMembershipIdResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      security:
+        - Bearer: []
+  /api/v1/tenants/memberships/{membershipId}/accept:
+    post:
+      tags:
+        - Tenants
+      summary: Accept a tenant invitation
+      parameters:
+        - name: membershipId
+          in: path
+          required: true
+          schema:
+            pattern: ^-?(?:0|[1-9]\d*)$
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiEnvelopeOfAcceptedResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      security:
+        - Bearer: []
+  /api/v1/tenants/{tenantId}/memberships/{membershipId}:
+    delete:
+      tags:
+        - Tenants
+      summary: Remove a tenant member
+      description: Requires the tenant.members.remove permission for the tenant.
+      parameters:
+        - name: tenantId
+          in: path
+          required: true
+          schema:
+            pattern: ^-?(?:0|[1-9]\d*)$
+            type: integer
+            format: int64
+        - name: membershipId
+          in: path
+          required: true
+          schema:
+            pattern: ^-?(?:0|[1-9]\d*)$
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiEnvelopeOfRemovedResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      security:
+        - Bearer: []
+  /api/v1/tenants/{tenantId}/memberships/{membershipId}/roles:
+    post:
+      tags:
+        - Tenants
+      summary: Assign a tenant role
+      description: Requires the tenant.roles.assign permission for the tenant.
+      parameters:
+        - name: tenantId
+          in: path
+          required: true
+          schema:
+            pattern: ^-?(?:0|[1-9]\d*)$
+            type: integer
+            format: int64
+        - name: membershipId
+          in: path
+          required: true
+          schema:
+            pattern: ^-?(?:0|[1-9]\d*)$
+            type: integer
+            format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiEnvelopeOfAssignedResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      security:
+        - Bearer: []
+  /api/v1/tenants/{tenantId}/memberships/{membershipId}/roles/{roleCode}:
+    delete:
+      tags:
+        - Tenants
+      summary: Revoke a tenant role
+      description: Requires the tenant.roles.assign permission for the tenant.
+      parameters:
+        - name: tenantId
+          in: path
+          required: true
+          schema:
+            pattern: ^-?(?:0|[1-9]\d*)$
+            type: integer
+            format: int64
+        - name: membershipId
+          in: path
+          required: true
+          schema:
+            pattern: ^-?(?:0|[1-9]\d*)$
+            type: integer
+            format: int64
+        - name: roleCode
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiEnvelopeOfRevokedResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      security:
+        - Bearer: []
+  /health/ready:
+    get:
+      tags:
+        - Health
+      summary: Check SQL readiness
+      description: Reports healthy, degraded or unhealthy without exposing dependency details.
+      responses:
+        '200':
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                required:
+                  - status
+                type: object
+                properties:
+                  status:
+                    type: string
+        '503':
+          description: Degraded or unhealthy
+          content:
+            application/json:
+              schema:
+                required:
+                  - status
+                type: object
+                properties:
+                  status:
+                    type: string
+components:
+  parameters:
+    DocumentVersionId:
+      name: documentVersionId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  schemas:
+    AcceptedResponse:
+      required:
+        - accepted
+      type: object
+      properties:
+        accepted:
+          type: boolean
+    AccessResult:
+      required:
+        - accessToken
+        - expiresInSeconds
+      type: object
+      properties:
+        accessToken:
+          type: string
+        expiresInSeconds:
+          pattern: ^-?(?:0|[1-9]\d*)$
+          type:
+            - integer
+            - string
+          format: int32
+        tokenType:
+          type: string
+          default: Bearer
+    ApiEnvelopeOfAcceptedResponse:
+      required:
+        - success
+        - data
+        - error
+        - meta
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/AcceptedResponse'
+        error:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/ApiError'
+        meta:
+          $ref: '#/components/schemas/ApiMeta'
+    ApiEnvelopeOfLegalTermsMetadata:
+      required:
+        - success
+        - data
+        - error
+        - meta
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/LegalTermsMetadata'
+        error:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/ApiError'
+        meta:
+          $ref: '#/components/schemas/ApiMeta'
+    ApiEnvelopeOfRegistrationPolicyResponse:
+      required:
+        - success
+        - data
+        - error
+        - meta
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/RegistrationPolicyResponse'
+        error:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/ApiError'
+        meta:
+          $ref: '#/components/schemas/ApiMeta'
+    ApiEnvelopeOfAccessResult:
+      required:
+        - success
+        - data
+        - error
+        - meta
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/AccessResult'
+        error:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/ApiError'
+        meta:
+          $ref: '#/components/schemas/ApiMeta'
+    ApiEnvelopeOfAssignedResponse:
+      required:
+        - success
+        - data
+        - error
+        - meta
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/AssignedResponse'
+        error:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/ApiError'
+        meta:
+          $ref: '#/components/schemas/ApiMeta'
+    ApiEnvelopeOfIReadOnlyListOfOrganizationType:
+      required:
+        - success
+        - data
+        - error
+        - meta
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type:
+            - 'null'
+            - array
+          items:
+            $ref: '#/components/schemas/OrganizationType'
+        error:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/ApiError'
+        meta:
+          $ref: '#/components/schemas/ApiMeta'
+    ApiEnvelopeOfIReadOnlyListOfTenantSummary:
+      required:
+        - success
+        - data
+        - error
+        - meta
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type:
+            - 'null'
+            - array
+          items:
+            $ref: '#/components/schemas/TenantSummary'
+        error:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/ApiError'
+        meta:
+          $ref: '#/components/schemas/ApiMeta'
+    ApiEnvelopeOfTenantPermissionsResponse:
+      required:
+        - success
+        - data
+        - error
+        - meta
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/TenantPermissionsResponse'
+        error:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/ApiError'
+        meta:
+          $ref: '#/components/schemas/ApiMeta'
+    ApiEnvelopeOfRolePermissionMatrixAccessResponse:
+      required: [success, data, error, meta]
+      type: object
+      properties:
+        success: { type: boolean }
+        data:
+          oneOf:
+            - { type: 'null' }
+            - $ref: '#/components/schemas/RolePermissionMatrixAccessResponse'
+        error:
+          oneOf:
+            - { type: 'null' }
+            - $ref: '#/components/schemas/ApiError'
+        meta: { $ref: '#/components/schemas/ApiMeta' }
+    ApiEnvelopeOfRolePermissionMatrixResponse:
+      required: [success, data, error, meta]
+      type: object
+      properties:
+        success: { type: boolean }
+        data:
+          oneOf:
+            - { type: 'null' }
+            - $ref: '#/components/schemas/RolePermissionMatrixResponse'
+        error:
+          oneOf:
+            - { type: 'null' }
+            - $ref: '#/components/schemas/ApiError'
+        meta: { $ref: '#/components/schemas/ApiMeta' }
+    ApiEnvelopeOfRolePermissionMatrixHistory:
+      required: [success, data, error, meta]
+      type: object
+      properties:
+        success: { type: boolean }
+        data:
+          oneOf:
+            - { type: 'null' }
+            - type: array
+              items: { $ref: '#/components/schemas/RolePermissionMatrixHistoryEntry' }
+        error:
+          oneOf:
+            - { type: 'null' }
+            - $ref: '#/components/schemas/ApiError'
+        meta: { $ref: '#/components/schemas/ApiMeta' }
+    ApiEnvelopeOfRolePermissionMatrixValidationResponse:
+      required: [success, data, error, meta]
+      type: object
+      properties:
+        success: { type: boolean }
+        data:
+          oneOf:
+            - { type: 'null' }
+            - $ref: '#/components/schemas/RolePermissionMatrixValidationResponse'
+        error:
+          oneOf:
+            - { type: 'null' }
+            - $ref: '#/components/schemas/ApiError'
+        meta: { $ref: '#/components/schemas/ApiMeta' }
+    ApiEnvelopeOfRolePermissionMatrixSaveResponse:
+      required: [success, data, error, meta]
+      type: object
+      properties:
+        success: { type: boolean }
+        data:
+          oneOf:
+            - { type: 'null' }
+            - $ref: '#/components/schemas/RolePermissionMatrixSaveResponse'
+        error:
+          oneOf:
+            - { type: 'null' }
+            - $ref: '#/components/schemas/ApiError'
+        meta: { $ref: '#/components/schemas/ApiMeta' }
+    ApiEnvelopeOfLoggedOutResponse:
+      required:
+        - success
+        - data
+        - error
+        - meta
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/LoggedOutResponse'
+        error:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/ApiError'
+        meta:
+          $ref: '#/components/schemas/ApiMeta'
+    ApiEnvelopeOfMembershipIdResponse:
+      required:
+        - success
+        - data
+        - error
+        - meta
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/MembershipIdResponse'
+        error:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/ApiError'
+        meta:
+          $ref: '#/components/schemas/ApiMeta'
+    ApiEnvelopeOfMessageResponse:
+      required:
+        - success
+        - data
+        - error
+        - meta
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/MessageResponse'
+        error:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/ApiError'
+        meta:
+          $ref: '#/components/schemas/ApiMeta'
+    ApiEnvelopeOfProfile:
+      required:
+        - success
+        - data
+        - error
+        - meta
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/Profile'
+        error:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/ApiError'
+        meta:
+          $ref: '#/components/schemas/ApiMeta'
+    ApiEnvelopeOfRemovedResponse:
+      required:
+        - success
+        - data
+        - error
+        - meta
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/RemovedResponse'
+        error:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/ApiError'
+        meta:
+          $ref: '#/components/schemas/ApiMeta'
+    ApiEnvelopeOfRevokedResponse:
+      required:
+        - success
+        - data
+        - error
+        - meta
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/RevokedResponse'
+        error:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/ApiError'
+        meta:
+          $ref: '#/components/schemas/ApiMeta'
+    ApiEnvelopeOfTenantCreateResult:
+      required:
+        - success
+        - data
+        - error
+        - meta
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/TenantCreateResult'
+        error:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/ApiError'
+        meta:
+          $ref: '#/components/schemas/ApiMeta'
+    ApiEnvelopeOfVerifiedResponse:
+      required:
+        - success
+        - data
+        - error
+        - meta
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/VerifiedResponse'
+        error:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/ApiError'
+        meta:
+          $ref: '#/components/schemas/ApiMeta'
+    ApiError:
+      required:
+        - code
+        - message
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+    LegalTermsMetadata:
+      required:
+        - documentVersionId
+        - title
+        - registrationType
+        - version
+        - effectiveAtUtc
+        - documentUrl
+        - contentHash
+        - publicationStatus
+      type: object
+      properties:
+        documentVersionId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        registrationType:
+          type: string
+          enum:
+            - PERSONAL
+            - ORGANIZATION
+        version:
+          type: string
+        effectiveAtUtc:
+          type: string
+          format: date-time
+        documentUrl:
+          type: string
+        contentHash:
+          type: string
+        publicationStatus:
+          type: string
+          enum:
+            - PUBLISHED
+    ApiEnvelopeOfPlatformRegistrationSummary:
+      required:
+        - success
+        - data
+        - error
+        - meta
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/PlatformRegistrationSummary'
+        error:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/ApiError'
+        meta:
+          $ref: '#/components/schemas/ApiMeta'
+    ApiEnvelopeOfPlatformRegistrationPermissions:
+      required:
+        - success
+        - data
+        - error
+        - meta
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/PlatformRegistrationPermissions'
+        error:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/ApiError'
+        meta:
+          $ref: '#/components/schemas/ApiMeta'
+    ApiEnvelopeOfPlatformRegistrationPage:
+      required:
+        - success
+        - data
+        - error
+        - meta
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/PlatformRegistrationPage'
+        error:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/ApiError'
+        meta:
+          $ref: '#/components/schemas/ApiMeta'
+    ApiEnvelopeOfPlatformRegistrationDetail:
+      required:
+        - success
+        - data
+        - error
+        - meta
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/PlatformRegistrationDetail'
+        error:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/ApiError'
+        meta:
+          $ref: '#/components/schemas/ApiMeta'
+    ApiEnvelopeOfPlatformRegistrationTimeline:
+      required:
+        - success
+        - data
+        - error
+        - meta
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type:
+            - 'null'
+            - array
+          items:
+            $ref: '#/components/schemas/PlatformRegistrationTimelineEvent'
+        error:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/ApiError'
+        meta:
+          $ref: '#/components/schemas/ApiMeta'
+    PlatformRegistrationSummary:
+      required:
+        - registrationType
+        - totalRegistrations
+        - pendingEmailVerification
+        - emailVerified
+        - pendingReview
+      type: object
+      properties:
+        registrationType:
+          type: string
+          enum:
+            - PERSONAL
+            - ORGANIZATION
+        totalRegistrations:
+          type: integer
+          format: int64
+        pendingEmailVerification:
+          type: integer
+          format: int64
+        emailVerified:
+          type: integer
+          format: int64
+        pendingReview:
+          type: integer
+          format: int64
+    PlatformRegistrationPermissions:
+      required:
+        - permissions
+      type: object
+      properties:
+        permissions:
+          type: array
+          items:
+            type: string
+            enum:
+              - platform.registrations.read
+    PlatformRegistrationPage:
+      required:
+        - items
+        - pageNumber
+        - pageSize
+        - totalCount
+        - totalPages
+        - applicationStatuses
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlatformRegistrationListItem'
+        pageNumber:
+          type: integer
+          format: int32
+        pageSize:
+          type: integer
+          format: int32
+        totalCount:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+          format: int32
+        applicationStatuses:
+          type: array
+          items:
+            type: string
+    PlatformRegistrationListItem:
+      required:
+        - registrationApplicationId
+        - displayName
+        - email
+        - emailVerifiedAtUtc
+        - applicationStatus
+        - registrationType
+        - registeredAtUtc
+      type: object
+      properties:
+        registrationApplicationId:
+          type: integer
+          format: int64
+        displayName:
+          type: string
+        email:
+          type: string
+        emailVerifiedAtUtc:
+          oneOf:
+            - type: 'null'
+            - type: string
+              format: date-time
+        applicationStatus:
+          type: string
+        registrationType:
+          type: string
+          enum:
+            - PERSONAL
+            - ORGANIZATION
+        registeredAtUtc:
+          type: string
+          format: date-time
+    PlatformRegistrationDetail:
+      required:
+        - registrationApplicationId
+        - user
+        - application
+        - profile
+        - latestVerificationChallenge
+        - tenant
+      type: object
+      properties:
+        registrationApplicationId:
+          type: integer
+          format: int64
+        user:
+          $ref: '#/components/schemas/PlatformRegistrationUser'
+        application:
+          $ref: '#/components/schemas/PlatformRegistrationApplication'
+        profile:
+          $ref: '#/components/schemas/PlatformRegistrationProfile'
+        latestVerificationChallenge:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/PlatformRegistrationChallenge'
+        tenant:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/PlatformRegistrationTenant'
+    PlatformRegistrationUser:
+      required:
+        - displayName
+        - email
+        - accountStatus
+        - registeredAtUtc
+        - emailVerifiedAtUtc
+      type: object
+      properties:
+        displayName:
+          type: string
+        email:
+          type: string
+        accountStatus:
+          type: string
+        registeredAtUtc:
+          type: string
+          format: date-time
+        emailVerifiedAtUtc:
+          oneOf:
+            - type: 'null'
+            - type: string
+              format: date-time
+    PlatformRegistrationApplication:
+      required:
+        - registrationType
+        - applicationStatus
+        - createdAtUtc
+        - updatedAtUtc
+        - tenantId
+      type: object
+      properties:
+        registrationType:
+          type: string
+          enum:
+            - PERSONAL
+            - ORGANIZATION
+        applicationStatus:
+          type: string
+        createdAtUtc:
+          type: string
+          format: date-time
+        updatedAtUtc:
+          type: string
+          format: date-time
+        tenantId:
+          oneOf:
+            - type: 'null'
+            - type: integer
+              format: int64
+    PlatformRegistrationProfile:
+      required:
+        - completionStatus
+        - personal
+        - organization
+      type: object
+      properties:
+        completionStatus:
+          oneOf:
+            - type: 'null'
+            - type: string
+        personal:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/PlatformPersonalRegistrationProfile'
+        organization:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/PlatformOrganizationRegistrationProfile'
+    PlatformPersonalRegistrationProfile:
+      required:
+        - phoneNumber
+        - countryCode
+        - region
+        - city
+        - postalCode
+        - addressLine
+      type: object
+      properties:
+        phoneNumber:
+          oneOf:
+            - type: 'null'
+            - type: string
+        countryCode:
+          oneOf:
+            - type: 'null'
+            - type: string
+        region:
+          oneOf:
+            - type: 'null'
+            - type: string
+        city:
+          oneOf:
+            - type: 'null'
+            - type: string
+        postalCode:
+          oneOf:
+            - type: 'null'
+            - type: string
+        addressLine:
+          oneOf:
+            - type: 'null'
+            - type: string
+    PlatformOrganizationRegistrationProfile:
+      required:
+        - organizationType
+        - countryCode
+        - registeredName
+        - contactEmail
+        - contactPhone
+        - region
+        - city
+        - postalCode
+        - addressLine
+      type: object
+      properties:
+        organizationType:
+          oneOf:
+            - type: 'null'
+            - type: string
+        countryCode:
+          oneOf:
+            - type: 'null'
+            - type: string
+        registeredName:
+          oneOf:
+            - type: 'null'
+            - type: string
+        contactEmail:
+          oneOf:
+            - type: 'null'
+            - type: string
+        contactPhone:
+          oneOf:
+            - type: 'null'
+            - type: string
+        region:
+          oneOf:
+            - type: 'null'
+            - type: string
+        city:
+          oneOf:
+            - type: 'null'
+            - type: string
+        postalCode:
+          oneOf:
+            - type: 'null'
+            - type: string
+        addressLine:
+          oneOf:
+            - type: 'null'
+            - type: string
+    PlatformRegistrationChallenge:
+      required:
+        - issuedAtUtc
+        - expiresAtUtc
+      type: object
+      properties:
+        issuedAtUtc:
+          oneOf:
+            - type: 'null'
+            - type: string
+              format: date-time
+        expiresAtUtc:
+          oneOf:
+            - type: 'null'
+            - type: string
+              format: date-time
+    PlatformRegistrationTenant:
+      required:
+        - tenantId
+        - tenantCode
+        - tenantType
+        - displayName
+        - status
+      type: object
+      properties:
+        tenantId:
+          type: integer
+          format: int64
+        tenantCode:
+          type: string
+        tenantType:
+          type: string
+        displayName:
+          type: string
+        status:
+          type: string
+    PlatformRegistrationTimelineEvent:
+      required:
+        - occurredAtUtc
+        - eventCode
+        - fromStatus
+        - toStatus
+        - actorDisplayName
+      type: object
+      properties:
+        occurredAtUtc:
+          type: string
+          format: date-time
+        eventCode:
+          type: string
+        fromStatus:
+          oneOf:
+            - type: 'null'
+            - type: string
+        toStatus:
+          oneOf:
+            - type: 'null'
+            - type: string
+        actorDisplayName:
+          oneOf:
+            - type: 'null'
+            - type: string
+    ApiEnvelopeOfPlatformLegalDocumentPermissions:
+      required:
+        - success
+        - data
+        - error
+        - meta
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/PlatformLegalDocumentPermissions'
+        error:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/ApiError'
+        meta:
+          $ref: '#/components/schemas/ApiMeta'
+    ApiEnvelopeOfLegalDocumentList:
+      required:
+        - success
+        - data
+        - error
+        - meta
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type:
+            - 'null'
+            - array
+          items:
+            $ref: '#/components/schemas/LegalDocument'
+        error:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/ApiError'
+        meta:
+          $ref: '#/components/schemas/ApiMeta'
+    ApiEnvelopeOfLegalDocument:
+      required:
+        - success
+        - data
+        - error
+        - meta
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/LegalDocument'
+        error:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/ApiError'
+        meta:
+          $ref: '#/components/schemas/ApiMeta'
+    LegalDocument:
+      required:
+        - legalDocumentId
+        - documentTypeCode
+        - versions
+      type: object
+      properties:
+        legalDocumentId:
+          type: string
+          format: uuid
+        documentTypeCode:
+          type: string
+        versions:
+          type: array
+          items:
+            $ref: '#/components/schemas/LegalDocumentVersion'
+    LegalDocumentVersion:
+      required:
+        - documentVersionId
+        - versionIdentifier
+        - title
+        - effectiveAtUtc
+        - publicationStatus
+        - fileSizeBytes
+        - contentHash
+        - createdAtUtc
+        - registrationScopes
+        - rowVersion
+      type: object
+      properties:
+        documentVersionId:
+          type: string
+          format: uuid
+        versionIdentifier:
+          type: string
+        title:
+          type: string
+        effectiveAtUtc:
+          type: string
+          format: date-time
+        publicationStatus:
+          type: string
+          enum: [DRAFT, PENDING_APPROVAL, APPROVED, PUBLISHED, ARCHIVED]
+        fileSizeBytes:
+          type: integer
+          format: int64
+        contentHash:
+          type: string
+        createdAtUtc:
+          type: string
+          format: date-time
+        submittedAtUtc:
+          type: [string, 'null']
+          format: date-time
+        approvedAtUtc:
+          type: [string, 'null']
+          format: date-time
+        publishedAtUtc:
+          type: [string, 'null']
+          format: date-time
+        archivedAtUtc:
+          type: [string, 'null']
+          format: date-time
+        latestApprovalDecisionCode:
+          type: [string, 'null']
+          enum: [APPROVED, REJECTED, null]
+        latestApprovalDecisionAtUtc:
+          type: [string, 'null']
+          format: date-time
+        latestApprovalDecisionNote:
+          type: [string, 'null']
+        registrationScopes:
+          type: array
+          items:
+            type: string
+            enum: [PERSONAL, ORGANIZATION]
+        rowVersion:
+          type: string
+          contentEncoding: base64
+    PlatformLegalDocumentPermissions:
+      required:
+        - permissions
+      type: object
+      properties:
+        permissions:
+          type: array
+          items:
+            type: string
+            enum:
+              - platform.legal_documents.read
+              - platform.legal_documents.draft.create
+              - platform.legal_documents.draft.edit
+              - platform.legal_documents.draft.preview
+              - platform.legal_documents.submit
+              - platform.legal_documents.approve
+              - platform.legal_documents.publish
+              - platform.legal_documents.archive
+    LegalDocumentDraftUpload:
+      required:
+        - title
+        - versionIdentifier
+        - effectiveAtUtc
+        - registrationTypes
+        - file
+      type: object
+      properties:
+        legalDocumentId:
+          type: string
+          format: uuid
+        title:
+          type: string
+          maxLength: 300
+        versionIdentifier:
+          type: string
+          maxLength: 50
+        effectiveAtUtc:
+          type: string
+          format: date-time
+        registrationTypes:
+          type: array
+          minItems: 1
+          items:
+            type: string
+            enum: [PERSONAL, ORGANIZATION]
+        file:
+          type: string
+          format: binary
+    LegalDocumentDraftUpdate:
+      required:
+        - title
+        - versionIdentifier
+        - effectiveAtUtc
+        - registrationTypes
+        - rowVersion
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 300
+        versionIdentifier:
+          type: string
+          maxLength: 50
+        effectiveAtUtc:
+          type: string
+          format: date-time
+        registrationTypes:
+          type: array
+          minItems: 1
+          items:
+            type: string
+            enum: [PERSONAL, ORGANIZATION]
+        rowVersion:
+          type: string
+          contentEncoding: base64
+    LegalDocumentApprovalRequest:
+      required:
+        - decisionCode
+      type: object
+      properties:
+        decisionCode:
+          type: string
+          enum: [APPROVED, REJECTED]
+        decisionNote:
+          type: [string, 'null']
+          maxLength: 1000
+    ApiMeta:
+      required:
+        - requestId
+      type: object
+      properties:
+        requestId:
+          type: string
+    AssignedResponse:
+      required:
+        - assigned
+      type: object
+      properties:
+        assigned:
+          type: boolean
+    HealthResponse:
+      required:
+        - status
+      type: object
+      properties:
+        status:
+          type: string
+    InviteRequest:
+      required:
+        - inviteeUserId
+      type: object
+      properties:
+        inviteeUserId:
+          pattern: ^-?(?:0|[1-9]\d*)$
+          type:
+            - integer
+            - string
+          format: int64
+    JwkResponse:
+      required:
+        - kty
+        - use
+        - alg
+        - kid
+        - 'n'
+        - e
+      type: object
+      properties:
+        kty:
+          type: string
+        use:
+          type: string
+        alg:
+          type: string
+        kid:
+          type: string
+        'n':
+          type: string
+        e:
+          type: string
+    JwksResponse:
+      required:
+        - keys
+      type: object
+      properties:
+        keys:
+          type: array
+          items:
+            $ref: '#/components/schemas/JwkResponse'
+    LoggedOutResponse:
+      required:
+        - loggedOut
+      type: object
+      properties:
+        loggedOut:
+          type: boolean
+    LoginRequest:
+      required:
+        - email
+        - password
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+    MembershipIdResponse:
+      required:
+        - membershipId
+      type: object
+      properties:
+        membershipId:
+          pattern: ^-?(?:0|[1-9]\d*)$
+          type:
+            - integer
+            - string
+          format: int64
+    MessageResponse:
+      required:
+        - message
+      type: object
+      properties:
+        message:
+          type: string
+    OrganizationType:
+      type: object
+      properties:
+        organizationTypeId:
+          pattern: ^-?(?:0|[1-9]\d*)$
+          type:
+            - integer
+            - string
+          format: int64
+        code:
+          type: string
+        name:
+          type: string
+        countryCode:
+          type: string
+    ProblemDetails:
+      type: object
+      properties:
+        type:
+          type:
+            - 'null'
+            - string
+        title:
+          type:
+            - 'null'
+            - string
+        status:
+          pattern: ^-?(?:0|[1-9]\d*)$
+          type:
+            - 'null'
+            - integer
+            - string
+          format: int32
+        detail:
+          type:
+            - 'null'
+            - string
+        instance:
+          type:
+            - 'null'
+            - string
+    Profile:
+      type: object
+      properties:
+        userId:
+          pattern: ^-?(?:0|[1-9]\d*)$
+          type:
+            - integer
+            - string
+          format: int64
+        email:
+          type: string
+        displayName:
+          type: string
+        emailVerifiedAtUtc:
+          type:
+            - 'null'
+            - string
+          format: date-time
+    RegistrationPolicyResponse:
+      required:
+        - termsRequired
+        - passwordMinLength
+        - passwordMaxLength
+        - allowedRegistrationTypes
+      type: object
+      properties:
+        termsRequired:
+          type: boolean
+        passwordMinLength:
+          type: integer
+          minimum: 12
+          maximum: 128
+        passwordMaxLength:
+          type: integer
+          const: 128
+        allowedRegistrationTypes:
+          type: array
+          items:
+            type: string
+            enum:
+              - PERSONAL
+              - ORGANIZATION
+    RegistrationRequest:
+      required:
+        - email
+        - displayName
+        - password
+        - registrationType
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 320
+        displayName:
+          type: string
+          maxLength: 150
+        password:
+          type: string
+          maxLength: 128
+        registrationType:
+          type: string
+          enum:
+            - PERSONAL
+            - ORGANIZATION
+    TermsRequiredRegistrationRequest:
+      required:
+        - email
+        - displayName
+        - password
+        - registrationType
+        - termsDocumentVersionId
+        - termsAccepted
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 320
+        displayName:
+          type: string
+          maxLength: 150
+        password:
+          type: string
+          maxLength: 128
+        registrationType:
+          type: string
+          enum:
+            - PERSONAL
+            - ORGANIZATION
+        termsDocumentVersionId:
+          type: string
+          format: uuid
+        termsAccepted:
+          type: boolean
+          const: true
+    RemovedResponse:
+      required:
+        - removed
+      type: object
+      properties:
+        removed:
+          type: boolean
+    ResendVerificationRequest:
+      required:
+        - email
+      type: object
+      properties:
+        email:
+          type: string
+    RevokedResponse:
+      required:
+        - revoked
+      type: object
+      properties:
+        revoked:
+          type: boolean
+    RoleRequest:
+      required:
+        - roleCode
+      type: object
+      properties:
+        roleCode:
+          type: string
+    TenantCreateRequest:
+      required:
+        - tenantCode
+        - tenantTypeCode
+        - displayName
+        - organizationTypeId
+        - registeredName
+      type: object
+      properties:
+        tenantCode:
+          type: string
+        tenantTypeCode:
+          type: string
+        displayName:
+          type: string
+        organizationTypeId:
+          pattern: ^-?(?:0|[1-9]\d*)$
+          type:
+            - 'null'
+            - integer
+            - string
+          format: int64
+        registeredName:
+          type:
+            - 'null'
+            - string
+    TenantCreateResult:
+      required:
+        - tenantId
+        - membershipId
+      type: object
+      properties:
+        tenantId:
+          pattern: ^-?(?:0|[1-9]\d*)$
+          type:
+            - integer
+            - string
+          format: int64
+        membershipId:
+          pattern: ^-?(?:0|[1-9]\d*)$
+          type:
+            - integer
+            - string
+          format: int64
+    TenantSummary:
+      type: object
+      properties:
+        tenantId:
+          pattern: ^-?(?:0|[1-9]\d*)$
+          type:
+            - integer
+            - string
+          format: int64
+        tenantCode:
+          type: string
+        displayName:
+          type: string
+        tenantTypeCode:
+          type: string
+        tenantStatusCode:
+          type: string
+        membershipId:
+          pattern: ^-?(?:0|[1-9]\d*)$
+          type:
+            - integer
+            - string
+          format: int64
+        membershipStatusCode:
+          type: string
+    TenantPermissionsResponse:
+      required:
+        - permissions
+      type: object
+      properties:
+        permissions:
+          type: array
+          items:
+            type: string
+    RolePermissionMatrixAccessResponse:
+      required: [canRead, canUpdate]
+      type: object
+      properties:
+        canRead: { type: boolean }
+        canUpdate: { type: boolean }
+    RolePermissionMatrixColumn:
+      required: [roleId, roleCode, roleName, scopeCode, tenantTypeId, tenantTypeCode, isAssignable]
+      type: object
+      properties:
+        roleId: { type: integer, format: int64 }
+        roleCode: { type: string }
+        roleName: { type: string }
+        scopeCode: { type: string }
+        tenantTypeId:
+          oneOf:
+            - { type: 'null' }
+            - { type: integer, format: int64 }
+        tenantTypeCode:
+          oneOf:
+            - { type: 'null' }
+            - { type: string }
+        isAssignable: { type: boolean }
+    RolePermissionMatrixCell:
+      required:
+        - roleId
+        - roleCode
+        - scopeCode
+        - tenantTypeId
+        - tenantTypeCode
+        - configuredGrant
+        - effectiveAllowed
+        - isEditable
+        - restrictionReason
+        - concurrencyVersion
+      type: object
+      properties:
+        roleId: { type: integer, format: int64 }
+        roleCode: { type: string }
+        scopeCode: { type: string }
+        tenantTypeId:
+          oneOf:
+            - { type: 'null' }
+            - { type: integer, format: int64 }
+        tenantTypeCode:
+          oneOf:
+            - { type: 'null' }
+            - { type: string }
+        configuredGrant: { type: boolean }
+        effectiveAllowed:
+          oneOf:
+            - { type: 'null' }
+            - { type: boolean }
+        isEditable: { type: boolean }
+        restrictionReason:
+          oneOf:
+            - { type: 'null' }
+            - { type: string }
+        concurrencyVersion:
+          oneOf:
+            - { type: 'null' }
+            - { type: string }
+    AccountPermissionPolicy:
+      required: [publicAllowed, unverifiedAllowed, verifiedAllowed]
+      type: object
+      properties:
+        publicAllowed: { type: boolean }
+        unverifiedAllowed: { type: boolean }
+        verifiedAllowed: { type: boolean }
+    RolePermissionMatrixRow:
+      required:
+        - permissionId
+        - module
+        - resource
+        - action
+        - permissionCode
+        - permissionName
+        - permissionDescription
+        - scopeCode
+        - readinessStatus
+        - isAccountPolicy
+        - cells
+      type: object
+      properties:
+        permissionId: { type: integer, format: int64, nullable: true }
+        module: { type: string }
+        resource: { type: string }
+        action: { type: string }
+        permissionCode: { type: string }
+        permissionName: { type: string }
+        permissionDescription: { type: string }
+        scopeCode: { type: string }
+        readinessStatus: { type: string }
+        isAccountPolicy: { type: boolean }
+        accountPolicy:
+          oneOf:
+            - { type: 'null' }
+            - $ref: '#/components/schemas/AccountPermissionPolicy'
+        cells:
+          type: array
+          items: { $ref: '#/components/schemas/RolePermissionMatrixCell' }
+    RolePermissionMatrixResponse:
+      required: [columns, rows]
+      type: object
+      properties:
+        columns:
+          type: array
+          items: { $ref: '#/components/schemas/RolePermissionMatrixColumn' }
+        rows:
+          type: array
+          items: { $ref: '#/components/schemas/RolePermissionMatrixRow' }
+    RolePermissionMatrixChange:
+      required: [permissionId, roleId, isGranted]
+      type: object
+      properties:
+        permissionId: { type: integer, format: int64 }
+        roleId: { type: integer, format: int64 }
+        tenantTypeId:
+          oneOf:
+            - { type: 'null' }
+            - { type: integer, format: int64 }
+        isGranted: { type: boolean }
+        concurrencyVersion:
+          oneOf:
+            - { type: 'null' }
+            - { type: string }
+    RolePermissionMatrixBatchRequest:
+      required: [reason, changes]
+      type: object
+      properties:
+        reason: { type: string, minLength: 10, maxLength: 500 }
+        changes:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items: { $ref: '#/components/schemas/RolePermissionMatrixChange' }
+    RolePermissionMatrixValidationIssue:
+      required: [changeIndex, code, message]
+      type: object
+      properties:
+        changeIndex: { type: integer }
+        permissionCode:
+          oneOf:
+            - { type: 'null' }
+            - { type: string }
+        code: { type: string }
+        message: { type: string }
+    RolePermissionMatrixValidationResponse:
+      required: [isValid, issues]
+      type: object
+      properties:
+        isValid: { type: boolean }
+        issues:
+          type: array
+          items: { $ref: '#/components/schemas/RolePermissionMatrixValidationIssue' }
+    RolePermissionMatrixSaveResponse:
+      required: [changedCount, savedAtUtc]
+      type: object
+      properties:
+        changedCount: { type: integer }
+        savedAtUtc: { type: string, format: date-time }
+    RolePermissionMatrixHistoryEntry:
+      required:
+        - auditEventId
+        - permissionCode
+        - roleCode
+        - scopeCode
+        - previousGrant
+        - newGrant
+        - changeReason
+        - occurredAtUtc
+        - outcome
+      type: object
+      properties:
+        auditEventId: { type: integer, format: int64 }
+        permissionCode: { type: string }
+        roleCode: { type: string }
+        scopeCode: { type: string }
+        tenantTypeCode:
+          oneOf:
+            - { type: 'null' }
+            - { type: string }
+        previousGrant: { type: boolean }
+        newGrant: { type: boolean }
+        changeReason: { type: string }
+        actorDisplayName:
+          oneOf:
+            - { type: 'null' }
+            - { type: string }
+        occurredAtUtc: { type: string, format: date-time }
+        correlationId:
+          oneOf:
+            - { type: 'null' }
+            - { type: string, format: uuid }
+        outcome: { type: string }
+    VerifiedResponse:
+      required:
+        - verified
+      type: object
+      properties:
+        verified:
+          type: boolean
+    VerifyEmailRequest:
+      required:
+        - userId
+        - token
+      type: object
+      properties:
+        userId:
+          pattern: ^-?(?:0|[1-9]\d*)$
+          type:
+            - integer
+            - string
+          format: int64
+        token:
+          type: string
+  securitySchemes:
+    Bearer:
+      type: http
+      description: Enter a JWT access token. The session must be active.
+      scheme: bearer
+      bearerFormat: JWT
+tags:
+  - name: Health
+  - name: Authentication
+  - name: Master Data
+  - name: Tenants

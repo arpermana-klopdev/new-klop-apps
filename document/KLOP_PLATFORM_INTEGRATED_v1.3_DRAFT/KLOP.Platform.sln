@@ -1,0 +1,48 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KLOP.Platform.Domain", "src\KLOP.Platform.Domain\KLOP.Platform.Domain.csproj", "{5D7090B6-5317-4C39-A2D7-8258D990C8F1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KLOP.Platform.Application", "src\KLOP.Platform.Application\KLOP.Platform.Application.csproj", "{904D582A-E5E4-46AA-9131-FA63DF1B3E0D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KLOP.Platform.Infrastructure", "src\KLOP.Platform.Infrastructure\KLOP.Platform.Infrastructure.csproj", "{A9584E75-893A-4EA8-81D7-CA7344723C2E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KLOP.Platform.Api", "src\KLOP.Platform.Api\KLOP.Platform.Api.csproj", "{B92B6D9A-3E7B-4716-98C8-940F68F3D184}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KLOP.Platform.UnitTests", "tests\KLOP.Platform.UnitTests\KLOP.Platform.UnitTests.csproj", "{F4889DC9-5232-4B64-8F2E-73A3BC43E506}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KLOP.Platform.IntegrationTests", "tests\KLOP.Platform.IntegrationTests\KLOP.Platform.IntegrationTests.csproj", "{1C85700D-C4D3-43DD-B709-A5C74C029240}"
+EndProject
+Global
+ GlobalSection(SolutionConfigurationPlatforms) = preSolution
+  Debug|Any CPU = Debug|Any CPU
+  Release|Any CPU = Release|Any CPU
+ EndGlobalSection
+ GlobalSection(ProjectConfigurationPlatforms) = postSolution
+  {5D7090B6-5317-4C39-A2D7-8258D990C8F1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+  {5D7090B6-5317-4C39-A2D7-8258D990C8F1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+  {5D7090B6-5317-4C39-A2D7-8258D990C8F1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+  {5D7090B6-5317-4C39-A2D7-8258D990C8F1}.Release|Any CPU.Build.0 = Release|Any CPU
+  {904D582A-E5E4-46AA-9131-FA63DF1B3E0D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+  {904D582A-E5E4-46AA-9131-FA63DF1B3E0D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+  {904D582A-E5E4-46AA-9131-FA63DF1B3E0D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+  {904D582A-E5E4-46AA-9131-FA63DF1B3E0D}.Release|Any CPU.Build.0 = Release|Any CPU
+  {A9584E75-893A-4EA8-81D7-CA7344723C2E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+  {A9584E75-893A-4EA8-81D7-CA7344723C2E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+  {A9584E75-893A-4EA8-81D7-CA7344723C2E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+  {A9584E75-893A-4EA8-81D7-CA7344723C2E}.Release|Any CPU.Build.0 = Release|Any CPU
+  {B92B6D9A-3E7B-4716-98C8-940F68F3D184}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+  {B92B6D9A-3E7B-4716-98C8-940F68F3D184}.Debug|Any CPU.Build.0 = Debug|Any CPU
+  {B92B6D9A-3E7B-4716-98C8-940F68F3D184}.Release|Any CPU.ActiveCfg = Release|Any CPU
+  {B92B6D9A-3E7B-4716-98C8-940F68F3D184}.Release|Any CPU.Build.0 = Release|Any CPU
+  {F4889DC9-5232-4B64-8F2E-73A3BC43E506}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+  {F4889DC9-5232-4B64-8F2E-73A3BC43E506}.Debug|Any CPU.Build.0 = Debug|Any CPU
+  {F4889DC9-5232-4B64-8F2E-73A3BC43E506}.Release|Any CPU.ActiveCfg = Release|Any CPU
+  {F4889DC9-5232-4B64-8F2E-73A3BC43E506}.Release|Any CPU.Build.0 = Release|Any CPU
+  {1C85700D-C4D3-43DD-B709-A5C74C029240}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+  {1C85700D-C4D3-43DD-B709-A5C74C029240}.Debug|Any CPU.Build.0 = Debug|Any CPU
+  {1C85700D-C4D3-43DD-B709-A5C74C029240}.Release|Any CPU.ActiveCfg = Release|Any CPU
+  {1C85700D-C4D3-43DD-B709-A5C74C029240}.Release|Any CPU.Build.0 = Release|Any CPU
+ EndGlobalSection
+EndGlobal

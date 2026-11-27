@@ -1,0 +1,9 @@
+-- SECURITY TEMPLATE: REVIEW BEFORE PRODUCTION.
+-- Database runtime users/roles should be provisioned via deployment/IaC, not created with embedded credentials.
+ -- Intentionally grants NO direct table DML and NO generic admin write SP privileges.
+ -- Example (uncomment after creating a reviewed limited database role):
+ -- GRANT EXECUTE ON OBJECT::cfg.usp_Configuration_GetByKey TO [klop_runtime_role];
+ -- GRANT EXECUTE ON OBJECT::cfg.usp_Configuration_GetAll TO [klop_runtime_role];
+ -- GRANT EXECUTE ON OBJECT::mst.usp_OrganizationIdentityRequirement_GetByOrganizationType TO [klop_runtime_role];
+ -- Grant remaining read SPs selectively by actual application requirements.
+ -- Do not grant EXECUTE ON SCHEMA::mst to untrusted tenants or exposed API principals.

@@ -1,0 +1,42 @@
+{
+  "project": "KLOP PROJECT",
+  "baseline_id": "KLOP-PLATFORM-DB-FOUNDATION-1.2.1",
+  "parent_id": "KLOP-PLATFORM-DB-FOUNDATION-1.2",
+  "frozen_root": "KLOP-PLATFORM-DB-FOUNDATION-1.1",
+  "version": "1.2.1",
+  "status": "DRAFT",
+  "approval": "NOT APPROVED",
+  "date": "2026-11-18",
+  "source_sha256": {
+    "KLOP_Platform_Baseline_v1.1.xlsx": "6990f651b0ea6bccc718d0df35e1387db923aac17a7d983ab211bf33f12f50fd",
+    "KLOP_Platform_SQL_v1.1.zip": "9bf6bf00c874e01fbb27b35891dc43512fe0ddda3234804ec48d6f0b79edcdfb",
+    "KLOP_Platform_Baseline_v1.2_DRAFT.xlsx": "bc362e67bf528325db2f9cb639e8d2952e044c5adebdbb69483e214941a5e2b9",
+    "KLOP_Platform_SQL_v1.2_DRAFT.zip": "e6319c8159b7662a51b5cc93933ac24af21103c8db4dd042eeaeda8fd87483b3"
+  },
+  "source_files_modified": false,
+  "new_tables": 0,
+  "new_procedures": 8,
+  "tenant_locking_procedures": 5,
+  "audit_mode": "same SQL transaction as protected mutation",
+  "static_validation": "PASS",
+  "sql_server_execution": "NOT RUN",
+  "concurrency_tests": "NOT RUN",
+  "api_integration": "NOT RUN",
+  "production_ready": false,
+  "files_sha256": {
+    "KLOP_Platform_Baseline_v1.2.1_DRAFT.xlsx": "5b9aafb7feb0b982fd8822b14aa26015581ba1df56185291da7041340cf193c7",
+    "docs/API_CONTRACTS.md": "b0b7af7276403fe337470b31b978b8374d6375a46398452d24ce5e0ec8bea80e",
+    "docs/INTEGRATION_TEST_MATRIX.md": "416817e768212ea5ca125a3fcc0d815e58637e25ee5a84da5e43f188e1d8eb02",
+    "docs/README_v1_2_1_DRAFT.md": "992c1f80d323239752ff462b87f6c31c05c3846f37852dbb7662133433f316eb",
+    "docs/STATIC_VALIDATION.py": "3e37a7e087897736078871efc1067248a2f9960ecde0e929dd987596cc9957b3",
+    "sql/00_Preflight/000_require_v1_2.sql": "fdbebd2669b716e8d2bb171123588134bcf971b2775f70f0ae8e505e52ee8f96",
+    "sql/01_StoredProcedures/100_registration.sql": "1aaa5c451796eb4a4de65a367eba637291d7e76967c97ea862f58fe552f3f1f9",
+    "sql/01_StoredProcedures/110_tenant_create.sql": "96c1df429675c865f6b7baca00feae55e903483bfe52246371e065af4f986c4a",
+    "sql/01_StoredProcedures/120_membership.sql": "7539604a27bec1ab6a405a25035998e056248eb1c7f58c33928c9386b2474dd7",
+    "sql/01_StoredProcedures/130_roles.sql": "837e90b7a547d876b47e01c6da3521b401785de57fb28e776d392efa0c54ba33",
+    "sql/02_Security/200_runtime_role_TEMPLATE.sql": "b30c2a6578f3263fd210cc4715cf798266a12114904cfaa3ad20808787e09b34",
+    "sql/03_Validation/300_structure_checks.sql": "f180623a07e4473cdc27473a5a2c2f7ffb26536f221036cfb553dd669a8a0fd4",
+    "sql/04_Rollback/900_rollback_TEMPLATE.sql": "a87dc61fb5ee62c90d00e78f31059f390d0cc4ec73d056e779478d8c8aa996db"
+  },
+  "workbook_sha256": "5b9aafb7feb0b982fd8822b14aa26015581ba1df56185291da7041340cf193c7"
+}

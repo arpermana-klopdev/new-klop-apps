@@ -1,0 +1,18 @@
+{
+  "package_id": "KLOP-PLATFORM-INTEGRATED-1.3-DRAFT",
+  "created_date": "2026-11-19",
+  "status": "DRAFT_NOT_EXECUTED",
+  "source_frozen_checkpoint": "KLOP-PLATFORM-DB-DEV-CHECKPOINT-1.2.1-FROZEN-20261118",
+  "source_checkpoint_package_sha256": "956493161597b0e7e816e8726a913e76afb15a521e06a4d312aeed6157dc6c94",
+  "database_prior_state": "development deployment and read-only validation reported PASS by user",
+  "v1_3_sql_status": "NOT EXECUTED",
+  "dotnet_build_status": "NOT RUN",
+  "unit_test_status": "NOT RUN",
+  "integration_test_status": "NOT RUN",
+  "api_routes": 15,
+  "new_stored_procedures": 9,
+  "test_matrix_scenarios": 32,
+  "risk_register_items": 12,
+  "original_scripts_modified": false,
+  "production_approved": false
+}

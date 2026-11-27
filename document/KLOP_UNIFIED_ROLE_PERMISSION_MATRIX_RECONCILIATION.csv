@@ -1,0 +1,45 @@
+RecordType,RoleId,RoleCode,TenantTypeCode,PermissionCode,ScopeCode,CurrentMappingCount,PreparedGrant,ReadinessStatus,PublicAllowed,UnverifiedAllowed,VerifiedAllowed,RestrictionReason,Source
+ROLE_COLUMN,1,SUPER_ADMIN,,,"PLATFORM",,,,"","","","",Existing active PLATFORM role; matrix read/update reserved for this role,Development role master
+ROLE_COLUMN,2,PLATFORM_SUPPORT,,,"PLATFORM",,,,"","","","",Existing active PLATFORM role; no tenant access,Development role master
+ROLE_COLUMN,3,OWNER,PERSONAL,,"TENANT",,,,"","","","",Contextual view of the existing OWNER role; no additional role record,PERSONAL/ORGANIZATION eligibility policy
+ROLE_COLUMN,3,OWNER,ORGANIZATION,,"TENANT",,,,"","","","",Contextual view of the existing OWNER role; no additional role record,PERSONAL/ORGANIZATION eligibility policy
+ROLE_COLUMN,4,ADMIN,ORGANIZATION,,"TENANT",,,,"","","","",Eligible only for ORGANIZATION,AllowMultipleMembers=1
+ROLE_COLUMN,5,MEMBER,ORGANIZATION,,"TENANT",,,,"","","","",Eligible only for ORGANIZATION,AllowMultipleMembers=1
+ROLE_COLUMN,6,VIEWER,ORGANIZATION,,"TENANT",,,,"","","","",Eligible only for ORGANIZATION; IsAssignable remains 0,AllowMultipleMembers=1
+PERMISSION_CATALOG,,,,platform.config.manage,PLATFORM,1,,HOLD,,,,Platform setup actions remain on HOLD,Read-only Development permission and mapping query
+PERMISSION_CATALOG,,,,platform.roles.manage,PLATFORM,1,,HOLD,,,,Platform setup actions remain on HOLD,Read-only Development permission and mapping query
+PERMISSION_CATALOG,,,,platform.tenants.manage,PLATFORM,1,,HOLD,,,,Cross-tenant administration remains on HOLD,Read-only Development permission and mapping query
+PERMISSION_CATALOG,,,,platform.verifications.review,PLATFORM,1,,HOLD,,,,Verification review remains on HOLD,Read-only Development permission and mapping query
+PERMISSION_CATALOG,,,,audit.read,TENANT,2,,ACTIVE,,,,Current permission master and mapping count,Read-only Development permission and mapping query
+PERMISSION_CATALOG,,,,billing.manage,TENANT,1,,ACTIVE,,,,Current permission master and mapping count,Read-only Development permission and mapping query
+PERMISSION_CATALOG,,,,documents.delete,TENANT,1,,ACTIVE,,,,Current permission master and mapping count,Read-only Development permission and mapping query
+PERMISSION_CATALOG,,,,documents.read,TENANT,3,,ACTIVE,,,,Current permission master and mapping count,Read-only Development permission and mapping query
+PERMISSION_CATALOG,,,,documents.upload,TENANT,3,,ACTIVE,,,,Current permission master and mapping count,Read-only Development permission and mapping query
+PERMISSION_CATALOG,,,,tenant.members.invite,TENANT,2,,ACTIVE,,,,PERSONAL effective access denied; ORGANIZATION grants preserved,Read-only Development permission and mapping query
+PERMISSION_CATALOG,,,,tenant.members.read,TENANT,2,,ACTIVE,,,,Current permission master and mapping count,Read-only Development permission and mapping query
+PERMISSION_CATALOG,,,,tenant.members.remove,TENANT,2,,ACTIVE,,,,PERSONAL effective access denied; ORGANIZATION grants preserved,Read-only Development permission and mapping query
+PERMISSION_CATALOG,,,,tenant.read,TENANT,3,,ACTIVE,,,,Current permission master and mapping count,Read-only Development permission and mapping query
+PERMISSION_CATALOG,,,,tenant.roles.assign,TENANT,1,,ACTIVE,,,,PERSONAL effective access denied; ADMIN mapping remains absent,Read-only Development permission and mapping query
+PERMISSION_CATALOG,,,,tenant.update,TENANT,2,,ACTIVE,,,,Current permission master and mapping count,Read-only Development permission and mapping query
+PERMISSION_CATALOG,,,,tenant.verification.read,TENANT,2,,ACTIVE,,,,Current permission master and mapping count,Read-only Development permission and mapping query
+PREPARED_GRANT,1,SUPER_ADMIN,,platform.role_permissions.read,PLATFORM,0,1,SYSTEM RESTRICTED,,,,Essential matrix read capability; not editable in the matrix,v1.10 template; not deployed
+PREPARED_GRANT,1,SUPER_ADMIN,,platform.role_permissions.update,PLATFORM,0,1,SYSTEM RESTRICTED,,,,Essential matrix update capability; not editable in the matrix,v1.10 template; not deployed
+PREPARED_GRANT,1,SUPER_ADMIN,,platform.registrations.read,PLATFORM,0,1,ACTIVE,,,,Approved source seed; DBA approval/deployment pending,v1.10 002 template; not deployed
+PREPARED_GRANT,2,PLATFORM_SUPPORT,,platform.registrations.read,PLATFORM,0,1,ACTIVE,,,,Approved source seed; DBA approval/deployment pending,v1.10 002 template; not deployed
+ACCOUNT_POLICY,,,,"account.self_service.register",ACCOUNT POLICY,,,"ACTIVE",1,0,0,Read-only policy; no role or permission-master row,Existing RBAC row-reconciliation CSV; source workbook must be rechecked
+ACCOUNT_POLICY,,,,"account.self_service.email.verify",ACCOUNT POLICY,,,"ACTIVE",1,1,0,Read-only policy; no role or permission-master row,Existing RBAC row-reconciliation CSV; source workbook must be rechecked
+ACCOUNT_POLICY,,,,"account.self_service.email.resend",ACCOUNT POLICY,,,"ACTIVE",1,1,0,Read-only policy; no role or permission-master row,Existing RBAC row-reconciliation CSV; source workbook must be rechecked
+ACCOUNT_POLICY,,,,"account.self_service.login",ACCOUNT POLICY,,,"ACTIVE",1,0,1,Read-only policy; session and account checks remain authoritative,Existing RBAC row-reconciliation CSV; source workbook must be rechecked
+ACCOUNT_POLICY,,,,"account.self_service.password.reset.request",ACCOUNT POLICY,,,"PLANNED",1,1,1,Reset workflow is not implemented,Existing RBAC row-reconciliation CSV; source workbook must be rechecked
+ACCOUNT_POLICY,,,,"account.self_service.profile.read",ACCOUNT POLICY,,,"ACTIVE",0,0,1,Authenticated identity required,Existing RBAC row-reconciliation CSV; source workbook must be rechecked
+ACCOUNT_POLICY,,,,"account.self_service.profile.update",ACCOUNT POLICY,,,"PLANNED",0,0,1,No approved profile-update endpoint,Existing RBAC row-reconciliation CSV; source workbook must be rechecked
+ACCOUNT_POLICY,,,,"account.self_service.password.change",ACCOUNT POLICY,,,"PLANNED",0,0,1,No approved password-change endpoint,Existing RBAC row-reconciliation CSV; source workbook must be rechecked
+ACCOUNT_POLICY,,,,"account.self_service.registration.read",ACCOUNT POLICY,,,"ACTIVE",0,0,1,Authenticated identity required,Existing RBAC row-reconciliation CSV; source workbook must be rechecked
+ACCOUNT_POLICY,,,,"account.self_service.registration.complete",ACCOUNT POLICY,,,"ACTIVE",0,0,1,Authenticated identity required,Existing RBAC row-reconciliation CSV; source workbook must be rechecked
+ACCOUNT_POLICY,,,,"account.self_service.registration.submit",ACCOUNT POLICY,,,"CONDITIONAL",0,0,0,Verification and consent policy required,Existing RBAC row-reconciliation CSV; source workbook must be rechecked
+ACCOUNT_POLICY,,,,"account.self_service.security_activity.read",ACCOUNT POLICY,,,"PLANNED",0,0,1,Security activity endpoint not available,Existing RBAC row-reconciliation CSV; source workbook must be rechecked
+ACCOUNT_POLICY,,,,"account.self_service.sessions.manage",ACCOUNT POLICY,,,"PLANNED",0,0,1,Session inventory management is not implemented,Existing RBAC row-reconciliation CSV; source workbook must be rechecked
+ACCOUNT_POLICY,,,,"account.self_service.tenant.access",ACCOUNT POLICY,,,"CONDITIONAL",0,0,0,Requires valid session active membership and tenant-scoped permissions,Existing RBAC row-reconciliation CSV; source workbook must be rechecked
+ACCOUNT_POLICY,,,,"account.self_service.users.read",ACCOUNT POLICY,,,"SYSTEM RESTRICTED",0,0,0,Cross-user account access denied by default,Existing RBAC row-reconciliation CSV; source workbook must be rechecked
+ACCOUNT_POLICY,,,,"account.self_service.platform.access",ACCOUNT POLICY,,,"CONDITIONAL",0,0,0,Requires explicit database-backed platform permission checks,Existing RBAC row-reconciliation CSV; source workbook must be rechecked
+RECONCILIATION_NOTE,,,,,,"28",,,"","","",Current DB has 16 active permission codes and 28 configured role-permission mappings; tenant mapping context is prepared but not deployed,Read-only Development inspection

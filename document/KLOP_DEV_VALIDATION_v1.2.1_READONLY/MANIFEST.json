@@ -1,0 +1,25 @@
+{
+  "artifact": "KLOP-DEV-VALIDATION-v1.2.1-READONLY",
+  "date": "2026-11-18",
+  "target_environment": "Development",
+  "reported_execution": {
+    "v1.1": "SUCCESS_USER_REPORTED",
+    "v1.2": "SUCCESS_USER_REPORTED",
+    "v1.2.1": "SUCCESS_USER_REPORTED"
+  },
+  "test_evidence": "NOT_VERIFIED",
+  "expected": {
+    "tables": 33,
+    "procedures": 24,
+    "foreign_keys": 46,
+    "v12_indexes": 30,
+    "v12_check_constraints": 10,
+    "seed_checks": 16
+  },
+  "modifies_existing_database": false,
+  "baseline_status": {
+    "v1.1": "FROZEN",
+    "v1.2": "DRAFT",
+    "v1.2.1": "DRAFT"
+  }
+}

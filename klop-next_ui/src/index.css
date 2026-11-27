@@ -1,0 +1,176 @@
+@import "./styles/tokens.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: var(--klop-font-family);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-optical-sizing: auto;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background: var(--klop-bg);
+  color: var(--klop-text-primary);
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--klop-primary);
+  outline-offset: 2px;
+}
+
+@layer components {
+  .field-label {
+    @apply block text-xs font-semibold;
+    color: var(--klop-text-primary);
+  }
+
+  .field-control {
+    @apply block w-full rounded-lg border px-3 py-2 text-sm placeholder:text-slate-400;
+    min-height: var(--klop-input-height);
+    border-color: var(--klop-border);
+    background-color: var(--klop-surface);
+    color: var(--klop-text-primary);
+  }
+
+  .field-control:focus {
+    border-color: var(--klop-primary);
+    --tw-ring-color: var(--klop-primary);
+  }
+}
+
+.app-logo {
+  display: block;
+  width: clamp(11rem, 28vw, 17rem);
+  height: auto;
+  aspect-ratio: 2149 / 732;
+  object-fit: contain;
+}
+
+.app-logo--compact {
+  width: clamp(9.5rem, 48vw, 13rem);
+}
+
+.password-input {
+  position: relative;
+}
+
+.password-input-control {
+  padding-right: 3.25rem;
+}
+
+.password-input-toggle {
+  position: absolute;
+  top: 50%;
+  right: 0.75rem;
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border: 0;
+  border-radius: var(--klop-radius-sm);
+  background: transparent;
+  color: var(--klop-text-secondary);
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+
+.password-input-toggle:hover {
+  background: var(--klop-surface-muted);
+  color: var(--klop-primary);
+}
+
+.password-input-toggle:focus-visible {
+  box-shadow: var(--klop-shadow-focus);
+  outline: none;
+}
+
+.app-card {
+  border: 1px solid var(--klop-border);
+  border-radius: var(--klop-radius-lg);
+  background: var(--klop-surface);
+  padding: var(--klop-space-lg);
+  box-shadow: var(--klop-shadow-card);
+}
+
+.app-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--klop-space-sm);
+  color: var(--klop-text-primary);
+}
+
+.app-checkbox input {
+  width: 1rem;
+  height: 1rem;
+  flex: none;
+  margin-top: 0.125rem;
+  accent-color: var(--klop-primary);
+}
+
+.app-checkbox label {
+  cursor: pointer;
+  font-size: var(--klop-font-size-sm);
+  font-weight: var(--klop-font-weight-medium);
+}
+
+.app-checkbox p {
+  margin: var(--klop-space-xs) 0 0;
+  color: var(--klop-text-secondary);
+  font-size: var(--klop-font-size-xs);
+}
+
+.app-empty-state {
+  display: grid;
+  justify-items: center;
+  gap: var(--klop-space-sm);
+  padding: var(--klop-space-xl);
+  color: var(--klop-text-secondary);
+  text-align: center;
+}
+
+.app-empty-state h2 {
+  margin: 0;
+  color: var(--klop-text-primary);
+  font-size: var(--klop-font-size-lg);
+}
+
+.app-empty-state p {
+  max-width: 34rem;
+  margin: 0;
+  font-size: var(--klop-font-size-sm);
+  line-height: var(--klop-line-height-normal);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

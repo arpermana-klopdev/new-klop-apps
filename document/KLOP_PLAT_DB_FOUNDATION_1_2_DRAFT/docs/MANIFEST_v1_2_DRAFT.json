@@ -1,0 +1,24 @@
+{
+  "project": "KLOP PROJECT",
+  "baseline_id": "KLOP-PLATFORM-DB-FOUNDATION-1.2",
+  "version": "1.2",
+  "status": "DRAFT",
+  "date": "2026-11-18",
+  "time_zone": "Asia/Jakarta",
+  "previous_baseline": "KLOP-PLATFORM-DB-FOUNDATION-1.1",
+  "source_file_hashes": {
+    "KLOP_Platform_Baseline_v1.1.xlsx": "6990f651b0ea6bccc718d0df35e1387db923aac17a7d983ab211bf33f12f50fd",
+    "KLOP_Platform_SQL_v1.1.zip": "9bf6bf00c874e01fbb27b35891dc43512fe0ddda3234804ec48d6f0b79edcdfb"
+  },
+  "change_summary": {
+    "new_tables": 17,
+    "new_mst": 3,
+    "new_runtime": 14,
+    "fk": 39,
+    "indexes": 30,
+    "checks": 10
+  },
+  "execution_status": "NOT EXECUTED OR TESTED AGAINST SQL SERVER",
+  "approvals": "NOT APPROVED",
+  "frozen_baseline_modified": false
+}
