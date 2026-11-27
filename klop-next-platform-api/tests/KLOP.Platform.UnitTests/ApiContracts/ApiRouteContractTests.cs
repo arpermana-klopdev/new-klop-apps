@@ -85,6 +85,7 @@ public sealed class ApiRouteContractTests
             "ALL /health/ready",
             "GET /.well-known/jwks.json",
             "GET /api/v1/master/organization-types",
+            "GET /api/v1/master/tenant-types",
             "GET /api/v1/public/legal/terms/current",
             "GET /api/v1/public/legal/terms/{documentVersionId:guid}/file",
             "GET /api/v1/platform/legal-documents/permissions",
@@ -132,7 +133,7 @@ public sealed class ApiRouteContractTests
         ];
 
         Assert.Equal(expectedRoutes.Order(StringComparer.Ordinal), endpoints.Keys.Order(StringComparer.Ordinal));
-        Assert.Equal(48, endpoints.Count);
+        Assert.Equal(49, endpoints.Count);
 
         foreach (var route in expectedRoutes.Where(route => route.Contains("/auth/", StringComparison.Ordinal)))
         {

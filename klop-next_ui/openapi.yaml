@@ -41,6 +41,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApiEnvelopeOfIReadOnlyListOfOrganizationType'
+  /api/v1/master/tenant-types:
+    get:
+      tags:
+        - Master Data
+      summary: List active tenant types
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiEnvelopeOfIReadOnlyListOfTenantTypeReference'
   /api/v1/public/legal/terms/current:
     get:
       tags:
@@ -1523,6 +1535,28 @@ components:
             - $ref: '#/components/schemas/ApiError'
         meta:
           $ref: '#/components/schemas/ApiMeta'
+    ApiEnvelopeOfIReadOnlyListOfTenantTypeReference:
+      required:
+        - success
+        - data
+        - error
+        - meta
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type:
+            - 'null'
+            - array
+          items:
+            $ref: '#/components/schemas/TenantTypeReference'
+        error:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/ApiError'
+        meta:
+          $ref: '#/components/schemas/ApiMeta'
     ApiEnvelopeOfIReadOnlyListOfTenantSummary:
       required:
         - success
@@ -2623,6 +2657,16 @@ components:
         name:
           type: string
         countryCode:
+          type: string
+    TenantTypeReference:
+      required:
+        - code
+        - name
+      type: object
+      properties:
+        code:
+          type: string
+        name:
           type: string
     ProblemDetails:
       type: object

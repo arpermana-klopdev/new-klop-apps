@@ -7,7 +7,7 @@ import { getRolePermissionMatrixAccess } from "../src/api/rolePermissionMatrix";
 import { getRegistrationPolicy } from "../src/api/auth";
 import { getCurrentTerms } from "../src/api/legal";
 import { ApiRequestError } from "../src/api/client";
-import { getOrganizationTypes } from "../src/api/tenants";
+import { getOrganizationTypes, getTenantTypes } from "../src/api/tenants";
 import {
   MasterDataSetupPage,
   PlatformSetupPage,
@@ -19,6 +19,7 @@ vi.mock("../src/api/legal", () => ({ getCurrentTerms: vi.fn() }));
 
 vi.mock("../src/api/tenants", () => ({
   getOrganizationTypes: vi.fn(),
+  getTenantTypes: vi.fn(),
 }));
 
 vi.mock("../src/api/rolePermissionMatrix", () => ({
@@ -41,6 +42,7 @@ describe("Platform Setup foundation", () => {
     vi.mocked(getRegistrationPolicy).mockReset();
     vi.mocked(getCurrentTerms).mockReset();
     vi.mocked(getOrganizationTypes).mockReset();
+    vi.mocked(getTenantTypes).mockReset().mockResolvedValue([]);
     vi.mocked(getRolePermissionMatrixAccess).mockReset().mockResolvedValue({ canRead: false, canUpdate: false });
   });
 
@@ -125,6 +127,36 @@ describe("Platform Setup foundation", () => {
     vi.mocked(getCurrentTerms).mockRejectedValue(new ApiRequestError("TERMS_UNAVAILABLE", "Not available", 404));
     renderWithProviders(<RegistrationSetupPage />);
     await waitFor(() => expect(screen.getAllByText("Required Terms are not verified; registration readiness is incomplete.")).toHaveLength(2));
+  });
+
+  it("loads tenant types from the API and filters only that catalog", async () => {
+    vi.mocked(getTenantTypes).mockResolvedValue([
+      { code: "PERSONAL", name: "Personal workspace" },
+      { code: "ORGANIZATION", name: "Organization workspace" },
+    ]);
+    vi.mocked(getOrganizationTypes).mockResolvedValue([{ code: "COMPANY", name: "Company", countryCode: "ID" }]);
+    renderWithProviders(<MasterDataSetupPage />);
+    const tenants = screen.getByRole("region", { name: "Tenant types" });
+    const organizations = screen.getByRole("region", { name: "Organization types" });
+    expect(await within(tenants).findByText("Personal workspace")).toBeInTheDocument();
+    expect(await within(organizations).findByText("Company")).toBeInTheDocument();
+    fireEvent.change(within(tenants).getByRole("textbox", { name: "Search tenant types" }), { target: { value: "organization" } });
+    expect(within(tenants).queryByText("Personal workspace")).not.toBeInTheDocument();
+    expect(within(tenants).getByText("Organization workspace")).toBeInTheDocument();
+    expect(within(organizations).getByText("Company")).toBeInTheDocument();
+  });
+
+  it("distinguishes a catalog error from an empty result and retries independently", async () => {
+    vi.mocked(getTenantTypes).mockRejectedValueOnce(new Error("offline")).mockResolvedValueOnce([{ code: "PERSONAL", name: "Personal workspace" }]);
+    vi.mocked(getOrganizationTypes).mockResolvedValue([]);
+    renderWithProviders(<MasterDataSetupPage />);
+    const tenants = screen.getByRole("region", { name: "Tenant types" });
+    const organizations = screen.getByRole("region", { name: "Organization types" });
+    expect(await within(tenants).findByText(/Tenant types could not be loaded/)).toBeInTheDocument();
+    expect(await within(organizations).findByText("No active records were returned by the API.")).toBeInTheDocument();
+    fireEvent.click(within(tenants).getByRole("button", { name: "Refresh" }));
+    expect(await within(tenants).findByText("Personal workspace")).toBeInTheDocument();
+    expect(getOrganizationTypes).toHaveBeenCalledOnce();
   });
 
   it("shows only organization types returned by the existing master-data API", async () => {

@@ -8,6 +8,8 @@ public sealed class OrganizationType
     public string CountryCode { get; set; } = "";
 }
 
+public sealed record TenantTypeReference(string Code, string Name);
+
 public sealed class ConfigurationEntry
 {
     public string ConfigurationKey { get; set; } = "";

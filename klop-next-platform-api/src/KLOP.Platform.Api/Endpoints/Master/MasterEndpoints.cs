@@ -11,5 +11,9 @@ public static class MasterEndpoints
             .WithTags("Master Data")
             .WithSummary("List organization types")
             .Produces<ApiEnvelope<IReadOnlyList<OrganizationType>>>();
+        api.MapGet("/master/tenant-types", MasterHandlers.ListTenantTypes)
+            .WithTags("Master Data")
+            .WithSummary("List active tenant types")
+            .Produces<ApiEnvelope<IReadOnlyList<TenantTypeReference>>>();
     }
 }

@@ -27,6 +27,7 @@ export type RolePermissionMatrixValidationResponse = Schemas["RolePermissionMatr
 export type RolePermissionMatrixSaveResponse = Schemas["RolePermissionMatrixSaveResponse"];
 export type RolePermissionMatrixHistoryEntry = Schemas["RolePermissionMatrixHistoryEntry"];
 export type OrganizationType = Schemas["OrganizationType"];
+export type TenantTypeReference = Schemas["TenantTypeReference"];
 export type AccessResult = Schemas["AccessResult"];
 export type TenantCreateResult = Schemas["TenantCreateResult"];
 export type MessageResponse = Schemas["MessageResponse"];
