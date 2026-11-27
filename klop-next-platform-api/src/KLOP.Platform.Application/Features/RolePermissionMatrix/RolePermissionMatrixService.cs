@@ -20,6 +20,7 @@ public sealed class RolePermissionMatrixService(
                 row.TenantTypeId, row.TenantTypeCode, row.IsAssignable ?? false))
             .Distinct()
             .OrderBy(column => ScopeOrder(column.ScopeCode))
+            .ThenBy(column => TenantContextOrder(column.TenantTypeCode))
             .ThenBy(column => column.TenantTypeCode, StringComparer.Ordinal)
             .ThenBy(column => column.RoleId)
             .ToArray();
@@ -66,9 +67,9 @@ public sealed class RolePermissionMatrixService(
     {
         var permissions = await permissionRepository.GetPlatformPermissions(
             actorUserId, sessionId, cancellationToken);
-        return new RolePermissionMatrixAccessResponse(
-            permissions.Contains(RolePermissionMatrixPermissions.Read, StringComparer.Ordinal),
-            permissions.Contains(RolePermissionMatrixPermissions.Update, StringComparer.Ordinal));
+        var canRead = permissions.Contains(RolePermissionMatrixPermissions.Read, StringComparer.Ordinal);
+        return new RolePermissionMatrixAccessResponse(canRead,
+            canRead && permissions.Contains(RolePermissionMatrixPermissions.Update, StringComparer.Ordinal));
     }
 
     public async Task<RolePermissionMatrixValidationResponse> Validate(
@@ -122,6 +123,14 @@ public sealed class RolePermissionMatrixService(
         _ => 2
     };
 
+    private static int TenantContextOrder(string? tenantTypeCode) => tenantTypeCode switch
+    {
+        null => 0,
+        "PERSONAL" => 1,
+        "ORGANIZATION" => 2,
+        _ => 3
+    };
+
     private static string SerializeChanges(IReadOnlyList<RolePermissionMatrixChange> changes) =>
         JsonSerializer.Serialize(changes.Select(change => new
         {
@@ -143,7 +152,7 @@ public sealed class RolePermissionMatrixService(
         if (request.Changes is null || request.Changes.Count is < 1 or > 100)
             throw new ArgumentException("A batch must contain between 1 and 100 changes.", nameof(request));
         if (request.Changes.Any(change =>
-                change.PermissionId <= 0 || change.RoleId <= 0 ||
+                change is null || change.PermissionId <= 0 || change.RoleId <= 0 ||
                 change.TenantTypeId is <= 0 ||
                 (change.ConcurrencyVersion is not null &&
                  !IsValidConcurrencyVersion(change.ConcurrencyVersion))))

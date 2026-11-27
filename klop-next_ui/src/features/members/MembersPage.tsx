@@ -62,9 +62,10 @@ export function MembersPage() {
     refetchOnWindowFocus: true,
     retry: false,
   });
-  const canAssignRoles =
+  const permissionsVerified = selectedTenant !== undefined && permissionsQuery.isSuccess && !permissionsQuery.isFetching;
+  const canAssignRoles = permissionsVerified && selectedTenant?.tenantTypeCode !== "PERSONAL" &&
     permissionsQuery.data?.permissions.includes(TENANT_ROLES_ASSIGN) === true;
-  const canRemoveMembers =
+  const canRemoveMembers = permissionsVerified && selectedTenant?.tenantTypeCode !== "PERSONAL" &&
     permissionsQuery.data?.permissions.includes(TENANT_MEMBERS_REMOVE) === true;
 
   const acceptMutation = useMutation({
@@ -111,6 +112,7 @@ export function MembersPage() {
 
   function runTargetAction(action: "assign" | "revoke" | "remove") {
     void targetForm.handleSubmit((values) => {
+      if (values.tenantId !== selectedTenantId || (action === "remove" ? !canRemoveMembers : !canAssignRoles)) return;
       setNotice(null);
       if (action === "remove") {
         setRemoveTarget({ tenantId: values.tenantId, membershipId: values.membershipId });
@@ -242,7 +244,7 @@ export function MembersPage() {
                 </div>
               </form>
             )}
-            {selectedTenant && permissionsQuery.data && !canAssignRoles && !canRemoveMembers && (
+            {selectedTenant && permissionsVerified && !canAssignRoles && !canRemoveMembers && (
               <Notice>
                 {selectedTenant.tenantTypeCode?.toUpperCase() === "PERSONAL"
                   ? "Personal workspaces do not support additional members or membership administration."
@@ -267,7 +269,7 @@ export function MembersPage() {
           <Button
             type="button"
             variant="danger"
-            disabled={targetMutation.isPending || removeTarget === null}
+            disabled={targetMutation.isPending || removeTarget === null || !canRemoveMembers || removeTarget.tenantId !== selectedTenantId}
             onClick={() => {
               if (!removeTarget) return;
               targetMutation.mutate({ action: "remove", ...removeTarget });

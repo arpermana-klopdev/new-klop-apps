@@ -73,6 +73,44 @@ public sealed class RolePermissionMatrixServiceTests
             document.RootElement[0].GetProperty("concurrencyVersion").GetString());
     }
 
+    [Fact]
+    public async Task ValidationRejectsNullBatchEntryBeforeCallingRepository()
+    {
+        var repository = new TestRolePermissionMatrixRepository();
+        var service = new RolePermissionMatrixService(repository, new TestPlatformPermissionRepository());
+        var request = new RolePermissionMatrixBatchRequest("Approved change reason", [null!]);
+
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            service.Validate(41, Guid.NewGuid(), request, CancellationToken.None));
+
+        Assert.False(repository.ValidationCalled);
+    }
+
+    [Fact]
+    public async Task MatrixColumnsFollowPlatformPersonalOrganizationOrder()
+    {
+        var repository = new TestRolePermissionMatrixRepository
+        {
+            Rows =
+            [
+                new RolePermissionMatrixDbRow { PermissionCode = "tenant.example", RoleId = 3,
+                    RoleCode = "OWNER", RoleName = "Owner", RoleScopeCode = "TENANT",
+                    TenantTypeId = 2, TenantTypeCode = "ORGANIZATION" },
+                new RolePermissionMatrixDbRow { PermissionCode = "tenant.example", RoleId = 3,
+                    RoleCode = "OWNER", RoleName = "Owner", RoleScopeCode = "TENANT",
+                    TenantTypeId = 1, TenantTypeCode = "PERSONAL" },
+                new RolePermissionMatrixDbRow { PermissionCode = "platform.example", RoleId = 1,
+                    RoleCode = "SUPER_ADMIN", RoleName = "Super Administrator", RoleScopeCode = "PLATFORM" }
+            ]
+        };
+        var service = new RolePermissionMatrixService(repository, new TestPlatformPermissionRepository());
+
+        var response = await service.Get(41, Guid.NewGuid(), CancellationToken.None);
+
+        Assert.Equal(new[] { "PLATFORM", "PERSONAL", "ORGANIZATION" },
+            response.Columns.Select(column => column.TenantTypeCode ?? column.ScopeCode).ToArray());
+    }
+
     private sealed class TestRolePermissionMatrixRepository : IRolePermissionMatrixRepository
     {
         public IReadOnlyList<RolePermissionMatrixDbRow> Rows { get; init; } = [];

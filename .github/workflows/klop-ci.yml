@@ -1,0 +1,81 @@
+name: KLOP CI
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: klop-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend build and unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: klop-next-platform-api
+    env:
+      DOTNET_NOLOGO: 'true'
+      DOTNET_CLI_TELEMETRY_OPTOUT: 'true'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      # Restore and build only the unit-test project and its application/API
+      # project references. Do not execute the SQL integration-test project.
+      - name: Restore backend
+        run: dotnet restore tests/KLOP.Platform.UnitTests/KLOP.Platform.UnitTests.csproj
+      - name: Build backend
+        run: dotnet build tests/KLOP.Platform.UnitTests/KLOP.Platform.UnitTests.csproj --configuration Release --no-restore
+      - name: Backend unit and API contract regression tests
+        run: dotnet test tests/KLOP.Platform.UnitTests/KLOP.Platform.UnitTests.csproj --configuration Release --no-build --no-restore --logger "console;verbosity=normal"
+
+  frontend:
+    name: Frontend contracts, regression and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: klop-next_ui
+    env:
+      CI: 'true'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.x'
+          cache: npm
+          cache-dependency-path: klop-next_ui/package-lock.json
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Verify generated OpenAPI types
+        run: |
+          npm run api:types
+          git diff --exit-code -- src/api/schema.d.ts
+      - name: TypeScript typecheck
+        run: npm run typecheck
+      - name: Frontend unit and component regression tests
+        run: npm test
+      - name: Frontend production build
+        run: npm run build
+
+# CI only: no deployment, live API startup, database provisioning, SQL
+# execution, secrets, or merge. Live SQL/API UAT is owner-manual.
