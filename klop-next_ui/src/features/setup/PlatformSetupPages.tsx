@@ -10,6 +10,8 @@ import {
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { getRegistrationPolicy } from "../../api/auth";
+import { getCurrentTerms } from "../../api/legal";
 import { getOrganizationTypes } from "../../api/tenants";
 import { getRolePermissionMatrixAccess } from "../../api/rolePermissionMatrix";
 import { toApiRequestError } from "../../api/client";
@@ -21,8 +23,8 @@ const setupSections = [
   {
     title: "Registration Setup",
     route: "/platform-setup/registration",
-    description: "Review registration and onboarding readiness without changing the existing registration flow.",
-    status: "Read API unavailable",
+    description: "Inspect effective registration policy and published Terms readiness from the existing APIs.",
+    status: "Read only",
     icon: ClipboardList,
   },
   {
@@ -169,36 +171,100 @@ export function PlatformSetupPage() {
 }
 
 export function RegistrationSetupPage() {
-  const configurationAreas = [
-    "Registration type availability",
-    "Email verification requirement",
-    "Terms consent requirement",
-    "Onboarding submission behavior",
-  ];
+  const policyQuery = useQuery({
+    queryKey: ["platform-setup", "registration-policy"],
+    queryFn: getRegistrationPolicy,
+    staleTime: 0,
+    retry: false,
+    refetchOnMount: "always",
+  });
+  const policy = policyQuery.isSuccess && !policyQuery.isFetching ? policyQuery.data : undefined;
 
   return (
     <SetupSectionPage
       title="Registration Setup"
-      description="Readiness for existing PERSONAL and ORGANIZATION registration behavior; this page does not alter registration or authentication."
-      status="Read API unavailable"
+      description="Inspect effective registration policy for PERSONAL and ORGANIZATION without altering authentication or configuration."
+      status="Read only"
     >
-      <p className="mb-5 text-sm text-slate-600 dark:text-slate-300">
-        The backend registration flow remains authoritative. The current frontend API does not expose these database-backed configuration values, so no value or default is inferred here.
-      </p>
-      <dl className="divide-y divide-slate-100 dark:divide-slate-800">
-        {configurationAreas.map((label) => (
-          <div key={label} className="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
-            <dt className="text-sm font-medium">{label}</dt>
-            <dd className="text-xs text-slate-500 dark:text-slate-400">Not exposed by the current API</dd>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h3 className="text-sm font-semibold">Effective registration policy</h3>
+          <p className="mt-1 text-xs text-slate-500">Source: GET /api/v1/auth/registration-policy</p>
+        </div>
+        <Button size="sm" variant="secondary" onClick={() => void policyQuery.refetch()} disabled={policyQuery.isFetching}>Refresh policy</Button>
+      </div>
+      {policyQuery.isFetching || policyQuery.isPending ? (
+        <div role="status" aria-label="Loading registration policy"><Skeleton className="h-28" /></div>
+      ) : policyQuery.isError ? (
+        <Notice>Registration policy could not be verified. {toApiRequestError(policyQuery.error).message}</Notice>
+      ) : policy ? (
+        <>
+          <dl className="divide-y divide-slate-100 dark:divide-slate-800">
+            <div className="flex flex-wrap items-center justify-between gap-3 py-3">
+              <dt className="text-sm font-medium">Terms consent</dt>
+              <dd><StatusBadge value={policy.termsRequired ? "Required" : "Not required by effective policy"} /></dd>
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-3 py-3">
+              <dt className="text-sm font-medium">Password length</dt>
+              <dd className="text-sm">{policy.passwordMinLength}–{policy.passwordMaxLength} characters</dd>
+            </div>
+          </dl>
+          <div className="mt-5 grid gap-3 md:grid-cols-2">
+            {(["PERSONAL", "ORGANIZATION"] as const).map((scope) => (
+              <RegistrationScopeReadiness key={scope} scope={scope}
+                enabled={policy.allowedRegistrationTypes.includes(scope)} termsRequired={policy.termsRequired} />
+            ))}
           </div>
-        ))}
-      </dl>
+        </>
+      ) : <Notice>Registration policy is unavailable.</Notice>}
       <div className="mt-5">
         <Notice kind="info">
-          Existing Register, email-verification, and Terms enforcement APIs are unchanged. No settings are editable from this page.
+          These are effective runtime values, not editable database settings. Email delivery, verification configuration, and onboarding submission behavior are not exposed by this policy API. No setting is changed here.
         </Notice>
       </div>
     </SetupSectionPage>
+  );
+}
+
+function RegistrationScopeReadiness({ scope, enabled, termsRequired }: {
+  scope: "PERSONAL" | "ORGANIZATION";
+  enabled: boolean;
+  termsRequired: boolean;
+}) {
+  const terms = useQuery({
+    queryKey: ["platform-setup", "registration-terms-readiness", scope],
+    queryFn: () => getCurrentTerms(scope),
+    staleTime: 0,
+    retry: false,
+    refetchOnMount: "always",
+  });
+  const published = terms.isSuccess && terms.data.registrationType === scope &&
+    terms.data.publicationStatus === "PUBLISHED" ? terms.data : undefined;
+  const missing = terms.isError && toApiRequestError(terms.error).code === "TERMS_UNAVAILABLE";
+  return (
+    <section aria-label={scope + " registration"} className="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h4 className="text-sm font-semibold">{scope}</h4>
+        <StatusBadge value={enabled ? "Registration enabled" : "Registration disabled"} />
+      </div>
+      <p className="mt-3 text-xs font-medium text-slate-500">Published Terms</p>
+      {terms.isPending || terms.isFetching ? (
+        <p role="status" className="mt-1 text-sm">Checking Terms readiness...</p>
+      ) : published ? (
+        <div className="mt-1 text-sm">
+          <p>{published.title}</p>
+          <p className="text-xs text-slate-500">Version {published.version}</p>
+        </div>
+      ) : missing ? (
+        <p className="mt-1 text-sm">No published Terms for this scope.</p>
+      ) : (
+        <p role="alert" className="mt-1 text-sm">Terms readiness could not be verified.</p>
+      )}
+      {enabled && termsRequired && !terms.isFetching && !published && (
+        <p className="mt-2 text-xs text-amber-700 dark:text-amber-300">Required Terms are not verified; registration readiness is incomplete.</p>
+      )}
+      <Button className="mt-3" size="sm" variant="secondary" onClick={() => void terms.refetch()} disabled={terms.isFetching}>Refresh Terms</Button>
+    </section>
   );
 }
 
