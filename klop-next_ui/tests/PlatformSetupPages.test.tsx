@@ -1,14 +1,21 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getRolePermissionMatrixAccess } from "../src/api/rolePermissionMatrix";
+import { getRegistrationPolicy } from "../src/api/auth";
+import { getCurrentTerms } from "../src/api/legal";
+import { ApiRequestError } from "../src/api/client";
 import { getOrganizationTypes } from "../src/api/tenants";
 import {
   MasterDataSetupPage,
   PlatformSetupPage,
+  RegistrationSetupPage,
 } from "../src/features/setup/PlatformSetupPages";
+
+vi.mock("../src/api/auth", () => ({ getRegistrationPolicy: vi.fn() }));
+vi.mock("../src/api/legal", () => ({ getCurrentTerms: vi.fn() }));
 
 vi.mock("../src/api/tenants", () => ({
   getOrganizationTypes: vi.fn(),
@@ -31,6 +38,8 @@ function renderWithProviders(page: ReactNode) {
 
 describe("Platform Setup foundation", () => {
   beforeEach(() => {
+    vi.mocked(getRegistrationPolicy).mockReset();
+    vi.mocked(getCurrentTerms).mockReset();
     vi.mocked(getOrganizationTypes).mockReset();
     vi.mocked(getRolePermissionMatrixAccess).mockReset();
   });
@@ -65,6 +74,57 @@ describe("Platform Setup foundation", () => {
 
     await waitFor(() => expect(getRolePermissionMatrixAccess).toHaveBeenCalledOnce());
     expect(screen.queryByRole("link", { name: /Role & Permission Matrix/ })).not.toBeInTheDocument();
+  });
+
+  it("shows effective policy and the actual published Terms for each registration scope", async () => {
+    vi.mocked(getRolePermissionMatrixAccess).mockResolvedValue({ canRead: false, canUpdate: false });
+    vi.mocked(getRegistrationPolicy).mockResolvedValue({
+      termsRequired: true, passwordMinLength: 14, passwordMaxLength: 128,
+      allowedRegistrationTypes: ["PERSONAL"],
+    });
+    vi.mocked(getCurrentTerms).mockImplementation(async (scope) => {
+      if (scope === "ORGANIZATION") throw new ApiRequestError("TERMS_UNAVAILABLE", "Not available", 404);
+      return {
+        documentVersionId: "00000000-0000-4000-8000-000000000001", title: "Personal Terms",
+        registrationType: scope, version: "1.2", effectiveAtUtc: "2026-01-01T00:00:00Z",
+        documentUrl: "/terms", contentHash: "hash", publicationStatus: "PUBLISHED",
+      };
+    });
+    renderWithProviders(<RegistrationSetupPage />);
+    expect(await screen.findByText("14–128 characters")).toBeInTheDocument();
+    const personal = await screen.findByRole("region", { name: "PERSONAL registration" });
+    const organization = screen.getByRole("region", { name: "ORGANIZATION registration" });
+    expect(within(personal).getByText("Registration enabled")).toBeInTheDocument();
+    expect(await within(personal).findByText("Personal Terms")).toBeInTheDocument();
+    expect(within(organization).getByText("Registration disabled")).toBeInTheDocument();
+    expect(await within(organization).findByText("No published Terms for this scope.")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /save/i })).not.toBeInTheDocument();
+  });
+
+  it("does not infer policy or request Terms when the policy API fails; supports retry", async () => {
+    vi.mocked(getRolePermissionMatrixAccess).mockResolvedValue({ canRead: false, canUpdate: false });
+    vi.mocked(getRegistrationPolicy).mockRejectedValueOnce(new Error("offline")).mockResolvedValueOnce({
+      termsRequired: false, passwordMinLength: 12, passwordMaxLength: 128, allowedRegistrationTypes: [],
+    });
+    vi.mocked(getCurrentTerms).mockRejectedValue(new Error("offline"));
+    renderWithProviders(<RegistrationSetupPage />);
+    expect(await screen.findByText(/Registration policy could not be verified/)).toBeInTheDocument();
+    expect(getCurrentTerms).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Refresh policy" }));
+    expect(await screen.findByText("Not required by effective policy")).toBeInTheDocument();
+    expect(await screen.findAllByText("Terms readiness could not be verified.")).toHaveLength(2);
+    expect(screen.queryByText("No published Terms for this scope.")).not.toBeInTheDocument();
+  });
+
+  it("flags required missing Terms instead of treating registration as ready", async () => {
+    vi.mocked(getRolePermissionMatrixAccess).mockResolvedValue({ canRead: false, canUpdate: false });
+    vi.mocked(getRegistrationPolicy).mockResolvedValue({
+      termsRequired: true, passwordMinLength: 12, passwordMaxLength: 128,
+      allowedRegistrationTypes: ["PERSONAL", "ORGANIZATION"],
+    });
+    vi.mocked(getCurrentTerms).mockRejectedValue(new ApiRequestError("TERMS_UNAVAILABLE", "Not available", 404));
+    renderWithProviders(<RegistrationSetupPage />);
+    expect(await screen.findAllByText("Required Terms are not verified; registration readiness is incomplete.")).toHaveLength(2);
   });
 
   it("shows only organization types returned by the existing master-data API", async () => {
