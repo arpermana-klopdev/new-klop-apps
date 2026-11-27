@@ -8,9 +8,11 @@ namespace KLOP.Platform.Infrastructure;
 public sealed class SmtpVerificationEmailSender(
     IHostEnvironment environment,
     IPlatformRuntimeSettings settings,
-    IKeyVaultSecrets secrets) : IVerificationEmailSender
+    IKeyVaultSecrets secrets,
+    INotificationManagementRepository notificationRepository) : IVerificationEmailSender
 {
-    public async Task Send(string email, long userId, string verificationCode, CancellationToken cancellationToken)
+    public async Task Send(string email, long userId, string verificationCode, Guid correlationId,
+        CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(settings.SmtpHost) || string.IsNullOrWhiteSpace(settings.SmtpFrom))
             throw new InvalidOperationException("SMTP delivery is not configured.");
@@ -18,11 +20,37 @@ public sealed class SmtpVerificationEmailSender(
             throw new InvalidOperationException("Production SMTP requires TLS.");
 
         var verificationUrl = VerificationEmailLink.Build(settings.AllowedOrigin, userId, verificationCode);
+        var subject = "KLOP - Email verification";
+        var body = $"Complete email verification using this single-use link:\n{verificationUrl}\n" +
+            $"The link expires in {settings.EmailVerificationHours} hour(s). Never share it.";
+        NotificationTemplateVersion? template = null;
+        if (settings.NotificationTemplatesEnabled)
+        {
+            template = await notificationRepository.GetActiveVerificationVersion(cancellationToken);
+            if (template is null)
+            {
+                await notificationRepository.RecordDeliveryAttempt(null, "EMAIL_VERIFICATION", null,
+                    correlationId, false, "TEMPLATE_UNAVAILABLE", cancellationToken);
+                throw new InvalidOperationException("The enabled verification template is unavailable.");
+            }
+            try
+            {
+                var rendered = NotificationTemplateRenderer.RenderVerification(template.Subject, template.Body,
+                    verificationUrl, settings.EmailVerificationHours);
+                subject = rendered.Subject;
+                body = rendered.Body;
+            }
+            catch (ArgumentException)
+            {
+                await notificationRepository.RecordDeliveryAttempt(template.VersionId, template.TemplateCode,
+                    template.VersionNumber, correlationId, false, "TEMPLATE_UNAVAILABLE", cancellationToken);
+                throw;
+            }
+        }
         using var message = new MailMessage(settings.SmtpFrom, email)
         {
-            Subject = "KLOP - Email verification",
-            Body = $"Complete email verification using this single-use link:\n{verificationUrl}\n" +
-                $"The link expires in {settings.EmailVerificationHours} hour(s). Never share it."
+            Subject = subject,
+            Body = body
         };
         using var smtp = new SmtpClient(settings.SmtpHost, settings.SmtpPort)
         {
@@ -31,14 +59,31 @@ public sealed class SmtpVerificationEmailSender(
             Timeout = 15_000
         };
 
-        if (!string.IsNullOrWhiteSpace(settings.SmtpUsername))
+        try
         {
-            var reference = settings.SmtpPasswordReference ??
-                throw new InvalidOperationException("SMTP credentials must come from Key Vault.");
-            var secret = await secrets.Get(reference, cancellationToken);
-            smtp.Credentials = new NetworkCredential(settings.SmtpUsername, secret.Value);
+            if (!string.IsNullOrWhiteSpace(settings.SmtpUsername))
+            {
+                var reference = settings.SmtpPasswordReference ??
+                    throw new InvalidOperationException("SMTP credentials must come from Key Vault.");
+                var secret = await secrets.Get(reference, cancellationToken);
+                smtp.Credentials = new NetworkCredential(settings.SmtpUsername, secret.Value);
+            }
+            await smtp.SendMailAsync(message, cancellationToken);
         }
-        await smtp.SendMailAsync(message, cancellationToken);
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch
+        {
+            await notificationRepository.RecordDeliveryAttempt(template?.VersionId,
+                template?.TemplateCode ?? "EMAIL_VERIFICATION",
+                template?.VersionNumber, correlationId, false, "SMTP_FAILURE", cancellationToken);
+            throw;
+        }
+        await notificationRepository.RecordDeliveryAttempt(template?.VersionId,
+            template?.TemplateCode ?? "EMAIL_VERIFICATION", template?.VersionNumber,
+            correlationId, true, null, cancellationToken);
     }
 }
 

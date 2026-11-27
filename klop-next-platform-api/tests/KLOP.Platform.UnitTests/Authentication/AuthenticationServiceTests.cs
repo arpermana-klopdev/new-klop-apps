@@ -627,7 +627,8 @@ public sealed class AuthenticationServiceTests
         public string? LastVerificationCode { get; private set; }
         public Exception? Failure { get; set; }
 
-        public Task Send(string email, long userId, string verificationCode, CancellationToken cancellationToken)
+        public Task Send(string email, long userId, string verificationCode, Guid correlationId,
+            CancellationToken cancellationToken)
         {
             SendCount++;
             LastUserId = userId;

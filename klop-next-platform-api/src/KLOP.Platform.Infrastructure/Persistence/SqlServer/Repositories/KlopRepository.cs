@@ -7,7 +7,8 @@ namespace KLOP.Platform.Infrastructure;
 // Repository methods invoke versioned stored procedures; application tables and audit remain database-owned.
 public sealed partial class KlopRepository(SqlConnectionFactory factory, RuntimeSettings settings) :
     IPlatformRepository, IRegistrationRepository, IPlatformRegistrationRepository,
-    IPlatformPermissionRepository, ILegalDocumentsRepository, IRolePermissionMatrixRepository
+    IPlatformPermissionRepository, ILegalDocumentsRepository, IRolePermissionMatrixRepository,
+    INotificationManagementRepository
 {
     private async Task Execute(string name, DynamicParameters parameters, CancellationToken cancellationToken)
     {

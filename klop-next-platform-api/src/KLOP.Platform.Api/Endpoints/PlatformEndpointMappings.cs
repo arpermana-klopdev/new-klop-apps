@@ -2,6 +2,7 @@ using KLOP.Platform.Api;
 using KLOP.Platform.Api.Endpoints.Authentication;
 using KLOP.Platform.Api.Endpoints.Legal;
 using KLOP.Platform.Api.Endpoints.Master;
+using KLOP.Platform.Api.Endpoints.Notifications;
 using KLOP.Platform.Api.Endpoints.Onboarding;
 using KLOP.Platform.Api.Endpoints.Registrations;
 using KLOP.Platform.Api.Endpoints.RolePermissionMatrix;
@@ -26,6 +27,7 @@ public static class PlatformEndpointMappings
         OnboardingEndpoints.MapOnboardingEndpoints(api);
         PlatformRegistrationEndpoints.MapPlatformRegistrationEndpoints(api);
         RolePermissionMatrixEndpoints.MapRolePermissionMatrixEndpoints(api);
+        NotificationManagementEndpoints.MapNotificationManagementEndpoints(api);
         TenantEndpoints.MapTenantEndpoints(api);
     }
 }

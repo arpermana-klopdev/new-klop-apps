@@ -96,7 +96,7 @@ public sealed class AuthenticationService(
     {
         try
         {
-            await emailSender.Send(email, userId, token, cancellationToken);
+            await emailSender.Send(email, userId, token, correlationId, cancellationToken);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {

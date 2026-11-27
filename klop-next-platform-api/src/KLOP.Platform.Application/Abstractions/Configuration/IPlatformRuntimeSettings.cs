@@ -27,4 +27,5 @@ public interface IPlatformRuntimeSettings : IPasswordPolicy
     bool DevelopmentTermsBypassEnabled { get; }
     bool PersonalRegistrationEnabled { get; }
     bool OrganizationRegistrationEnabled { get; }
+    bool NotificationTemplatesEnabled { get; }
 }

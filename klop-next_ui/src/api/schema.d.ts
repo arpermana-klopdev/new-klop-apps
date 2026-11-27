@@ -2645,6 +2645,513 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/platform/notifications/permissions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the caller's effective notification permissions */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Effective notification permissions */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiEnvelopeOfNotificationPermissionsResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/notifications/templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List notification templates and active versions */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Template catalog */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiEnvelopeOfNotificationTemplateSummaryList"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /** Create a notification template draft */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CreateNotificationTemplateRequest"];
+                };
+            };
+            responses: {
+                /** @description Draft created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiEnvelopeOfNotificationTemplateDraftResult"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/notifications/templates/{templateId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get notification template details and version history */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    templateId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Template details */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiEnvelopeOfNotificationTemplateDetail"];
+                    };
+                };
+                /** @description Template not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/notifications/versions/{versionId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Edit a template draft using optimistic concurrency */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    versionId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["NotificationTemplateDraftRequest"];
+                };
+            };
+            responses: {
+                /** @description Draft updated */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiEnvelopeOfNotificationTemplateDraftResult"];
+                    };
+                };
+                /** @description Version changed or is no longer editable */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/notifications/versions/{versionId}/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Render a draft with synthetic preview values */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    versionId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Plain-text preview; no real recipient or verification token is used */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiEnvelopeOfNotificationTemplatePreviewResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/notifications/versions/{versionId}/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submit a template version for approval */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    versionId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["NotificationDecisionRequest"];
+                };
+            };
+            responses: {
+                /** @description Submitted version */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiEnvelopeOfNotificationTemplateVersionList"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/notifications/versions/{versionId}/approval": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Approve or reject a submitted version */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    versionId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["NotificationDecisionRequest"];
+                };
+            };
+            responses: {
+                /** @description Approval decision recorded */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiEnvelopeOfNotificationTemplateVersionList"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/notifications/versions/{versionId}/activate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Activate an approved version atomically */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    versionId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["NotificationDecisionRequest"];
+                };
+            };
+            responses: {
+                /** @description Active version */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiEnvelopeOfNotificationTemplateVersionList"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/notifications/versions/{versionId}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Archive a template version */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    versionId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["NotificationDecisionRequest"];
+                };
+            };
+            responses: {
+                /** @description Archived version */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiEnvelopeOfNotificationTemplateVersionList"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/notifications/channels": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List configured notification channels */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Channel status */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiEnvelopeOfNotificationChannelStatusList"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/notifications/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read paginated notification delivery history */
+        get: {
+            parameters: {
+                query?: {
+                    pageNumber?: number;
+                    pageSize?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Provider-attempt history; not inbox-delivery confirmation */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiEnvelopeOfNotificationDeliveryHistoryPage"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/notifications/settings/readiness": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read safe SMTP and template rollout readiness metadata */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Safe configuration metadata only; no host, username, or secret reference values */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiEnvelopeOfNotificationSettingsReadiness"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -3264,6 +3771,166 @@ export interface components {
             /** Format: int64 */
             userId: number | string;
             token: string;
+        };
+        NotificationPermissionsResponse: {
+            permissions: string[];
+        };
+        NotificationTemplateSummary: {
+            /** Format: uuid */
+            templateId: string;
+            templateCode: string;
+            displayName: string;
+            channelCode: string;
+            localeCode: string;
+            /** Format: uuid */
+            activeVersionId?: string | null;
+            activeVersionNumber?: number | null;
+            activeVersionStatus?: string | null;
+            /** Format: byte */
+            concurrencyVersion: string;
+        };
+        NotificationTemplateVersion: {
+            /** Format: uuid */
+            versionId: string;
+            templateCode: string;
+            displayName: string;
+            versionNumber: number;
+            status: string;
+            subject: string;
+            body: string;
+            channelCode: string;
+            localeCode: string;
+            /** Format: date-time */
+            createdAtUtc: string;
+            /** Format: byte */
+            concurrencyVersion: string;
+        };
+        NotificationTemplateDetail: {
+            /** Format: uuid */
+            templateId: string;
+            templateCode: string;
+            displayName: string;
+            versions: components["schemas"]["NotificationTemplateVersion"][];
+        };
+        CreateNotificationTemplateRequest: {
+            templateCode: string;
+            displayName: string;
+            channelCode: string;
+            localeCode: string;
+            subject: string;
+            body: string;
+        };
+        NotificationTemplateDraftRequest: {
+            subject: string;
+            body: string;
+            /** Format: byte */
+            concurrencyVersion: string;
+        };
+        NotificationDecisionRequest: {
+            decision: string;
+            note?: string | null;
+            /** Format: byte */
+            concurrencyVersion: string;
+        };
+        NotificationTemplateDraftResult: {
+            /** Format: uuid */
+            templateId: string;
+            /** Format: uuid */
+            versionId: string;
+        };
+        NotificationTemplatePreviewResponse: {
+            subject: string;
+            body: string;
+        };
+        NotificationChannelStatus: {
+            channelCode: string;
+            displayName: string;
+            status: string;
+            isEnabled: boolean;
+            readiness: string;
+        };
+        NotificationSettingsReadiness: {
+            smtpHostConfigured: boolean;
+            smtpPortConfigured: boolean;
+            senderConfigured: boolean;
+            tlsRequired: boolean;
+            credentialsConfigured: boolean;
+            templateRolloutEnabled: boolean;
+            verificationLifetimeStatus: string;
+        };
+        NotificationDeliveryHistoryItem: {
+            /** Format: uuid */
+            deliveryId: string;
+            templateCode: string;
+            templateVersion: string;
+            channelCode: string;
+            outcome: string;
+            safeErrorCategory?: string | null;
+            /** Format: date-time */
+            occurredAtUtc: string;
+            /** Format: uuid */
+            correlationId: string;
+        };
+        NotificationDeliveryHistoryPage: {
+            items: components["schemas"]["NotificationDeliveryHistoryItem"][];
+            pageNumber: number;
+            pageSize: number;
+            /** Format: int64 */
+            totalCount: number;
+        };
+        ApiEnvelopeOfNotificationPermissionsResponse: {
+            success?: boolean;
+            data?: null | components["schemas"]["NotificationPermissionsResponse"];
+            error?: null | components["schemas"]["ApiError"];
+            meta?: components["schemas"]["ApiMeta"];
+        };
+        ApiEnvelopeOfNotificationTemplateSummaryList: {
+            success?: boolean;
+            data?: null | components["schemas"]["NotificationTemplateSummary"][];
+            error?: null | components["schemas"]["ApiError"];
+            meta?: components["schemas"]["ApiMeta"];
+        };
+        ApiEnvelopeOfNotificationTemplateDetail: {
+            success?: boolean;
+            data?: null | components["schemas"]["NotificationTemplateDetail"];
+            error?: null | components["schemas"]["ApiError"];
+            meta?: components["schemas"]["ApiMeta"];
+        };
+        ApiEnvelopeOfNotificationTemplateDraftResult: {
+            success?: boolean;
+            data?: null | components["schemas"]["NotificationTemplateDraftResult"];
+            error?: null | components["schemas"]["ApiError"];
+            meta?: components["schemas"]["ApiMeta"];
+        };
+        ApiEnvelopeOfNotificationTemplatePreviewResponse: {
+            success?: boolean;
+            data?: null | components["schemas"]["NotificationTemplatePreviewResponse"];
+            error?: null | components["schemas"]["ApiError"];
+            meta?: components["schemas"]["ApiMeta"];
+        };
+        ApiEnvelopeOfNotificationTemplateVersionList: {
+            success?: boolean;
+            data?: null | components["schemas"]["NotificationTemplateVersion"][];
+            error?: null | components["schemas"]["ApiError"];
+            meta?: components["schemas"]["ApiMeta"];
+        };
+        ApiEnvelopeOfNotificationChannelStatusList: {
+            success?: boolean;
+            data?: null | components["schemas"]["NotificationChannelStatus"][];
+            error?: null | components["schemas"]["ApiError"];
+            meta?: components["schemas"]["ApiMeta"];
+        };
+        ApiEnvelopeOfNotificationDeliveryHistoryPage: {
+            success?: boolean;
+            data?: null | components["schemas"]["NotificationDeliveryHistoryPage"];
+            error?: null | components["schemas"]["ApiError"];
+            meta?: components["schemas"]["ApiMeta"];
+        };
+        ApiEnvelopeOfNotificationSettingsReadiness: {
+            success?: boolean;
+            data?: null | components["schemas"]["NotificationSettingsReadiness"];
+            error?: null | components["schemas"]["ApiError"];
+            meta?: components["schemas"]["ApiMeta"];
         };
     };
     responses: never;
