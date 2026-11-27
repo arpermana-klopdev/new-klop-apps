@@ -112,6 +112,42 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/master/tenant-types": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List active tenant types */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiEnvelopeOfIReadOnlyListOfTenantTypeReference"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/public/legal/terms/current": {
         parameters: {
             query?: never;
@@ -2659,6 +2695,12 @@ export interface components {
             error: null | components["schemas"]["ApiError"];
             meta: components["schemas"]["ApiMeta"];
         };
+        ApiEnvelopeOfIReadOnlyListOfTenantTypeReference: {
+            success: boolean;
+            data: null | components["schemas"]["TenantTypeReference"][];
+            error: null | components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
         ApiEnvelopeOfIReadOnlyListOfTenantSummary: {
             success: boolean;
             data: null | components["schemas"]["TenantSummary"][];
@@ -3032,6 +3074,10 @@ export interface components {
             code?: string;
             name?: string;
             countryCode?: string;
+        };
+        TenantTypeReference: {
+            code: string;
+            name: string;
         };
         ProblemDetails: {
             type?: null | string;
