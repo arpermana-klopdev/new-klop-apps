@@ -41,7 +41,7 @@ describe("Platform Setup foundation", () => {
     vi.mocked(getRegistrationPolicy).mockReset();
     vi.mocked(getCurrentTerms).mockReset();
     vi.mocked(getOrganizationTypes).mockReset();
-    vi.mocked(getRolePermissionMatrixAccess).mockReset();
+    vi.mocked(getRolePermissionMatrixAccess).mockReset().mockResolvedValue({ canRead: false, canUpdate: false });
   });
 
   it("shows all six sections under one Platform Setup entry", async () => {
@@ -112,7 +112,7 @@ describe("Platform Setup foundation", () => {
     expect(getCurrentTerms).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "Refresh policy" }));
     expect(await screen.findByText("Not required by effective policy")).toBeInTheDocument();
-    expect(await screen.findAllByText("Terms readiness could not be verified.")).toHaveLength(2);
+    await waitFor(() => expect(screen.getAllByText("Terms readiness could not be verified.")).toHaveLength(2));
     expect(screen.queryByText("No published Terms for this scope.")).not.toBeInTheDocument();
   });
 
@@ -124,7 +124,7 @@ describe("Platform Setup foundation", () => {
     });
     vi.mocked(getCurrentTerms).mockRejectedValue(new ApiRequestError("TERMS_UNAVAILABLE", "Not available", 404));
     renderWithProviders(<RegistrationSetupPage />);
-    expect(await screen.findAllByText("Required Terms are not verified; registration readiness is incomplete.")).toHaveLength(2);
+    await waitFor(() => expect(screen.getAllByText("Required Terms are not verified; registration readiness is incomplete.")).toHaveLength(2));
   });
 
   it("shows only organization types returned by the existing master-data API", async () => {
