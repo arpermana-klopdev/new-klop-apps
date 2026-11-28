@@ -18,6 +18,7 @@ import { toApiRequestError } from "../../api/client";
 import type { OrganizationType } from "../../api/contracts";
 import { Button, Notice, PageHeading, Skeleton, StatusBadge } from "../../components/ui";
 import { RolePermissionMatrixPage } from "./RolePermissionMatrixPage";
+import { NotificationManagementPage } from "./NotificationManagementPage";
 
 const setupSections = [
   {
@@ -51,8 +52,8 @@ const setupSections = [
   {
     title: "Notifications",
     route: "/platform-setup/notifications",
-    description: "Template and activation state management requires protected backend contracts.",
-    status: "API unavailable",
+    description: "Manage versioned email templates, delivery history, channel readiness, and safe settings.",
+    status: "Email only",
     icon: Bell,
   },
   {
@@ -389,14 +390,7 @@ export function SystemConfigurationPage() {
 }
 
 export function NotificationsSetupPage() {
-  return (
-    <UnavailableSetupPage
-      title="Notifications"
-      description="Notification template, channel, and activation readiness."
-      status="API unavailable"
-      detail="The current API does not expose notification templates, delivery-channel settings, activation state, or approval history."
-    />
-  );
+  return <NotificationManagementPage />;
 }
 
 export function AccessApprovalPage() {

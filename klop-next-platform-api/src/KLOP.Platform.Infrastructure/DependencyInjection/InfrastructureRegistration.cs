@@ -28,6 +28,8 @@ public static class InfrastructureRegistration
         services.AddScoped<IPlatformPermissionRepository, KlopRepository>();
         services.AddScoped<IRolePermissionMatrixRepository, KlopRepository>();
         services.AddScoped<ILegalDocumentsRepository, KlopRepository>();
+        services.AddScoped<INotificationManagementRepository, KlopRepository>();
+        services.AddSingleton<ISmtpMailTransport, SmtpMailTransport>();
         services.AddSingleton<ILegalDocumentStorage, FileSystemLegalDocumentStorage>();
         services.AddTransient<IVerificationEmailSender, SmtpVerificationEmailSender>();
         return services;

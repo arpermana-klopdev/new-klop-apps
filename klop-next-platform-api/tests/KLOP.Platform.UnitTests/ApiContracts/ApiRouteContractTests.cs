@@ -36,6 +36,7 @@ public sealed class ApiRouteContractTests
         builder.Services.AddScoped<PlatformRegistrationPermissionService>(_ => throw new InvalidOperationException());
         builder.Services.AddScoped<PlatformRegistrationService>(_ => throw new InvalidOperationException());
         builder.Services.AddScoped<RolePermissionMatrixService>(_ => throw new InvalidOperationException());
+        builder.Services.AddScoped<NotificationManagementService>(_ => throw new InvalidOperationException());
         await using var app = builder.Build();
         app.MapPlatformEndpoints(TestSettings());
 
@@ -68,6 +69,7 @@ public sealed class ApiRouteContractTests
         builder.Services.AddScoped<PlatformRegistrationPermissionService>(_ => throw new InvalidOperationException());
         builder.Services.AddScoped<PlatformRegistrationService>(_ => throw new InvalidOperationException());
         builder.Services.AddScoped<RolePermissionMatrixService>(_ => throw new InvalidOperationException());
+        builder.Services.AddScoped<NotificationManagementService>(_ => throw new InvalidOperationException());
         await using var app = builder.Build();
         app.MapPlatformEndpoints(TestSettings());
 
@@ -122,6 +124,19 @@ public sealed class ApiRouteContractTests
             "GET /api/v1/platform/role-permissions/history",
             "POST /api/v1/platform/role-permissions/changes/validate",
             "POST /api/v1/platform/role-permissions/changes",
+            "GET /api/v1/platform/notifications/permissions",
+            "GET /api/v1/platform/notifications/templates",
+            "POST /api/v1/platform/notifications/templates",
+            "GET /api/v1/platform/notifications/templates/{templateId:guid}",
+            "PUT /api/v1/platform/notifications/versions/{versionId:guid}",
+            "POST /api/v1/platform/notifications/versions/{versionId:guid}/preview",
+            "POST /api/v1/platform/notifications/versions/{versionId:guid}/submit",
+            "POST /api/v1/platform/notifications/versions/{versionId:guid}/approval",
+            "POST /api/v1/platform/notifications/versions/{versionId:guid}/activate",
+            "POST /api/v1/platform/notifications/versions/{versionId:guid}/archive",
+            "GET /api/v1/platform/notifications/channels",
+            "GET /api/v1/platform/notifications/history",
+            "GET /api/v1/platform/notifications/settings/readiness",
             "GET /api/v1/tenants/mine",
             "GET /api/v1/tenants/{tenantId:long}/permissions",
             "POST /api/v1/tenants/",
@@ -133,7 +148,7 @@ public sealed class ApiRouteContractTests
         ];
 
         Assert.Equal(expectedRoutes.Order(StringComparer.Ordinal), endpoints.Keys.Order(StringComparer.Ordinal));
-        Assert.Equal(49, endpoints.Count);
+        Assert.Equal(62, endpoints.Count);
 
         foreach (var route in expectedRoutes.Where(route => route.Contains("/auth/", StringComparison.Ordinal)))
         {
@@ -190,6 +205,32 @@ public sealed class ApiRouteContractTests
         Assert.Null(endpoints["GET /api/v1/platform/role-permissions/access"]
             .Metadata.GetMetadata<AuthorizationPolicy>());
 
+        var notificationPermissionRoutes = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["GET /api/v1/platform/notifications/templates"] = NotificationPermissions.Read,
+            ["POST /api/v1/platform/notifications/templates"] = NotificationPermissions.DraftCreate,
+            ["GET /api/v1/platform/notifications/templates/{templateId:guid}"] = NotificationPermissions.Read,
+            ["PUT /api/v1/platform/notifications/versions/{versionId:guid}"] = NotificationPermissions.DraftEdit,
+            ["POST /api/v1/platform/notifications/versions/{versionId:guid}/preview"] = NotificationPermissions.Preview,
+            ["POST /api/v1/platform/notifications/versions/{versionId:guid}/submit"] = NotificationPermissions.Submit,
+            ["POST /api/v1/platform/notifications/versions/{versionId:guid}/approval"] = NotificationPermissions.Approve,
+            ["POST /api/v1/platform/notifications/versions/{versionId:guid}/activate"] = NotificationPermissions.Activate,
+            ["POST /api/v1/platform/notifications/versions/{versionId:guid}/archive"] = NotificationPermissions.Archive,
+            ["GET /api/v1/platform/notifications/channels"] = NotificationPermissions.Read,
+            ["GET /api/v1/platform/notifications/history"] = NotificationPermissions.History,
+            ["GET /api/v1/platform/notifications/settings/readiness"] = NotificationPermissions.SettingsRead
+        };
+        foreach (var (route, permission) in notificationPermissionRoutes)
+        {
+            var policy = endpoints[route].Metadata.GetMetadata<AuthorizationPolicy>();
+            Assert.NotNull(policy);
+            Assert.Contains(policy.Requirements.OfType<PlatformPermissionRequirement>(),
+                requirement => requirement.PermissionCode == permission);
+        }
+        var notificationPermissionsRoute = endpoints["GET /api/v1/platform/notifications/permissions"];
+        Assert.NotEmpty(notificationPermissionsRoute.Metadata.GetOrderedMetadata<IAuthorizeData>());
+        Assert.Null(notificationPermissionsRoute.Metadata.GetMetadata<AuthorizationPolicy>());
+
         foreach (var route in expectedRoutes.Where(route => route.Contains("/public/legal/terms", StringComparison.Ordinal)))
             Assert.Empty(endpoints[route].Metadata.GetOrderedMetadata<IAuthorizeData>());
 
@@ -243,6 +284,7 @@ public sealed class ApiRouteContractTests
             builder.Services.AddScoped<PlatformRegistrationPermissionService>(_ => throw new InvalidOperationException());
             builder.Services.AddScoped<PlatformRegistrationService>(_ => throw new InvalidOperationException());
             builder.Services.AddScoped<RolePermissionMatrixService>(_ => throw new InvalidOperationException());
+            builder.Services.AddScoped<NotificationManagementService>(_ => throw new InvalidOperationException());
             await using var app = builder.Build();
             app.MapPlatformEndpoints(TestSettings(bypassEnabled));
 

@@ -26,7 +26,9 @@ public sealed record RuntimeSettings(
     bool LegalConsentEnforcement = true,
     bool DevelopmentTermsBypassEnabled = false,
     bool PersonalRegistrationEnabled = true,
-    bool OrganizationRegistrationEnabled = true) : IPlatformRuntimeSettings
+    bool OrganizationRegistrationEnabled = true,
+    bool NotificationTemplatesEnabled = false,
+    bool NotificationDeliveryAuditEnabled = false) : IPlatformRuntimeSettings
 {
     private sealed class ConfigRow
     {
@@ -100,6 +102,17 @@ public sealed record RuntimeSettings(
             return value;
         }
 
+        async Task<bool> OptionalFlag(string key, bool fallback)
+        {
+            var row = await Read(key);
+            if (row is null)
+                return fallback;
+            if (row.StorageType != "PLAIN" || row.ValueType != "BOOLEAN" ||
+                !bool.TryParse(row.ConfigurationValue, out var value))
+                throw new InvalidOperationException($"SQL configuration '{key}' must be a boolean.");
+            return value;
+        }
+
         var issuer = await Required("auth.jwt.issuer", "STRING");
         var audience = await Required("auth.jwt.audience", "STRING");
         var allowedOrigin = await Required("web.allowed_origin", "STRING");
@@ -138,6 +151,8 @@ public sealed record RuntimeSettings(
             await Flag("registration.legal_consent_enforcement"),
             developmentTermsBypassEnabled,
             await Flag("registration.personal.enabled"),
-            await Flag("registration.organization.enabled"));
+            await Flag("registration.organization.enabled"),
+            await OptionalFlag("notification.email_verification_templates.enabled", false),
+            await OptionalFlag("notification.email_verification_delivery_audit.enabled", false));
     }
 }

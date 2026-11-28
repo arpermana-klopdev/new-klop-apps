@@ -1379,6 +1379,237 @@ paths:
                 properties:
                   status:
                     type: string
+  /api/v1/platform/notifications/permissions:
+    get:
+      tags: [Platform Notifications]
+      summary: Get the caller's effective notification permissions
+      security:
+        - Bearer: []
+      responses:
+        '200':
+          description: Effective notification permissions
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiEnvelopeOfNotificationPermissionsResponse' }
+  /api/v1/platform/notifications/templates:
+    get:
+      tags: [Platform Notifications]
+      summary: List notification templates and active versions
+      security:
+        - Bearer: []
+      responses:
+        '200':
+          description: Template catalog
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiEnvelopeOfNotificationTemplateSummaryList' }
+    post:
+      tags: [Platform Notifications]
+      summary: Create a notification template draft
+      security:
+        - Bearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateNotificationTemplateRequest' }
+      responses:
+        '201':
+          description: Draft created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiEnvelopeOfNotificationTemplateDraftResult' }
+  /api/v1/platform/notifications/templates/{templateId}:
+    get:
+      tags: [Platform Notifications]
+      summary: Get notification template details and version history
+      security:
+        - Bearer: []
+      parameters:
+        - name: templateId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Template details
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiEnvelopeOfNotificationTemplateDetail' }
+        '404':
+          description: Template not found
+  /api/v1/platform/notifications/versions/{versionId}:
+    put:
+      tags: [Platform Notifications]
+      summary: Edit a template draft using optimistic concurrency
+      security:
+        - Bearer: []
+      parameters:
+        - name: versionId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/NotificationTemplateDraftRequest' }
+      responses:
+        '200':
+          description: Draft updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiEnvelopeOfNotificationTemplateDraftResult' }
+        '409':
+          description: Version changed or is no longer editable
+  /api/v1/platform/notifications/versions/{versionId}/preview:
+    post:
+      tags: [Platform Notifications]
+      summary: Render a draft with synthetic preview values
+      security:
+        - Bearer: []
+      parameters:
+        - name: versionId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Plain-text preview; no real recipient or verification token is used
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiEnvelopeOfNotificationTemplatePreviewResponse' }
+  /api/v1/platform/notifications/versions/{versionId}/submit:
+    post:
+      tags: [Platform Notifications]
+      summary: Submit a template version for approval
+      security:
+        - Bearer: []
+      parameters:
+        - name: versionId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/NotificationDecisionRequest' }
+      responses:
+        '200':
+          description: Submitted version
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiEnvelopeOfNotificationTemplateVersionList' }
+  /api/v1/platform/notifications/versions/{versionId}/approval:
+    post:
+      tags: [Platform Notifications]
+      summary: Approve or reject a submitted version
+      security:
+        - Bearer: []
+      parameters:
+        - name: versionId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/NotificationDecisionRequest' }
+      responses:
+        '200':
+          description: Approval decision recorded
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiEnvelopeOfNotificationTemplateVersionList' }
+  /api/v1/platform/notifications/versions/{versionId}/activate:
+    post:
+      tags: [Platform Notifications]
+      summary: Activate an approved version atomically
+      security:
+        - Bearer: []
+      parameters:
+        - name: versionId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/NotificationDecisionRequest' }
+      responses:
+        '200':
+          description: Active version
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiEnvelopeOfNotificationTemplateVersionList' }
+  /api/v1/platform/notifications/versions/{versionId}/archive:
+    post:
+      tags: [Platform Notifications]
+      summary: Archive a template version
+      security:
+        - Bearer: []
+      parameters:
+        - name: versionId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/NotificationDecisionRequest' }
+      responses:
+        '200':
+          description: Archived version
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiEnvelopeOfNotificationTemplateVersionList' }
+  /api/v1/platform/notifications/channels:
+    get:
+      tags: [Platform Notifications]
+      summary: List configured notification channels
+      security:
+        - Bearer: []
+      responses:
+        '200':
+          description: Channel status
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiEnvelopeOfNotificationChannelStatusList' }
+  /api/v1/platform/notifications/history:
+    get:
+      tags: [Platform Notifications]
+      summary: Read paginated notification delivery history
+      security:
+        - Bearer: []
+      parameters:
+        - name: pageNumber
+          in: query
+          schema: { type: integer, minimum: 1, default: 1 }
+        - name: pageSize
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+      responses:
+        '200':
+          description: Provider-attempt history; not inbox-delivery confirmation
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiEnvelopeOfNotificationDeliveryHistoryPage' }
+  /api/v1/platform/notifications/settings/readiness:
+    get:
+      tags: [Platform Notifications]
+      summary: Read safe SMTP and template rollout readiness metadata
+      security:
+        - Bearer: []
+      responses:
+        '200':
+          description: Safe configuration metadata only; no host, username, or secret reference values
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiEnvelopeOfNotificationSettingsReadiness' }
 components:
   parameters:
     DocumentVersionId:
@@ -3112,6 +3343,206 @@ components:
           format: int64
         token:
           type: string
+    NotificationPermissionsResponse:
+      required: [permissions]
+      type: object
+      properties:
+        permissions:
+          type: array
+          items: { type: string }
+    NotificationTemplateSummary:
+      required: [templateId, templateCode, displayName, channelCode, localeCode, concurrencyVersion]
+      type: object
+      properties:
+        templateId: { type: string, format: uuid }
+        templateCode: { type: string }
+        displayName: { type: string }
+        channelCode: { type: string }
+        localeCode: { type: string }
+        activeVersionId: { type: string, format: uuid, nullable: true }
+        activeVersionNumber: { type: integer, nullable: true }
+        activeVersionStatus: { type: string, nullable: true }
+        concurrencyVersion: { type: string, format: byte }
+    NotificationTemplateVersion:
+      required: [versionId, templateCode, displayName, versionNumber, status, subject, body, channelCode, localeCode, createdAtUtc, concurrencyVersion]
+      type: object
+      properties:
+        versionId: { type: string, format: uuid }
+        templateCode: { type: string }
+        displayName: { type: string }
+        versionNumber: { type: integer }
+        status: { type: string }
+        subject: { type: string }
+        body: { type: string }
+        channelCode: { type: string }
+        localeCode: { type: string }
+        createdAtUtc: { type: string, format: date-time }
+        concurrencyVersion: { type: string, format: byte }
+    NotificationTemplateDetail:
+      required: [templateId, templateCode, displayName, versions]
+      type: object
+      properties:
+        templateId: { type: string, format: uuid }
+        templateCode: { type: string }
+        displayName: { type: string }
+        versions:
+          type: array
+          items: { $ref: '#/components/schemas/NotificationTemplateVersion' }
+    CreateNotificationTemplateRequest:
+      required: [templateCode, displayName, channelCode, localeCode, subject, body]
+      type: object
+      properties:
+        templateCode: { type: string, maxLength: 50 }
+        displayName: { type: string, maxLength: 200 }
+        channelCode: { type: string, maxLength: 30 }
+        localeCode: { type: string, maxLength: 20 }
+        subject: { type: string, maxLength: 300 }
+        body: { type: string, maxLength: 20000 }
+    NotificationTemplateDraftRequest:
+      required: [subject, body, concurrencyVersion]
+      type: object
+      properties:
+        subject: { type: string, maxLength: 300 }
+        body: { type: string, maxLength: 20000 }
+        concurrencyVersion: { type: string, format: byte }
+    NotificationDecisionRequest:
+      required: [decision, concurrencyVersion]
+      type: object
+      properties:
+        decision: { type: string, maxLength: 20 }
+        note: { type: string, nullable: true, maxLength: 1000 }
+        concurrencyVersion: { type: string, format: byte }
+    NotificationTemplateDraftResult:
+      required: [templateId, versionId]
+      type: object
+      properties:
+        templateId: { type: string, format: uuid }
+        versionId: { type: string, format: uuid }
+    NotificationTemplatePreviewResponse:
+      required: [subject, body]
+      type: object
+      properties:
+        subject: { type: string }
+        body: { type: string }
+    NotificationChannelStatus:
+      required: [channelCode, displayName, status, isEnabled, readiness]
+      type: object
+      properties:
+        channelCode: { type: string }
+        displayName: { type: string }
+        status: { type: string }
+        isEnabled: { type: boolean }
+        readiness: { type: string }
+    NotificationSettingsReadiness:
+      required: [smtpHostConfigured, smtpPortConfigured, senderConfigured, tlsRequired, credentialsConfigured, templateRolloutEnabled, deliveryAuditEnabled, verificationLifetimeStatus]
+      type: object
+      properties:
+        smtpHostConfigured: { type: boolean }
+        smtpPortConfigured: { type: boolean }
+        senderConfigured: { type: boolean }
+        tlsRequired: { type: boolean }
+        credentialsConfigured: { type: boolean }
+        templateRolloutEnabled: { type: boolean }
+        deliveryAuditEnabled: { type: boolean }
+        verificationLifetimeStatus: { type: string }
+    NotificationDeliveryHistoryItem:
+      required: [attemptId, deliveryId, templateCode, templateVersion, channelCode, outcome, occurredAtUtc, correlationId]
+      type: object
+      properties:
+        attemptId: { type: integer, format: int64 }
+        deliveryId: { type: string, format: uuid }
+        templateCode: { type: string }
+        templateVersion: { type: string }
+        channelCode: { type: string }
+        outcome: { type: string }
+        safeErrorCategory: { type: string, nullable: true }
+        occurredAtUtc: { type: string, format: date-time }
+        correlationId: { type: string, format: uuid }
+    NotificationDeliveryHistoryPage:
+      required: [items, pageNumber, pageSize, totalCount]
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/NotificationDeliveryHistoryItem' }
+        pageNumber: { type: integer }
+        pageSize: { type: integer }
+        totalCount: { type: integer, format: int64 }
+    ApiEnvelopeOfNotificationPermissionsResponse:
+      type: object
+      properties:
+        success: { type: boolean }
+        data: { oneOf: [{ type: 'null' }, { $ref: '#/components/schemas/NotificationPermissionsResponse' }] }
+        error: { oneOf: [{ type: 'null' }, { $ref: '#/components/schemas/ApiError' }] }
+        meta: { $ref: '#/components/schemas/ApiMeta' }
+    ApiEnvelopeOfNotificationTemplateSummaryList:
+      type: object
+      properties:
+        success: { type: boolean }
+        data:
+          oneOf:
+            - { type: 'null' }
+            - type: array
+              items: { $ref: '#/components/schemas/NotificationTemplateSummary' }
+        error: { oneOf: [{ type: 'null' }, { $ref: '#/components/schemas/ApiError' }] }
+        meta: { $ref: '#/components/schemas/ApiMeta' }
+    ApiEnvelopeOfNotificationTemplateDetail:
+      type: object
+      properties:
+        success: { type: boolean }
+        data: { oneOf: [{ type: 'null' }, { $ref: '#/components/schemas/NotificationTemplateDetail' }] }
+        error: { oneOf: [{ type: 'null' }, { $ref: '#/components/schemas/ApiError' }] }
+        meta: { $ref: '#/components/schemas/ApiMeta' }
+    ApiEnvelopeOfNotificationTemplateDraftResult:
+      type: object
+      properties:
+        success: { type: boolean }
+        data: { oneOf: [{ type: 'null' }, { $ref: '#/components/schemas/NotificationTemplateDraftResult' }] }
+        error: { oneOf: [{ type: 'null' }, { $ref: '#/components/schemas/ApiError' }] }
+        meta: { $ref: '#/components/schemas/ApiMeta' }
+    ApiEnvelopeOfNotificationTemplatePreviewResponse:
+      type: object
+      properties:
+        success: { type: boolean }
+        data: { oneOf: [{ type: 'null' }, { $ref: '#/components/schemas/NotificationTemplatePreviewResponse' }] }
+        error: { oneOf: [{ type: 'null' }, { $ref: '#/components/schemas/ApiError' }] }
+        meta: { $ref: '#/components/schemas/ApiMeta' }
+    ApiEnvelopeOfNotificationTemplateVersionList:
+      type: object
+      properties:
+        success: { type: boolean }
+        data:
+          oneOf:
+            - { type: 'null' }
+            - type: array
+              items: { $ref: '#/components/schemas/NotificationTemplateVersion' }
+        error: { oneOf: [{ type: 'null' }, { $ref: '#/components/schemas/ApiError' }] }
+        meta: { $ref: '#/components/schemas/ApiMeta' }
+    ApiEnvelopeOfNotificationChannelStatusList:
+      type: object
+      properties:
+        success: { type: boolean }
+        data:
+          oneOf:
+            - { type: 'null' }
+            - type: array
+              items: { $ref: '#/components/schemas/NotificationChannelStatus' }
+        error: { oneOf: [{ type: 'null' }, { $ref: '#/components/schemas/ApiError' }] }
+        meta: { $ref: '#/components/schemas/ApiMeta' }
+    ApiEnvelopeOfNotificationDeliveryHistoryPage:
+      type: object
+      properties:
+        success: { type: boolean }
+        data: { oneOf: [{ type: 'null' }, { $ref: '#/components/schemas/NotificationDeliveryHistoryPage' }] }
+        error: { oneOf: [{ type: 'null' }, { $ref: '#/components/schemas/ApiError' }] }
+        meta: { $ref: '#/components/schemas/ApiMeta' }
+    ApiEnvelopeOfNotificationSettingsReadiness:
+      type: object
+      properties:
+        success: { type: boolean }
+        data: { oneOf: [{ type: 'null' }, { $ref: '#/components/schemas/NotificationSettingsReadiness' }] }
+        error: { oneOf: [{ type: 'null' }, { $ref: '#/components/schemas/ApiError' }] }
+        meta: { $ref: '#/components/schemas/ApiMeta' }
   securitySchemes:
     Bearer:
       type: http
