@@ -3152,6 +3152,462 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/platform/configurations/permissions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Discover effective configuration-management capabilities */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Effective capabilities */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiEnvelopeOfSystemConfigurationAccessResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/configurations/catalog": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read the explicitly classified safe configuration catalog */
+        get: {
+            parameters: {
+                query?: {
+                    category?: string;
+                    pageNumber?: number;
+                    pageSize?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Safe metadata only; no persisted value or secret reference */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiEnvelopeOfSystemConfigurationCatalogPage"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/configurations/requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List safe configuration change request metadata */
+        get: {
+            parameters: {
+                query?: {
+                    status?: "ALL" | "DRAFT" | "SUBMITTED" | "APPROVED" | "REJECTED" | "CANCELED" | "APPLIED";
+                    pageNumber?: number;
+                    pageSize?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Safe requests and allowlisted proposed integer only */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiEnvelopeOfSystemConfigurationRequestPage"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /** Create a draft for the explicitly supported bounded integer candidate */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["SystemConfigurationDraftRequest"];
+                };
+            };
+            responses: {
+                /** @description Draft created */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiEnvelopeOfSystemConfigurationDraftResult"];
+                    };
+                };
+                /** @description Candidate remains held or target/policy changed */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/configurations/approvals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List submitted requests awaiting an independent decision */
+        get: {
+            parameters: {
+                query?: {
+                    pageNumber?: number;
+                    pageSize?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Submitted request metadata */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiEnvelopeOfSystemConfigurationRequestPage"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/configurations/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read deterministic paginated safe applied history */
+        get: {
+            parameters: {
+                query?: {
+                    pageNumber?: number;
+                    pageSize?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Safe applied history; startup runtime values are not returned */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiEnvelopeOfSystemConfigurationHistoryPage"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/configurations/requests/{requestId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Edit an owned unsubmitted draft using optimistic concurrency */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    requestId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["SystemConfigurationDraftUpdate"];
+                };
+            };
+            responses: {
+                /** @description Draft updated */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiEnvelopeOfSystemConfigurationDraftResult"];
+                    };
+                };
+                /** @description Request or current policy changed */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/configurations/requests/{requestId}/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submit a draft for independent approval */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    requestId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["SystemConfigurationTransitionRequest"];
+                };
+            };
+            responses: {
+                /** @description Submitted request */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiEnvelopeOfSystemConfigurationDraftResult"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/configurations/requests/{requestId}/approval": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Approve or reject a submitted request; self-approval is denied */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    requestId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["SystemConfigurationDecisionRequest"];
+                };
+            };
+            responses: {
+                /** @description Decision recorded */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiEnvelopeOfSystemConfigurationDraftResult"];
+                    };
+                };
+                /** @description State, policy, or request version conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/configurations/requests/{requestId}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel an owned draft or submitted request */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    requestId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["SystemConfigurationTransitionRequest"];
+                };
+            };
+            responses: {
+                /** @description Request canceled */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiEnvelopeOfSystemConfigurationDraftResult"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/configurations/requests/{requestId}/apply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Apply an approved request exactly once; no automatic restart occurs */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    requestId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["SystemConfigurationTransitionRequest"];
+                };
+            };
+            responses: {
+                /** @description Request applied; startup in-memory value remains unchanged until authorized restart */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiEnvelopeOfSystemConfigurationDraftResult"];
+                    };
+                };
+                /** @description Request, policy, or target configuration version conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -3880,6 +4336,153 @@ export interface components {
             pageSize: number;
             /** Format: int64 */
             totalCount: number;
+        };
+        SystemConfigurationAccessResponse: {
+            canRead: boolean;
+            canCreateRequest: boolean;
+            canEditRequest: boolean;
+            canSubmit: boolean;
+            canCancel: boolean;
+            canApprove: boolean;
+            canApply: boolean;
+            canReadHistory: boolean;
+        };
+        SystemConfigurationCatalogItem: {
+            configurationKey: string;
+            category: string;
+            valueType: string;
+            storageType: string;
+            /** @enum {string} */
+            readiness: "PRESENT" | "MISSING" | "INACTIVE" | "INVALID";
+            /** @enum {string} */
+            managementStatus: "HOLD" | "ACTIVE" | "INVALID" | "MISSING";
+            isEditable: boolean;
+            requiresApproval: boolean;
+            requiresRestart: boolean;
+            versionNumber?: number | null;
+            /** Format: byte */
+            concurrencyVersion?: string | null;
+            /** Format: date-time */
+            createdAtUtc?: string | null;
+            /** Format: date-time */
+            updatedAtUtc?: string | null;
+            minimum?: number | null;
+            maximum?: number | null;
+        };
+        SystemConfigurationCatalogPage: {
+            items: components["schemas"]["SystemConfigurationCatalogItem"][];
+            pageNumber: number;
+            pageSize: number;
+            /** Format: int64 */
+            totalCount: number;
+            /** Format: int64 */
+            unclassifiedCount: number;
+        };
+        SystemConfigurationRequestItem: {
+            /** Format: uuid */
+            requestId: string;
+            configurationKey: string;
+            /** @enum {string} */
+            status: "DRAFT" | "SUBMITTED" | "APPROVED" | "REJECTED" | "CANCELED" | "APPLIED";
+            proposedInteger?: number | null;
+            expectedVersionNumber?: number | null;
+            reasonCode: string;
+            /** Format: date-time */
+            createdAtUtc: string;
+            /** Format: date-time */
+            updatedAtUtc?: string | null;
+            /** Format: byte */
+            requestConcurrencyVersion?: string | null;
+        };
+        SystemConfigurationRequestPage: {
+            items: components["schemas"]["SystemConfigurationRequestItem"][];
+            pageNumber: number;
+            pageSize: number;
+            /** Format: int64 */
+            totalCount: number;
+        };
+        SystemConfigurationHistoryItem: {
+            /** Format: int64 */
+            historyId: number;
+            configurationKey: string;
+            versionNumber: number;
+            changeType: string;
+            appliedInteger?: number | null;
+            reasonCode: string;
+            /** Format: date-time */
+            occurredAtUtc: string;
+            /** Format: int64 */
+            actorUserId: number;
+        };
+        SystemConfigurationHistoryPage: {
+            items: components["schemas"]["SystemConfigurationHistoryItem"][];
+            pageNumber: number;
+            pageSize: number;
+            /** Format: int64 */
+            totalCount: number;
+        };
+        SystemConfigurationDraftRequest: {
+            /** @enum {string} */
+            configurationKey: "database.command_timeout_seconds";
+            proposedInteger: number;
+            expectedVersionNumber: number;
+            /** Format: byte */
+            targetConcurrencyVersion: string;
+            /** @enum {string} */
+            reasonCode: "ROUTINE_MAINTENANCE" | "CAPACITY_ADJUSTMENT" | "INCIDENT_FOLLOWUP";
+        };
+        SystemConfigurationDraftUpdate: {
+            proposedInteger: number;
+            /** @enum {string} */
+            reasonCode: "ROUTINE_MAINTENANCE" | "CAPACITY_ADJUSTMENT" | "INCIDENT_FOLLOWUP";
+            /** Format: byte */
+            requestConcurrencyVersion: string;
+        };
+        SystemConfigurationTransitionRequest: {
+            /** Format: byte */
+            requestConcurrencyVersion: string;
+        };
+        SystemConfigurationDecisionRequest: {
+            /** @enum {string} */
+            decision: "APPROVE" | "REJECT";
+            /** Format: byte */
+            requestConcurrencyVersion: string;
+        };
+        SystemConfigurationDraftResult: {
+            /** Format: uuid */
+            requestId: string;
+            /** Format: byte */
+            requestConcurrencyVersion: string;
+        };
+        ApiEnvelopeOfSystemConfigurationAccessResponse: {
+            success?: boolean;
+            data?: null | components["schemas"]["SystemConfigurationAccessResponse"];
+            error?: null | components["schemas"]["ApiError"];
+            meta?: components["schemas"]["ApiMeta"];
+        };
+        ApiEnvelopeOfSystemConfigurationCatalogPage: {
+            success?: boolean;
+            data?: null | components["schemas"]["SystemConfigurationCatalogPage"];
+            error?: null | components["schemas"]["ApiError"];
+            meta?: components["schemas"]["ApiMeta"];
+        };
+        ApiEnvelopeOfSystemConfigurationRequestPage: {
+            success?: boolean;
+            data?: null | components["schemas"]["SystemConfigurationRequestPage"];
+            error?: null | components["schemas"]["ApiError"];
+            meta?: components["schemas"]["ApiMeta"];
+        };
+        ApiEnvelopeOfSystemConfigurationHistoryPage: {
+            success?: boolean;
+            data?: null | components["schemas"]["SystemConfigurationHistoryPage"];
+            error?: null | components["schemas"]["ApiError"];
+            meta?: components["schemas"]["ApiMeta"];
+        };
+        ApiEnvelopeOfSystemConfigurationDraftResult: {
+            success?: boolean;
+            data?: null | components["schemas"]["SystemConfigurationDraftResult"];
+            error?: null | components["schemas"]["ApiError"];
+            meta?: components["schemas"]["ApiMeta"];
         };
         ApiEnvelopeOfNotificationPermissionsResponse: {
             success?: boolean;

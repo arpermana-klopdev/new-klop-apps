@@ -100,6 +100,17 @@ public sealed class ApiRouteContractTests
             "POST /api/v1/platform/legal-documents/versions/{documentVersionId:guid}/approve",
             "POST /api/v1/platform/legal-documents/versions/{documentVersionId:guid}/publish",
             "POST /api/v1/platform/legal-documents/versions/{documentVersionId:guid}/archive",
+            "GET /api/v1/platform/configurations/permissions",
+            "GET /api/v1/platform/configurations/catalog",
+            "GET /api/v1/platform/configurations/requests",
+            "GET /api/v1/platform/configurations/approvals",
+            "GET /api/v1/platform/configurations/history",
+            "POST /api/v1/platform/configurations/requests",
+            "PUT /api/v1/platform/configurations/requests/{requestId:guid}",
+            "POST /api/v1/platform/configurations/requests/{requestId:guid}/submit",
+            "POST /api/v1/platform/configurations/requests/{requestId:guid}/approval",
+            "POST /api/v1/platform/configurations/requests/{requestId:guid}/cancel",
+            "POST /api/v1/platform/configurations/requests/{requestId:guid}/apply",
             "POST /api/v1/auth/register",
             "GET /api/v1/auth/registration-policy",
             "POST /api/v1/auth/resend-verification",
@@ -148,7 +159,7 @@ public sealed class ApiRouteContractTests
         ];
 
         Assert.Equal(expectedRoutes.Order(StringComparer.Ordinal), endpoints.Keys.Order(StringComparer.Ordinal));
-        Assert.Equal(62, endpoints.Count);
+        Assert.Equal(73, endpoints.Count);
 
         foreach (var route in expectedRoutes.Where(route => route.Contains("/auth/", StringComparison.Ordinal)))
         {
@@ -163,6 +174,9 @@ public sealed class ApiRouteContractTests
             Assert.NotEmpty(endpoints[route].Metadata.GetOrderedMetadata<IAuthorizeData>());
 
         foreach (var route in expectedRoutes.Where(route => route.Contains("/platform/legal-documents", StringComparison.Ordinal)))
+            Assert.NotEmpty(endpoints[route].Metadata.GetOrderedMetadata<IAuthorizeData>());
+
+        foreach (var route in expectedRoutes.Where(route => route.Contains("/platform/configurations", StringComparison.Ordinal)))
             Assert.NotEmpty(endpoints[route].Metadata.GetOrderedMetadata<IAuthorizeData>());
 
         foreach (var route in expectedRoutes.Where(route =>
