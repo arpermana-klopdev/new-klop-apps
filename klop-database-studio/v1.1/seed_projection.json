@@ -1,0 +1,424 @@
+{
+  "source_commit": "36f563fdcdb70036ad5fd7d16e45c54b520c60a5",
+  "historical_grants": 28,
+  "projected_grants_not_applied": [
+    {
+      "role": "ADMIN",
+      "permission": "audit.read",
+      "tenant_type": "PERSONAL",
+      "source": "v1.1 historical seed; v1.10/003 contextualization"
+    },
+    {
+      "role": "ADMIN",
+      "permission": "audit.read",
+      "tenant_type": "ORGANIZATION",
+      "source": "v1.1 historical seed; v1.10/003 contextualization"
+    },
+    {
+      "role": "ADMIN",
+      "permission": "documents.read",
+      "tenant_type": "PERSONAL",
+      "source": "v1.1 historical seed; v1.10/003 contextualization"
+    },
+    {
+      "role": "ADMIN",
+      "permission": "documents.read",
+      "tenant_type": "ORGANIZATION",
+      "source": "v1.1 historical seed; v1.10/003 contextualization"
+    },
+    {
+      "role": "ADMIN",
+      "permission": "documents.upload",
+      "tenant_type": "PERSONAL",
+      "source": "v1.1 historical seed; v1.10/003 contextualization"
+    },
+    {
+      "role": "ADMIN",
+      "permission": "documents.upload",
+      "tenant_type": "ORGANIZATION",
+      "source": "v1.1 historical seed; v1.10/003 contextualization"
+    },
+    {
+      "role": "ADMIN",
+      "permission": "tenant.members.invite",
+      "tenant_type": "PERSONAL",
+      "source": "v1.1 historical seed; v1.10/003 contextualization"
+    },
+    {
+      "role": "ADMIN",
+      "permission": "tenant.members.invite",
+      "tenant_type": "ORGANIZATION",
+      "source": "v1.1 historical seed; v1.10/003 contextualization"
+    },
+    {
+      "role": "ADMIN",
+      "permission": "tenant.members.read",
+      "tenant_type": "PERSONAL",
+      "source": "v1.1 historical seed; v1.10/003 contextualization"
+    },
+    {
+      "role": "ADMIN",
+      "permission": "tenant.members.read",
+      "tenant_type": "ORGANIZATION",
+      "source": "v1.1 historical seed; v1.10/003 contextualization"
+    },
+    {
+      "role": "ADMIN",
+      "permission": "tenant.members.remove",
+      "tenant_type": "PERSONAL",
+      "source": "v1.1 historical seed; v1.10/003 contextualization"
+    },
+    {
+      "role": "ADMIN",
+      "permission": "tenant.members.remove",
+      "tenant_type": "ORGANIZATION",
+      "source": "v1.1 historical seed; v1.10/003 contextualization"
+    },
+    {
+      "role": "ADMIN",
+      "permission": "tenant.read",
+      "tenant_type": "PERSONAL",
+      "source": "v1.1 historical seed; v1.10/003 contextualization"
+    },
+    {
+      "role": "ADMIN",
+      "permission": "tenant.read",
+      "tenant_type": "ORGANIZATION",
+      "source": "v1.1 historical seed; v1.10/003 contextualization"
+    },
+    {
+      "role": "ADMIN",
+      "permission": "tenant.update",
+      "tenant_type": "PERSONAL",
+      "source": "v1.1 historical seed; v1.10/003 contextualization"
+    },
+    {
+      "role": "ADMIN",
+      "permission": "tenant.update",
+      "tenant_type": "ORGANIZATION",
+      "source": "v1.1 historical seed; v1.10/003 contextualization"
+    },
+    {
+      "role": "ADMIN",
+      "permission": "tenant.verification.read",
+      "tenant_type": "PERSONAL",
+      "source": "v1.1 historical seed; v1.10/003 contextualization"
+    },
+    {
+      "role": "ADMIN",
+      "permission": "tenant.verification.read",
+      "tenant_type": "ORGANIZATION",
+      "source": "v1.1 historical seed; v1.10/003 contextualization"
+    },
+    {
+      "role": "MEMBER",
+      "permission": "documents.read",
+      "tenant_type": "PERSONAL",
+      "source": "v1.1 historical seed; v1.10/003 contextualization"
+    },
+    {
+      "role": "MEMBER",
+      "permission": "documents.read",
+      "tenant_type": "ORGANIZATION",
+      "source": "v1.1 historical seed; v1.10/003 contextualization"
+    },
+    {
+      "role": "MEMBER",
+      "permission": "documents.upload",
+      "tenant_type": "PERSONAL",
+      "source": "v1.1 historical seed; v1.10/003 contextualization"
+    },
+    {
+      "role": "MEMBER",
+      "permission": "documents.upload",
+      "tenant_type": "ORGANIZATION",
+      "source": "v1.1 historical seed; v1.10/003 contextualization"
+    },
+    {
+      "role": "MEMBER",
+      "permission": "tenant.read",
+      "tenant_type": "PERSONAL",
+      "source": "v1.1 historical seed; v1.10/003 contextualization"
+    },
+    {
+      "role": "MEMBER",
+      "permission": "tenant.read",
+      "tenant_type": "ORGANIZATION",
+      "source": "v1.1 historical seed; v1.10/003 contextualization"
+    },
+    {
+      "role": "OWNER",
+      "permission": "audit.read",
+      "tenant_type": "PERSONAL",
+      "source": "v1.1 historical seed; v1.10/003 contextualization"
+    },
+    {
+      "role": "OWNER",
+      "permission": "audit.read",
+      "tenant_type": "ORGANIZATION",
+      "source": "v1.1 historical seed; v1.10/003 contextualization"
+    },
+    {
+      "role": "OWNER",
+      "permission": "billing.manage",
+      "tenant_type": "PERSONAL",
+      "source": "v1.1 historical seed; v1.10/003 contextualization"
+    },
+    {
+      "role": "OWNER",
+      "permission": "billing.manage",
+      "tenant_type": "ORGANIZATION",
+      "source": "v1.1 historical seed; v1.10/003 contextualization"
+    },
+    {
+      "role": "OWNER",
+      "permission": "documents.delete",
+      "tenant_type": "PERSONAL",
+      "source": "v1.1 historical seed; v1.10/003 contextualization"
+    },
+    {
+      "role": "OWNER",
+      "permission": "documents.delete",
+      "tenant_type": "ORGANIZATION",
+      "source": "v1.1 historical seed; v1.10/003 contextualization"
+    },
+    {
+      "role": "OWNER",
+      "permission": "documents.read",
+      "tenant_type": "PERSONAL",
+      "source": "v1.1 historical seed; v1.10/003 contextualization"
+    },
+    {
+      "role": "OWNER",
+      "permission": "documents.read",
+      "tenant_type": "ORGANIZATION",
+      "source": "v1.1 historical seed; v1.10/003 contextualization"
+    },
+    {
+      "role": "OWNER",
+      "permission": "documents.upload",
+      "tenant_type": "PERSONAL",
+      "source": "v1.1 historical seed; v1.10/003 contextualization"
+    },
+    {
+      "role": "OWNER",
+      "permission": "documents.upload",
+      "tenant_type": "ORGANIZATION",
+      "source": "v1.1 historical seed; v1.10/003 contextualization"
+    },
+    {
+      "role": "OWNER",
+      "permission": "tenant.members.invite",
+      "tenant_type": "PERSONAL",
+      "source": "v1.1 historical seed; v1.10/003 contextualization"
+    },
+    {
+      "role": "OWNER",
+      "permission": "tenant.members.invite",
+      "tenant_type": "ORGANIZATION",
+      "source": "v1.1 historical seed; v1.10/003 contextualization"
+    },
+    {
+      "role": "OWNER",
+      "permission": "tenant.members.read",
+      "tenant_type": "PERSONAL",
+      "source": "v1.1 historical seed; v1.10/003 contextualization"
+    },
+    {
+      "role": "OWNER",
+      "permission": "tenant.members.read",
+      "tenant_type": "ORGANIZATION",
+      "source": "v1.1 historical seed; v1.10/003 contextualization"
+    },
+    {
+      "role": "OWNER",
+      "permission": "tenant.members.remove",
+      "tenant_type": "PERSONAL",
+      "source": "v1.1 historical seed; v1.10/003 contextualization"
+    },
+    {
+      "role": "OWNER",
+      "permission": "tenant.members.remove",
+      "tenant_type": "ORGANIZATION",
+      "source": "v1.1 historical seed; v1.10/003 contextualization"
+    },
+    {
+      "role": "OWNER",
+      "permission": "tenant.read",
+      "tenant_type": "PERSONAL",
+      "source": "v1.1 historical seed; v1.10/003 contextualization"
+    },
+    {
+      "role": "OWNER",
+      "permission": "tenant.read",
+      "tenant_type": "ORGANIZATION",
+      "source": "v1.1 historical seed; v1.10/003 contextualization"
+    },
+    {
+      "role": "OWNER",
+      "permission": "tenant.roles.assign",
+      "tenant_type": "PERSONAL",
+      "source": "v1.1 historical seed; v1.10/003 contextualization"
+    },
+    {
+      "role": "OWNER",
+      "permission": "tenant.roles.assign",
+      "tenant_type": "ORGANIZATION",
+      "source": "v1.1 historical seed; v1.10/003 contextualization"
+    },
+    {
+      "role": "OWNER",
+      "permission": "tenant.update",
+      "tenant_type": "PERSONAL",
+      "source": "v1.1 historical seed; v1.10/003 contextualization"
+    },
+    {
+      "role": "OWNER",
+      "permission": "tenant.update",
+      "tenant_type": "ORGANIZATION",
+      "source": "v1.1 historical seed; v1.10/003 contextualization"
+    },
+    {
+      "role": "OWNER",
+      "permission": "tenant.verification.read",
+      "tenant_type": "PERSONAL",
+      "source": "v1.1 historical seed; v1.10/003 contextualization"
+    },
+    {
+      "role": "OWNER",
+      "permission": "tenant.verification.read",
+      "tenant_type": "ORGANIZATION",
+      "source": "v1.1 historical seed; v1.10/003 contextualization"
+    },
+    {
+      "role": "SUPER_ADMIN",
+      "permission": "platform.config.manage",
+      "tenant_type": null,
+      "source": "v1.1 historical seed; v1.10/003 contextualization"
+    },
+    {
+      "role": "SUPER_ADMIN",
+      "permission": "platform.roles.manage",
+      "tenant_type": null,
+      "source": "v1.1 historical seed; v1.10/003 contextualization"
+    },
+    {
+      "role": "SUPER_ADMIN",
+      "permission": "platform.tenants.manage",
+      "tenant_type": null,
+      "source": "v1.1 historical seed; v1.10/003 contextualization"
+    },
+    {
+      "role": "SUPER_ADMIN",
+      "permission": "platform.verifications.review",
+      "tenant_type": null,
+      "source": "v1.1 historical seed; v1.10/003 contextualization"
+    },
+    {
+      "role": "SUPER_ADMIN",
+      "permission": "platform.registrations.read",
+      "tenant_type": null,
+      "source": "versioned SQL proposal (not applied)"
+    },
+    {
+      "role": "PLATFORM_SUPPORT",
+      "permission": "platform.registrations.read",
+      "tenant_type": null,
+      "source": "versioned SQL proposal (not applied)"
+    },
+    {
+      "role": "SUPER_ADMIN",
+      "permission": "platform.role_permissions.read",
+      "tenant_type": null,
+      "source": "versioned SQL proposal (not applied)"
+    },
+    {
+      "role": "SUPER_ADMIN",
+      "permission": "platform.role_permissions.update",
+      "tenant_type": null,
+      "source": "versioned SQL proposal (not applied)"
+    },
+    {
+      "role": "SUPER_ADMIN",
+      "permission": "platform.legal_documents.read",
+      "tenant_type": null,
+      "source": "versioned SQL proposal (not applied)"
+    },
+    {
+      "role": "PLATFORM_SUPPORT",
+      "permission": "platform.legal_documents.read",
+      "tenant_type": null,
+      "source": "versioned SQL proposal (not applied)"
+    },
+    {
+      "role": "SUPER_ADMIN",
+      "permission": "platform.legal_documents.draft.create",
+      "tenant_type": null,
+      "source": "versioned SQL proposal (not applied)"
+    },
+    {
+      "role": "PLATFORM_SUPPORT",
+      "permission": "platform.legal_documents.draft.create",
+      "tenant_type": null,
+      "source": "versioned SQL proposal (not applied)"
+    },
+    {
+      "role": "SUPER_ADMIN",
+      "permission": "platform.legal_documents.draft.edit",
+      "tenant_type": null,
+      "source": "versioned SQL proposal (not applied)"
+    },
+    {
+      "role": "PLATFORM_SUPPORT",
+      "permission": "platform.legal_documents.draft.edit",
+      "tenant_type": null,
+      "source": "versioned SQL proposal (not applied)"
+    },
+    {
+      "role": "SUPER_ADMIN",
+      "permission": "platform.legal_documents.draft.preview",
+      "tenant_type": null,
+      "source": "versioned SQL proposal (not applied)"
+    },
+    {
+      "role": "PLATFORM_SUPPORT",
+      "permission": "platform.legal_documents.draft.preview",
+      "tenant_type": null,
+      "source": "versioned SQL proposal (not applied)"
+    },
+    {
+      "role": "SUPER_ADMIN",
+      "permission": "platform.legal_documents.submit",
+      "tenant_type": null,
+      "source": "versioned SQL proposal (not applied)"
+    },
+    {
+      "role": "SUPER_ADMIN",
+      "permission": "platform.legal_documents.approve",
+      "tenant_type": null,
+      "source": "versioned SQL proposal (not applied)"
+    },
+    {
+      "role": "SUPER_ADMIN",
+      "permission": "platform.legal_documents.publish",
+      "tenant_type": null,
+      "source": "versioned SQL proposal (not applied)"
+    },
+    {
+      "role": "SUPER_ADMIN",
+      "permission": "platform.legal_documents.archive",
+      "tenant_type": null,
+      "source": "versioned SQL proposal (not applied)"
+    }
+  ],
+  "draft_recipe_not_applied": {
+    "template_code": "EMAIL_VERIFICATION",
+    "channel": "EMAIL",
+    "locale": "en",
+    "status": "DRAFT",
+    "subject": "KLOP - Email verification",
+    "body": "Complete email verification using this single-use link:\n{{verification_link}}\nThe link expires in {{expiry_hours}} hour(s). Never share it.",
+    "requires_actual_approved_actor_for_sql_server": true
+  },
+  "reason": "SQL HOLD; do not infer live grants or actual seed actor; legacy and prepared grants are comparison data only."
+}

@@ -1,0 +1,583 @@
+{
+  "source_commit": "36f563fdcdb70036ad5fd7d16e45c54b520c60a5",
+  "studio_version": "1.1",
+  "status": "SQL HOLD / OFFLINE ONLY",
+  "objects": [
+    {
+      "type": "index",
+      "name": "IX_NotificationDeliveries_Correlation",
+      "table": "ntf__NotificationDeliveries",
+      "sqlite_sql": "CREATE INDEX IX_NotificationDeliveries_Correlation ON ntf__NotificationDeliveries(CorrelationId,CreatedAtUtc DESC)"
+    },
+    {
+      "type": "index",
+      "name": "IX_aud__AuditEvents_CorrelationId",
+      "table": "aud__AuditEvents",
+      "sqlite_sql": "CREATE INDEX IX_aud__AuditEvents_CorrelationId ON aud__AuditEvents(CorrelationId)"
+    },
+    {
+      "type": "index",
+      "name": "IX_aud__AuditEvents_TenantId",
+      "table": "aud__AuditEvents",
+      "sqlite_sql": "CREATE INDEX IX_aud__AuditEvents_TenantId ON aud__AuditEvents(TenantId,OccurredAtUtc)"
+    },
+    {
+      "type": "index",
+      "name": "IX_aud__BusinessEvents_TargetType",
+      "table": "aud__BusinessEvents",
+      "sqlite_sql": "CREATE INDEX IX_aud__BusinessEvents_TargetType ON aud__BusinessEvents(TargetType,TargetId)"
+    },
+    {
+      "type": "index",
+      "name": "IX_aud__BusinessEvents_TenantId",
+      "table": "aud__BusinessEvents",
+      "sqlite_sql": "CREATE INDEX IX_aud__BusinessEvents_TenantId ON aud__BusinessEvents(TenantId,OccurredAtUtc)"
+    },
+    {
+      "type": "index",
+      "name": "IX_aud__SecurityEvents_SubjectUserId",
+      "table": "aud__SecurityEvents",
+      "sqlite_sql": "CREATE INDEX IX_aud__SecurityEvents_SubjectUserId ON aud__SecurityEvents(SubjectUserId,OccurredAtUtc)"
+    },
+    {
+      "type": "index",
+      "name": "IX_aud__SecurityEvents_TenantId",
+      "table": "aud__SecurityEvents",
+      "sqlite_sql": "CREATE INDEX IX_aud__SecurityEvents_TenantId ON aud__SecurityEvents(TenantId,OccurredAtUtc)"
+    },
+    {
+      "type": "index",
+      "name": "IX_iam__AuthSessions_UserId",
+      "table": "iam__AuthSessions",
+      "sqlite_sql": "CREATE INDEX IX_iam__AuthSessions_UserId ON iam__AuthSessions(UserId,RevokedAtUtc,ExpiresAtUtc)"
+    },
+    {
+      "type": "index",
+      "name": "IX_iam__ExternalIdentities_UserId",
+      "table": "iam__ExternalIdentities",
+      "sqlite_sql": "CREATE INDEX IX_iam__ExternalIdentities_UserId ON iam__ExternalIdentities(UserId)"
+    },
+    {
+      "type": "index",
+      "name": "IX_iam__RefreshTokens_AuthSessionId",
+      "table": "iam__RefreshTokens",
+      "sqlite_sql": "CREATE INDEX IX_iam__RefreshTokens_AuthSessionId ON iam__RefreshTokens(AuthSessionId,RevokedAtUtc,ExpiresAtUtc)"
+    },
+    {
+      "type": "index",
+      "name": "IX_iam__TenantRoleAssignments_RoleId",
+      "table": "iam__TenantRoleAssignments",
+      "sqlite_sql": "CREATE INDEX IX_iam__TenantRoleAssignments_RoleId ON iam__TenantRoleAssignments(RoleId)"
+    },
+    {
+      "type": "index",
+      "name": "IX_iam__VerificationChallenges_UserId",
+      "table": "iam__VerificationChallenges",
+      "sqlite_sql": "CREATE INDEX IX_iam__VerificationChallenges_UserId ON iam__VerificationChallenges(UserId,VerificationPurposeId,ExpiresAtUtc)"
+    },
+    {
+      "type": "index",
+      "name": "IX_leg__LegalDocumentApprovalDecisions_DocumentVersionId",
+      "table": "leg__LegalDocumentApprovalDecisions",
+      "sqlite_sql": "CREATE INDEX IX_leg__LegalDocumentApprovalDecisions_DocumentVersionId ON leg__LegalDocumentApprovalDecisions(DocumentVersionId,DecidedAtUtc DESC,ApprovalDecisionId DESC)"
+    },
+    {
+      "type": "index",
+      "name": "IX_leg__LegalDocumentVersionScopes_TenantTypeId",
+      "table": "leg__LegalDocumentVersionScopes",
+      "sqlite_sql": "CREATE INDEX IX_leg__LegalDocumentVersionScopes_TenantTypeId ON leg__LegalDocumentVersionScopes(TenantTypeId,DocumentVersionId)"
+    },
+    {
+      "type": "index",
+      "name": "IX_leg__LegalDocumentVersions_PublicationStatus",
+      "table": "leg__LegalDocumentVersions",
+      "sqlite_sql": "CREATE INDEX IX_leg__LegalDocumentVersions_PublicationStatus ON leg__LegalDocumentVersions(PublicationStatus,EffectiveAtUtc DESC,PublishedAtUtc DESC)"
+    },
+    {
+      "type": "index",
+      "name": "IX_leg__UserLegalConsents_UserId",
+      "table": "leg__UserLegalConsents",
+      "sqlite_sql": "CREATE INDEX IX_leg__UserLegalConsents_UserId ON leg__UserLegalConsents(UserId,AcceptedAtUtc DESC,ConsentId)"
+    },
+    {
+      "type": "index",
+      "name": "IX_mst__RolePermissions_PermissionId",
+      "table": "mst__RolePermissions",
+      "sqlite_sql": "CREATE INDEX IX_mst__RolePermissions_PermissionId ON mst__RolePermissions(PermissionId)"
+    },
+    {
+      "type": "index",
+      "name": "IX_reg__ApplicationSupportingDocuments_ApplicationId",
+      "table": "reg__ApplicationSupportingDocuments",
+      "sqlite_sql": "CREATE INDEX IX_reg__ApplicationSupportingDocuments_ApplicationId ON reg__ApplicationSupportingDocuments(ApplicationId,IdentityDocumentTypeId,VerificationStatusId)"
+    },
+    {
+      "type": "index",
+      "name": "IX_reg__RegistrationApplicationHistory_ApplicationId",
+      "table": "reg__RegistrationApplicationHistory",
+      "sqlite_sql": "CREATE INDEX IX_reg__RegistrationApplicationHistory_ApplicationId ON reg__RegistrationApplicationHistory(ApplicationId,OccurredAtUtc,HistoryId)"
+    },
+    {
+      "type": "index",
+      "name": "IX_reg__RegistrationApplications_OnboardingStatusId",
+      "table": "reg__RegistrationApplications",
+      "sqlite_sql": "CREATE INDEX IX_reg__RegistrationApplications_OnboardingStatusId ON reg__RegistrationApplications(OnboardingStatusId,CreatedAtUtc DESC,ApplicationId)"
+    },
+    {
+      "type": "index",
+      "name": "IX_reg__RegistrationApplications_UserId",
+      "table": "reg__RegistrationApplications",
+      "sqlite_sql": "CREATE INDEX IX_reg__RegistrationApplications_UserId ON reg__RegistrationApplications(UserId,CreatedAtUtc DESC,ApplicationId)"
+    },
+    {
+      "type": "index",
+      "name": "IX_ten__Organizations_OrganizationTypeId",
+      "table": "ten__Organizations",
+      "sqlite_sql": "CREATE INDEX IX_ten__Organizations_OrganizationTypeId ON ten__Organizations(OrganizationTypeId,VerificationStatusId)"
+    },
+    {
+      "type": "index",
+      "name": "IX_ten__TenantMemberships_UserId",
+      "table": "ten__TenantMemberships",
+      "sqlite_sql": "CREATE INDEX IX_ten__TenantMemberships_UserId ON ten__TenantMemberships(UserId,MembershipStatusId)"
+    },
+    {
+      "type": "index",
+      "name": "IX_ten__Tenants_TenantStatusId",
+      "table": "ten__Tenants",
+      "sqlite_sql": "CREATE INDEX IX_ten__Tenants_TenantStatusId ON ten__Tenants(TenantStatusId,TenantTypeId)"
+    },
+    {
+      "type": "index",
+      "name": "UX_NotificationTemplateVersions_OneActive",
+      "table": "ntf__NotificationTemplateVersions",
+      "sqlite_sql": "CREATE UNIQUE INDEX UX_NotificationTemplateVersions_OneActive ON ntf__NotificationTemplateVersions(TemplateId) WHERE StatusCode='ACTIVE'"
+    },
+    {
+      "type": "index",
+      "name": "UX_RolePermissions_Platform",
+      "table": "mst__RolePermissions",
+      "sqlite_sql": "CREATE UNIQUE INDEX UX_RolePermissions_Platform ON mst__RolePermissions(RoleId,PermissionId) WHERE TenantTypeId IS NULL"
+    },
+    {
+      "type": "index",
+      "name": "UX_RolePermissions_Tenant",
+      "table": "mst__RolePermissions",
+      "sqlite_sql": "CREATE UNIQUE INDEX UX_RolePermissions_Tenant ON mst__RolePermissions(RoleId,PermissionId,TenantTypeId) WHERE TenantTypeId IS NOT NULL"
+    },
+    {
+      "type": "index",
+      "name": "UX_reg_RegistrationApplications_UserCurrent",
+      "table": "reg__RegistrationApplications",
+      "sqlite_sql": "CREATE UNIQUE INDEX UX_reg_RegistrationApplications_UserCurrent ON reg__RegistrationApplications(UserId) WHERE IsCurrent=1"
+    },
+    {
+      "type": "table",
+      "name": "aud__AuditEvents",
+      "table": "aud__AuditEvents",
+      "sqlite_sql": "CREATE TABLE \"aud__AuditEvents\" (\n  \"AuditEventId\" INTEGER PRIMARY KEY AUTOINCREMENT,\n  \"TenantId\" INTEGER,\n  \"ActorUserId\" INTEGER,\n  \"ActorService\" TEXT,\n  \"AuditActionTypeId\" INTEGER NOT NULL,\n  \"AuditResultTypeId\" INTEGER NOT NULL,\n  \"TargetType\" TEXT NOT NULL,\n  \"TargetId\" TEXT,\n  \"ChangeSummaryJson\" TEXT,\n  \"RequestId\" TEXT,\n  \"CorrelationId\" TEXT,\n  \"OccurredAtUtc\" TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n  FOREIGN KEY (\"TenantId\") REFERENCES \"ten__Tenants\" (\"TenantId\"),\n  FOREIGN KEY (\"ActorUserId\") REFERENCES \"iam__Users\" (\"UserId\"),\n  FOREIGN KEY (\"AuditActionTypeId\") REFERENCES \"mst__AuditActionTypes\" (\"AuditActionTypeId\"),\n  FOREIGN KEY (\"AuditResultTypeId\") REFERENCES \"mst__AuditResultTypes\" (\"AuditResultTypeId\"),\n  CHECK (ActorUserId IS NOT NULL OR ActorService IS NOT NULL),\n  CHECK (ChangeSummaryJson IS NULL OR json_valid(ChangeSummaryJson))\n)"
+    },
+    {
+      "type": "table",
+      "name": "aud__BusinessEvents",
+      "table": "aud__BusinessEvents",
+      "sqlite_sql": "CREATE TABLE \"aud__BusinessEvents\" (\n  \"BusinessEventId\" INTEGER PRIMARY KEY AUTOINCREMENT,\n  \"TenantId\" INTEGER NOT NULL,\n  \"ActorUserId\" INTEGER,\n  \"BusinessEventTypeId\" INTEGER NOT NULL,\n  \"TargetType\" TEXT NOT NULL,\n  \"TargetId\" TEXT,\n  \"EventDataJson\" TEXT,\n  \"CorrelationId\" TEXT,\n  \"OccurredAtUtc\" TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n  FOREIGN KEY (\"TenantId\") REFERENCES \"ten__Tenants\" (\"TenantId\"),\n  FOREIGN KEY (\"ActorUserId\") REFERENCES \"iam__Users\" (\"UserId\"),\n  FOREIGN KEY (\"BusinessEventTypeId\") REFERENCES \"mst__BusinessEventTypes\" (\"BusinessEventTypeId\"),\n  CHECK (EventDataJson IS NULL OR json_valid(EventDataJson))\n)"
+    },
+    {
+      "type": "table",
+      "name": "aud__SecurityEvents",
+      "table": "aud__SecurityEvents",
+      "sqlite_sql": "CREATE TABLE \"aud__SecurityEvents\" (\n  \"SecurityEventId\" INTEGER PRIMARY KEY AUTOINCREMENT,\n  \"TenantId\" INTEGER,\n  \"ActorUserId\" INTEGER,\n  \"SubjectUserId\" INTEGER,\n  \"SecurityEventTypeId\" INTEGER NOT NULL,\n  \"SeverityCode\" TEXT NOT NULL,\n  \"MetadataJson\" TEXT,\n  \"CorrelationId\" TEXT,\n  \"OccurredAtUtc\" TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n  FOREIGN KEY (\"TenantId\") REFERENCES \"ten__Tenants\" (\"TenantId\"),\n  FOREIGN KEY (\"ActorUserId\") REFERENCES \"iam__Users\" (\"UserId\"),\n  FOREIGN KEY (\"SubjectUserId\") REFERENCES \"iam__Users\" (\"UserId\"),\n  FOREIGN KEY (\"SecurityEventTypeId\") REFERENCES \"mst__SecurityEventTypes\" (\"SecurityEventTypeId\"),\n  CHECK (SeverityCode IN ('INFO','WARNING','CRITICAL')),\n  CHECK (MetadataJson IS NULL OR json_valid(MetadataJson))\n)"
+    },
+    {
+      "type": "table",
+      "name": "cfg__SystemConfigurations",
+      "table": "cfg__SystemConfigurations",
+      "sqlite_sql": "CREATE TABLE \"cfg__SystemConfigurations\" (\n  \"ConfigurationId\" INTEGER PRIMARY KEY AUTOINCREMENT,\n  \"ConfigurationKey\" TEXT NOT NULL,\n  \"ConfigurationValue\" TEXT,\n  \"ValueType\" TEXT NOT NULL,\n  \"Category\" TEXT NOT NULL,\n  \"StorageType\" TEXT NOT NULL DEFAULT 'PLAIN',\n  \"Description\" TEXT,\n  \"DefaultValue\" TEXT,\n  \"MinNumericValue\" NUMERIC,\n  \"MaxNumericValue\" NUMERIC,\n  \"AllowedValuesJson\" TEXT,\n  \"ValidationPattern\" TEXT,\n  \"RequiresApproval\" INTEGER NOT NULL DEFAULT 0 CHECK (\"RequiresApproval\" IN (0,1)),\n  \"VersionNumber\" INTEGER NOT NULL DEFAULT 1,\n  \"IsActive\" INTEGER NOT NULL DEFAULT 1 CHECK (\"IsActive\" IN (0,1)),\n  \"IsSystem\" INTEGER NOT NULL DEFAULT 0 CHECK (\"IsSystem\" IN (0,1)),\n  \"IsEditable\" INTEGER NOT NULL DEFAULT 1 CHECK (\"IsEditable\" IN (0,1)),\n  \"IsSensitive\" INTEGER NOT NULL DEFAULT 0 CHECK (\"IsSensitive\" IN (0,1)),\n  \"RequiresRestart\" INTEGER NOT NULL DEFAULT 0 CHECK (\"RequiresRestart\" IN (0,1)),\n  \"CreatedAtUtc\" TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n  \"CreatedByUserId\" INTEGER,\n  \"UpdatedAtUtc\" TEXT,\n  \"UpdatedByUserId\" INTEGER,\n  \"RowVersion\" BLOB NOT NULL DEFAULT (randomblob(8)) CHECK (length(\"RowVersion\")=8),\n  UNIQUE (\"ConfigurationKey\"),\n  CHECK (ValueType IN ('STRING','INTEGER','BOOLEAN','DECIMAL','JSON')),\n  CHECK (StorageType IN ('PLAIN','KEYVAULT_REFERENCE')),\n  CHECK (MinNumericValue IS NULL OR MaxNumericValue IS NULL OR MinNumericValue<=MaxNumericValue),\n  CHECK (VersionNumber>=1),\n  CHECK (AllowedValuesJson IS NULL OR json_valid(AllowedValuesJson)),\n  CHECK (ValueType<>'JSON' OR ConfigurationValue IS NULL OR json_valid(ConfigurationValue))\n)"
+    },
+    {
+      "type": "table",
+      "name": "iam__AuthSessions",
+      "table": "iam__AuthSessions",
+      "sqlite_sql": "CREATE TABLE \"iam__AuthSessions\" (\n  \"AuthSessionId\" INTEGER PRIMARY KEY AUTOINCREMENT,\n  \"PublicSessionId\" TEXT NOT NULL DEFAULT (lower(hex(randomblob(16)))),\n  \"UserId\" INTEGER NOT NULL,\n  \"TenantId\" INTEGER,\n  \"ExpiresAtUtc\" TEXT NOT NULL,\n  \"LastSeenAtUtc\" TEXT,\n  \"RevokedAtUtc\" TEXT,\n  \"RevocationReason\" TEXT,\n  \"CreatedAtUtc\" TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n  \"RowVersion\" BLOB NOT NULL DEFAULT (randomblob(8)) CHECK (length(\"RowVersion\")=8),\n  UNIQUE (\"PublicSessionId\"),\n  FOREIGN KEY (\"UserId\") REFERENCES \"iam__Users\" (\"UserId\"),\n  FOREIGN KEY (\"TenantId\") REFERENCES \"ten__Tenants\" (\"TenantId\"),\n  CHECK (ExpiresAtUtc>CreatedAtUtc)\n)"
+    },
+    {
+      "type": "table",
+      "name": "iam__ExternalIdentities",
+      "table": "iam__ExternalIdentities",
+      "sqlite_sql": "CREATE TABLE \"iam__ExternalIdentities\" (\n  \"ExternalIdentityId\" INTEGER PRIMARY KEY AUTOINCREMENT,\n  \"UserId\" INTEGER NOT NULL,\n  \"IdentityProviderId\" INTEGER NOT NULL,\n  \"Issuer\" TEXT NOT NULL,\n  \"Subject\" TEXT NOT NULL,\n  \"LinkedAtUtc\" TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n  \"LastLoginAtUtc\" TEXT,\n  \"RowVersion\" BLOB NOT NULL DEFAULT (randomblob(8)) CHECK (length(\"RowVersion\")=8),\n  UNIQUE (\"IdentityProviderId\",\"Issuer\",\"Subject\"),\n  FOREIGN KEY (\"UserId\") REFERENCES \"iam__Users\" (\"UserId\"),\n  FOREIGN KEY (\"IdentityProviderId\") REFERENCES \"mst__IdentityProviders\" (\"IdentityProviderId\")\n)"
+    },
+    {
+      "type": "table",
+      "name": "iam__PlatformRoleAssignments",
+      "table": "iam__PlatformRoleAssignments",
+      "sqlite_sql": "CREATE TABLE \"iam__PlatformRoleAssignments\" (\n  \"PlatformRoleAssignmentId\" INTEGER PRIMARY KEY AUTOINCREMENT,\n  \"UserId\" INTEGER NOT NULL,\n  \"RoleId\" INTEGER NOT NULL,\n  \"AssignedAtUtc\" TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n  \"AssignedByUserId\" INTEGER,\n  \"RowVersion\" BLOB NOT NULL DEFAULT (randomblob(8)) CHECK (length(\"RowVersion\")=8),\n  UNIQUE (\"UserId\",\"RoleId\"),\n  FOREIGN KEY (\"UserId\") REFERENCES \"iam__Users\" (\"UserId\"),\n  FOREIGN KEY (\"RoleId\") REFERENCES \"mst__Roles\" (\"RoleId\"),\n  FOREIGN KEY (\"AssignedByUserId\") REFERENCES \"iam__Users\" (\"UserId\")\n)"
+    },
+    {
+      "type": "table",
+      "name": "iam__RefreshTokens",
+      "table": "iam__RefreshTokens",
+      "sqlite_sql": "CREATE TABLE \"iam__RefreshTokens\" (\n  \"RefreshTokenId\" INTEGER PRIMARY KEY AUTOINCREMENT,\n  \"AuthSessionId\" INTEGER NOT NULL,\n  \"TokenHash\" BLOB NOT NULL CHECK (length(\"TokenHash\")=32),\n  \"TokenFamilyId\" TEXT NOT NULL,\n  \"PreviousTokenId\" INTEGER,\n  \"ExpiresAtUtc\" TEXT NOT NULL,\n  \"UsedAtUtc\" TEXT,\n  \"RevokedAtUtc\" TEXT,\n  \"CreatedAtUtc\" TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n  \"RowVersion\" BLOB NOT NULL DEFAULT (randomblob(8)) CHECK (length(\"RowVersion\")=8),\n  UNIQUE (\"TokenHash\"),\n  UNIQUE (\"PreviousTokenId\"),\n  FOREIGN KEY (\"AuthSessionId\") REFERENCES \"iam__AuthSessions\" (\"AuthSessionId\"),\n  FOREIGN KEY (\"PreviousTokenId\") REFERENCES \"iam__RefreshTokens\" (\"RefreshTokenId\"),\n  CHECK (ExpiresAtUtc>CreatedAtUtc)\n)"
+    },
+    {
+      "type": "table",
+      "name": "iam__TenantRoleAssignments",
+      "table": "iam__TenantRoleAssignments",
+      "sqlite_sql": "CREATE TABLE \"iam__TenantRoleAssignments\" (\n  \"TenantRoleAssignmentId\" INTEGER PRIMARY KEY AUTOINCREMENT,\n  \"MembershipId\" INTEGER NOT NULL,\n  \"RoleId\" INTEGER NOT NULL,\n  \"AssignedAtUtc\" TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n  \"AssignedByUserId\" INTEGER,\n  \"RowVersion\" BLOB NOT NULL DEFAULT (randomblob(8)) CHECK (length(\"RowVersion\")=8),\n  UNIQUE (\"MembershipId\",\"RoleId\"),\n  FOREIGN KEY (\"MembershipId\") REFERENCES \"ten__TenantMemberships\" (\"MembershipId\"),\n  FOREIGN KEY (\"RoleId\") REFERENCES \"mst__Roles\" (\"RoleId\"),\n  FOREIGN KEY (\"AssignedByUserId\") REFERENCES \"iam__Users\" (\"UserId\")\n)"
+    },
+    {
+      "type": "table",
+      "name": "iam__UserCredentials",
+      "table": "iam__UserCredentials",
+      "sqlite_sql": "CREATE TABLE \"iam__UserCredentials\" (\n  \"CredentialId\" INTEGER PRIMARY KEY AUTOINCREMENT,\n  \"UserId\" INTEGER NOT NULL,\n  \"PasswordHash\" TEXT NOT NULL,\n  \"PasswordChangedAtUtc\" TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n  \"FailedLoginCount\" INTEGER NOT NULL DEFAULT 0,\n  \"LockoutUntilUtc\" TEXT,\n  \"CreatedAtUtc\" TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n  \"UpdatedAtUtc\" TEXT,\n  \"RowVersion\" BLOB NOT NULL DEFAULT (randomblob(8)) CHECK (length(\"RowVersion\")=8),\n  UNIQUE (\"UserId\"),\n  FOREIGN KEY (\"UserId\") REFERENCES \"iam__Users\" (\"UserId\"),\n  CHECK (FailedLoginCount>=0)\n)"
+    },
+    {
+      "type": "table",
+      "name": "iam__Users",
+      "table": "iam__Users",
+      "sqlite_sql": "CREATE TABLE \"iam__Users\" (\n  \"UserId\" INTEGER PRIMARY KEY AUTOINCREMENT,\n  \"PublicUserId\" TEXT NOT NULL DEFAULT (lower(hex(randomblob(16)))),\n  \"Email\" TEXT NOT NULL,\n  \"NormalizedEmail\" TEXT NOT NULL,\n  \"DisplayName\" TEXT NOT NULL,\n  \"EmailVerifiedAtUtc\" TEXT,\n  \"IsActive\" INTEGER NOT NULL DEFAULT 1 CHECK (\"IsActive\" IN (0,1)),\n  \"CreatedAtUtc\" TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n  \"CreatedByUserId\" INTEGER,\n  \"UpdatedAtUtc\" TEXT,\n  \"UpdatedByUserId\" INTEGER,\n  \"RowVersion\" BLOB NOT NULL DEFAULT (randomblob(8)) CHECK (length(\"RowVersion\")=8),\n  UNIQUE (\"PublicUserId\"),\n  UNIQUE (\"NormalizedEmail\")\n)"
+    },
+    {
+      "type": "table",
+      "name": "iam__VerificationChallenges",
+      "table": "iam__VerificationChallenges",
+      "sqlite_sql": "CREATE TABLE \"iam__VerificationChallenges\" (\n  \"ChallengeId\" INTEGER PRIMARY KEY AUTOINCREMENT,\n  \"UserId\" INTEGER NOT NULL,\n  \"VerificationPurposeId\" INTEGER NOT NULL,\n  \"TokenHash\" BLOB NOT NULL CHECK (length(\"TokenHash\")=32),\n  \"ExpiresAtUtc\" TEXT NOT NULL,\n  \"ConsumedAtUtc\" TEXT,\n  \"InvalidatedAtUtc\" TEXT,\n  \"CreatedAtUtc\" TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n  \"RowVersion\" BLOB NOT NULL DEFAULT (randomblob(8)) CHECK (length(\"RowVersion\")=8),\n  UNIQUE (\"TokenHash\"),\n  FOREIGN KEY (\"UserId\") REFERENCES \"iam__Users\" (\"UserId\"),\n  FOREIGN KEY (\"VerificationPurposeId\") REFERENCES \"mst__VerificationPurposes\" (\"VerificationPurposeId\"),\n  CHECK (ExpiresAtUtc>CreatedAtUtc)\n)"
+    },
+    {
+      "type": "table",
+      "name": "leg__LegalDocumentApprovalDecisions",
+      "table": "leg__LegalDocumentApprovalDecisions",
+      "sqlite_sql": "CREATE TABLE \"leg__LegalDocumentApprovalDecisions\" (\n  \"ApprovalDecisionId\" INTEGER PRIMARY KEY AUTOINCREMENT,\n  \"DocumentVersionId\" TEXT NOT NULL,\n  \"ReviewerUserId\" INTEGER NOT NULL,\n  \"DecisionCode\" TEXT NOT NULL,\n  \"DecisionNote\" TEXT,\n  \"DecidedAtUtc\" TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n  \"RequestId\" TEXT,\n  \"CorrelationId\" TEXT,\n  FOREIGN KEY (\"DocumentVersionId\") REFERENCES \"leg__LegalDocumentVersions\" (\"DocumentVersionId\"),\n  FOREIGN KEY (\"ReviewerUserId\") REFERENCES \"iam__Users\" (\"UserId\"),\n  CHECK (DecisionCode IN ('APPROVED','REJECTED'))\n)"
+    },
+    {
+      "type": "table",
+      "name": "leg__LegalDocumentVersionScopes",
+      "table": "leg__LegalDocumentVersionScopes",
+      "sqlite_sql": "CREATE TABLE \"leg__LegalDocumentVersionScopes\" (\n  \"DocumentVersionId\" TEXT NOT NULL,\n  \"TenantTypeId\" INTEGER NOT NULL,\n  \"CreatedAtUtc\" TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n  \"CreatedByUserId\" INTEGER,\n  PRIMARY KEY (\"DocumentVersionId\",\"TenantTypeId\"),\n  FOREIGN KEY (\"DocumentVersionId\") REFERENCES \"leg__LegalDocumentVersions\" (\"DocumentVersionId\"),\n  FOREIGN KEY (\"TenantTypeId\") REFERENCES \"mst__TenantTypes\" (\"TenantTypeId\"),\n  FOREIGN KEY (\"CreatedByUserId\") REFERENCES \"iam__Users\" (\"UserId\")\n)"
+    },
+    {
+      "type": "table",
+      "name": "leg__LegalDocumentVersions",
+      "table": "leg__LegalDocumentVersions",
+      "sqlite_sql": "CREATE TABLE \"leg__LegalDocumentVersions\" (\n  \"DocumentVersionId\" TEXT NOT NULL DEFAULT (lower(hex(randomblob(16)))),\n  \"LegalDocumentId\" TEXT NOT NULL,\n  \"VersionIdentifier\" TEXT NOT NULL,\n  \"Title\" TEXT NOT NULL,\n  \"EffectiveAtUtc\" TEXT NOT NULL,\n  \"PublicationStatus\" TEXT NOT NULL,\n  \"StorageReference\" TEXT NOT NULL,\n  \"ContentHash\" BLOB NOT NULL CHECK (length(\"ContentHash\")=32),\n  \"MimeType\" TEXT NOT NULL,\n  \"FileSizeBytes\" INTEGER NOT NULL,\n  \"CreatedAtUtc\" TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n  \"CreatedByUserId\" INTEGER,\n  \"ApprovedAtUtc\" TEXT,\n  \"ApprovedByUserId\" INTEGER,\n  \"PublishedAtUtc\" TEXT,\n  \"PublishedByUserId\" INTEGER,\n  \"ArchivedAtUtc\" TEXT,\n  \"ArchivedByUserId\" INTEGER,\n  \"RowVersion\" BLOB NOT NULL DEFAULT (randomblob(8)) CHECK (length(\"RowVersion\")=8),\n  \"SubmittedAtUtc\" TEXT,\n  \"SubmittedByUserId\" INTEGER,\n  PRIMARY KEY (\"DocumentVersionId\"),\n  UNIQUE (\"LegalDocumentId\",\"VersionIdentifier\"),\n  FOREIGN KEY (\"LegalDocumentId\") REFERENCES \"leg__LegalDocuments\" (\"LegalDocumentId\"),\n  FOREIGN KEY (\"CreatedByUserId\") REFERENCES \"iam__Users\" (\"UserId\"),\n  FOREIGN KEY (\"ApprovedByUserId\") REFERENCES \"iam__Users\" (\"UserId\"),\n  FOREIGN KEY (\"PublishedByUserId\") REFERENCES \"iam__Users\" (\"UserId\"),\n  FOREIGN KEY (\"ArchivedByUserId\") REFERENCES \"iam__Users\" (\"UserId\"),\n  FOREIGN KEY (\"SubmittedByUserId\") REFERENCES \"iam__Users\" (\"UserId\"),\n  CHECK (MimeType='application/pdf' AND FileSizeBytes>0),\n  CHECK (length(StorageReference)=32 AND StorageReference NOT GLOB '*[^0-9A-Fa-f]*'),\n  CHECK ((PublicationStatus='DRAFT' AND ApprovedAtUtc IS NULL AND PublishedAtUtc IS NULL AND ArchivedAtUtc IS NULL) OR (PublicationStatus='PENDING_APPROVAL' AND SubmittedAtUtc IS NOT NULL AND ApprovedAtUtc IS NULL AND PublishedAtUtc IS NULL AND ArchivedAtUtc IS NULL) OR (PublicationStatus='APPROVED' AND ApprovedAtUtc IS NOT NULL AND PublishedAtUtc IS NULL AND ArchivedAtUtc IS NULL) OR (PublicationStatus='PUBLISHED' AND ApprovedAtUtc IS NOT NULL AND PublishedAtUtc IS NOT NULL AND ArchivedAtUtc IS NULL) OR (PublicationStatus='ARCHIVED' AND ApprovedAtUtc IS NOT NULL AND PublishedAtUtc IS NOT NULL AND ArchivedAtUtc IS NOT NULL))\n)"
+    },
+    {
+      "type": "table",
+      "name": "leg__LegalDocuments",
+      "table": "leg__LegalDocuments",
+      "sqlite_sql": "CREATE TABLE \"leg__LegalDocuments\" (\n  \"LegalDocumentId\" TEXT NOT NULL DEFAULT (lower(hex(randomblob(16)))),\n  \"DocumentTypeCode\" TEXT NOT NULL,\n  \"CreatedAtUtc\" TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n  \"CreatedByUserId\" INTEGER,\n  PRIMARY KEY (\"LegalDocumentId\"),\n  FOREIGN KEY (\"CreatedByUserId\") REFERENCES \"iam__Users\" (\"UserId\"),\n  CHECK (DocumentTypeCode='TERMS_AND_CONDITIONS')\n)"
+    },
+    {
+      "type": "table",
+      "name": "leg__UserLegalConsents",
+      "table": "leg__UserLegalConsents",
+      "sqlite_sql": "CREATE TABLE \"leg__UserLegalConsents\" (\n  \"ConsentId\" INTEGER PRIMARY KEY AUTOINCREMENT,\n  \"UserId\" INTEGER NOT NULL,\n  \"ApplicationId\" INTEGER NOT NULL,\n  \"TenantTypeId\" INTEGER NOT NULL,\n  \"DocumentVersionId\" TEXT NOT NULL,\n  \"DocumentContentHash\" BLOB NOT NULL CHECK (length(\"DocumentContentHash\")=32),\n  \"ConsentPurposeCode\" TEXT NOT NULL,\n  \"AcceptedAtUtc\" TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n  \"SourceCode\" TEXT NOT NULL,\n  \"RequestId\" TEXT,\n  \"CorrelationId\" TEXT,\n  UNIQUE (\"ApplicationId\",\"DocumentVersionId\",\"ConsentPurposeCode\"),\n  FOREIGN KEY (\"UserId\") REFERENCES \"iam__Users\" (\"UserId\"),\n  FOREIGN KEY (\"ApplicationId\") REFERENCES \"reg__RegistrationApplications\" (\"ApplicationId\"),\n  FOREIGN KEY (\"TenantTypeId\") REFERENCES \"mst__TenantTypes\" (\"TenantTypeId\"),\n  FOREIGN KEY (\"DocumentVersionId\") REFERENCES \"leg__LegalDocumentVersions\" (\"DocumentVersionId\"),\n  CHECK (ConsentPurposeCode='TERMS_AND_CONDITIONS'),\n  CHECK (SourceCode='PUBLIC_REGISTRATION')\n)"
+    },
+    {
+      "type": "table",
+      "name": "mst__AccountSelfServicePolicies",
+      "table": "mst__AccountSelfServicePolicies",
+      "sqlite_sql": "CREATE TABLE \"mst__AccountSelfServicePolicies\" (\n  \"PolicyCode\" TEXT NOT NULL,\n  \"ModuleCode\" TEXT NOT NULL,\n  \"ResourceCode\" TEXT NOT NULL,\n  \"ActionCode\" TEXT NOT NULL,\n  \"Name\" TEXT NOT NULL,\n  \"Description\" TEXT NOT NULL,\n  \"ReadinessCode\" TEXT NOT NULL,\n  \"PublicAllowed\" INTEGER NOT NULL CHECK (\"PublicAllowed\" IN (0,1)),\n  \"UnverifiedAllowed\" INTEGER NOT NULL CHECK (\"UnverifiedAllowed\" IN (0,1)),\n  \"VerifiedAllowed\" INTEGER NOT NULL CHECK (\"VerifiedAllowed\" IN (0,1)),\n  \"RestrictionReason\" TEXT NOT NULL,\n  \"SortOrder\" INTEGER NOT NULL,\n  \"IsActive\" INTEGER NOT NULL DEFAULT 1 CHECK (\"IsActive\" IN (0,1)),\n  \"UpdatedAtUtc\" TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n  \"MatrixRowVersion\" BLOB NOT NULL DEFAULT (randomblob(8)) CHECK (length(\"MatrixRowVersion\")=8),\n  PRIMARY KEY (\"PolicyCode\"),\n  FOREIGN KEY (\"ReadinessCode\") REFERENCES \"mst__PermissionReadinessStatuses\" (\"Code\")\n)"
+    },
+    {
+      "type": "table",
+      "name": "mst__AuditActionTypes",
+      "table": "mst__AuditActionTypes",
+      "sqlite_sql": "CREATE TABLE \"mst__AuditActionTypes\" (\n  \"AuditActionTypeId\" INTEGER PRIMARY KEY AUTOINCREMENT,\n  \"Code\" TEXT NOT NULL,\n  \"Name\" TEXT NOT NULL,\n  \"Description\" TEXT,\n  \"SortOrder\" INTEGER NOT NULL DEFAULT 0,\n  \"IsActive\" INTEGER NOT NULL DEFAULT 1 CHECK (\"IsActive\" IN (0,1)),\n  \"IsSystem\" INTEGER NOT NULL DEFAULT 1 CHECK (\"IsSystem\" IN (0,1)),\n  \"CreatedAtUtc\" TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n  \"CreatedByUserId\" INTEGER,\n  \"UpdatedAtUtc\" TEXT,\n  \"UpdatedByUserId\" INTEGER,\n  \"RowVersion\" BLOB NOT NULL DEFAULT (randomblob(8)) CHECK (length(\"RowVersion\")=8),\n  UNIQUE (\"Code\")\n)"
+    },
+    {
+      "type": "table",
+      "name": "mst__AuditResultTypes",
+      "table": "mst__AuditResultTypes",
+      "sqlite_sql": "CREATE TABLE \"mst__AuditResultTypes\" (\n  \"AuditResultTypeId\" INTEGER PRIMARY KEY AUTOINCREMENT,\n  \"Code\" TEXT NOT NULL,\n  \"Name\" TEXT NOT NULL,\n  \"Description\" TEXT,\n  \"SortOrder\" INTEGER NOT NULL DEFAULT 0,\n  \"IsActive\" INTEGER NOT NULL DEFAULT 1 CHECK (\"IsActive\" IN (0,1)),\n  \"IsSystem\" INTEGER NOT NULL DEFAULT 1 CHECK (\"IsSystem\" IN (0,1)),\n  \"CreatedAtUtc\" TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n  \"CreatedByUserId\" INTEGER,\n  \"UpdatedAtUtc\" TEXT,\n  \"UpdatedByUserId\" INTEGER,\n  \"RowVersion\" BLOB NOT NULL DEFAULT (randomblob(8)) CHECK (length(\"RowVersion\")=8),\n  UNIQUE (\"Code\")\n)"
+    },
+    {
+      "type": "table",
+      "name": "mst__BusinessEventTypes",
+      "table": "mst__BusinessEventTypes",
+      "sqlite_sql": "CREATE TABLE \"mst__BusinessEventTypes\" (\n  \"BusinessEventTypeId\" INTEGER PRIMARY KEY AUTOINCREMENT,\n  \"Code\" TEXT NOT NULL,\n  \"Name\" TEXT NOT NULL,\n  \"Description\" TEXT,\n  \"SortOrder\" INTEGER NOT NULL DEFAULT 0,\n  \"IsActive\" INTEGER NOT NULL DEFAULT 1 CHECK (\"IsActive\" IN (0,1)),\n  \"IsSystem\" INTEGER NOT NULL DEFAULT 1 CHECK (\"IsSystem\" IN (0,1)),\n  \"CreatedAtUtc\" TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n  \"CreatedByUserId\" INTEGER,\n  \"UpdatedAtUtc\" TEXT,\n  \"UpdatedByUserId\" INTEGER,\n  \"RowVersion\" BLOB NOT NULL DEFAULT (randomblob(8)) CHECK (length(\"RowVersion\")=8),\n  UNIQUE (\"Code\")\n)"
+    },
+    {
+      "type": "table",
+      "name": "mst__IdentityDocumentTypes",
+      "table": "mst__IdentityDocumentTypes",
+      "sqlite_sql": "CREATE TABLE \"mst__IdentityDocumentTypes\" (\n  \"IdentityDocumentTypeId\" INTEGER PRIMARY KEY AUTOINCREMENT,\n  \"Code\" TEXT NOT NULL,\n  \"CountryCode\" TEXT NOT NULL,\n  \"RequiresNumber\" INTEGER NOT NULL DEFAULT 0 CHECK (\"RequiresNumber\" IN (0,1)),\n  \"AllowsFileUpload\" INTEGER NOT NULL DEFAULT 1 CHECK (\"AllowsFileUpload\" IN (0,1)),\n  \"ValidationPattern\" TEXT,\n  \"Name\" TEXT NOT NULL,\n  \"Description\" TEXT,\n  \"SortOrder\" INTEGER NOT NULL DEFAULT 0,\n  \"IsActive\" INTEGER NOT NULL DEFAULT 1 CHECK (\"IsActive\" IN (0,1)),\n  \"IsSystem\" INTEGER NOT NULL DEFAULT 1 CHECK (\"IsSystem\" IN (0,1)),\n  \"CreatedAtUtc\" TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n  \"CreatedByUserId\" INTEGER,\n  \"UpdatedAtUtc\" TEXT,\n  \"UpdatedByUserId\" INTEGER,\n  \"RowVersion\" BLOB NOT NULL DEFAULT (randomblob(8)) CHECK (length(\"RowVersion\")=8),\n  UNIQUE (\"CountryCode\",\"Code\")\n)"
+    },
+    {
+      "type": "table",
+      "name": "mst__IdentityProviders",
+      "table": "mst__IdentityProviders",
+      "sqlite_sql": "CREATE TABLE \"mst__IdentityProviders\" (\n  \"IdentityProviderId\" INTEGER PRIMARY KEY AUTOINCREMENT,\n  \"Code\" TEXT NOT NULL,\n  \"Name\" TEXT NOT NULL,\n  \"Description\" TEXT,\n  \"SortOrder\" INTEGER NOT NULL DEFAULT 0,\n  \"IsActive\" INTEGER NOT NULL DEFAULT 1 CHECK (\"IsActive\" IN (0,1)),\n  \"IsSystem\" INTEGER NOT NULL DEFAULT 1 CHECK (\"IsSystem\" IN (0,1)),\n  \"CreatedAtUtc\" TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n  \"CreatedByUserId\" INTEGER,\n  \"UpdatedAtUtc\" TEXT,\n  \"UpdatedByUserId\" INTEGER,\n  \"RowVersion\" BLOB NOT NULL DEFAULT (randomblob(8)) CHECK (length(\"RowVersion\")=8),\n  UNIQUE (\"Code\")\n)"
+    },
+    {
+      "type": "table",
+      "name": "mst__MembershipStatuses",
+      "table": "mst__MembershipStatuses",
+      "sqlite_sql": "CREATE TABLE \"mst__MembershipStatuses\" (\n  \"MembershipStatusId\" INTEGER PRIMARY KEY AUTOINCREMENT,\n  \"Code\" TEXT NOT NULL,\n  \"Name\" TEXT NOT NULL,\n  \"Description\" TEXT,\n  \"SortOrder\" INTEGER NOT NULL DEFAULT 0,\n  \"IsActive\" INTEGER NOT NULL DEFAULT 1 CHECK (\"IsActive\" IN (0,1)),\n  \"IsSystem\" INTEGER NOT NULL DEFAULT 1 CHECK (\"IsSystem\" IN (0,1)),\n  \"CreatedAtUtc\" TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n  \"CreatedByUserId\" INTEGER,\n  \"UpdatedAtUtc\" TEXT,\n  \"UpdatedByUserId\" INTEGER,\n  \"RowVersion\" BLOB NOT NULL DEFAULT (randomblob(8)) CHECK (length(\"RowVersion\")=8),\n  UNIQUE (\"Code\")\n)"
+    },
+    {
+      "type": "table",
+      "name": "mst__OnboardingStatuses",
+      "table": "mst__OnboardingStatuses",
+      "sqlite_sql": "CREATE TABLE \"mst__OnboardingStatuses\" (\n  \"OnboardingStatusId\" INTEGER PRIMARY KEY AUTOINCREMENT,\n  \"Code\" TEXT NOT NULL,\n  \"Name\" TEXT NOT NULL,\n  \"Description\" TEXT,\n  \"SortOrder\" INTEGER NOT NULL,\n  \"IsActive\" INTEGER NOT NULL CHECK (\"IsActive\" IN (0,1)),\n  \"IsSystem\" INTEGER NOT NULL CHECK (\"IsSystem\" IN (0,1)),\n  \"CreatedAtUtc\" TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n  \"CreatedByUserId\" INTEGER,\n  \"UpdatedAtUtc\" TEXT,\n  \"UpdatedByUserId\" INTEGER,\n  \"RowVersion\" BLOB NOT NULL DEFAULT (randomblob(8)) CHECK (length(\"RowVersion\")=8),\n  UNIQUE (\"Code\"),\n  FOREIGN KEY (\"CreatedByUserId\") REFERENCES \"iam__Users\" (\"UserId\"),\n  FOREIGN KEY (\"UpdatedByUserId\") REFERENCES \"iam__Users\" (\"UserId\")\n)"
+    },
+    {
+      "type": "table",
+      "name": "mst__OrganizationIdentityRequirementGroups",
+      "table": "mst__OrganizationIdentityRequirementGroups",
+      "sqlite_sql": "CREATE TABLE \"mst__OrganizationIdentityRequirementGroups\" (\n  \"RequirementGroupId\" INTEGER PRIMARY KEY AUTOINCREMENT,\n  \"Code\" TEXT NOT NULL,\n  \"OrganizationTypeId\" INTEGER NOT NULL,\n  \"SelectionMode\" TEXT NOT NULL,\n  \"MinimumRequired\" INTEGER NOT NULL DEFAULT 1,\n  \"EffectiveFromUtc\" TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n  \"EffectiveToUtc\" TEXT,\n  \"Name\" TEXT NOT NULL,\n  \"Description\" TEXT,\n  \"SortOrder\" INTEGER NOT NULL DEFAULT 0,\n  \"IsActive\" INTEGER NOT NULL DEFAULT 1 CHECK (\"IsActive\" IN (0,1)),\n  \"IsSystem\" INTEGER NOT NULL DEFAULT 1 CHECK (\"IsSystem\" IN (0,1)),\n  \"CreatedAtUtc\" TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n  \"CreatedByUserId\" INTEGER,\n  \"UpdatedAtUtc\" TEXT,\n  \"UpdatedByUserId\" INTEGER,\n  \"RowVersion\" BLOB NOT NULL DEFAULT (randomblob(8)) CHECK (length(\"RowVersion\")=8),\n  UNIQUE (\"OrganizationTypeId\",\"Code\"),\n  FOREIGN KEY (\"OrganizationTypeId\") REFERENCES \"mst__OrganizationTypes\" (\"OrganizationTypeId\"),\n  CHECK (SelectionMode IN ('ALL','ANY','MINIMUM')),\n  CHECK (MinimumRequired>=1),\n  CHECK (EffectiveToUtc IS NULL OR EffectiveToUtc>EffectiveFromUtc)\n)"
+    },
+    {
+      "type": "table",
+      "name": "mst__OrganizationIdentityRequirements",
+      "table": "mst__OrganizationIdentityRequirements",
+      "sqlite_sql": "CREATE TABLE \"mst__OrganizationIdentityRequirements\" (\n  \"RequirementId\" INTEGER PRIMARY KEY AUTOINCREMENT,\n  \"RequirementGroupId\" INTEGER NOT NULL,\n  \"IdentityDocumentTypeId\" INTEGER NOT NULL,\n  \"RequirementLevel\" TEXT NOT NULL DEFAULT 'REQUIRED',\n  \"EffectiveFromUtc\" TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n  \"EffectiveToUtc\" TEXT,\n  \"IsActive\" INTEGER NOT NULL DEFAULT 1 CHECK (\"IsActive\" IN (0,1)),\n  \"CreatedAtUtc\" TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n  \"CreatedByUserId\" INTEGER,\n  \"UpdatedAtUtc\" TEXT,\n  \"UpdatedByUserId\" INTEGER,\n  \"RowVersion\" BLOB NOT NULL DEFAULT (randomblob(8)) CHECK (length(\"RowVersion\")=8),\n  UNIQUE (\"RequirementGroupId\",\"IdentityDocumentTypeId\",\"EffectiveFromUtc\"),\n  FOREIGN KEY (\"RequirementGroupId\") REFERENCES \"mst__OrganizationIdentityRequirementGroups\" (\"RequirementGroupId\"),\n  FOREIGN KEY (\"IdentityDocumentTypeId\") REFERENCES \"mst__IdentityDocumentTypes\" (\"IdentityDocumentTypeId\"),\n  CHECK (RequirementLevel IN ('REQUIRED','OPTIONAL','CONDITIONAL')),\n  CHECK (EffectiveToUtc IS NULL OR EffectiveToUtc>EffectiveFromUtc)\n)"
+    },
+    {
+      "type": "table",
+      "name": "mst__OrganizationTypes",
+      "table": "mst__OrganizationTypes",
+      "sqlite_sql": "CREATE TABLE \"mst__OrganizationTypes\" (\n  \"OrganizationTypeId\" INTEGER PRIMARY KEY AUTOINCREMENT,\n  \"Code\" TEXT NOT NULL,\n  \"CountryCode\" TEXT NOT NULL,\n  \"RequiresManualReview\" INTEGER NOT NULL DEFAULT 0 CHECK (\"RequiresManualReview\" IN (0,1)),\n  \"Name\" TEXT NOT NULL,\n  \"Description\" TEXT,\n  \"SortOrder\" INTEGER NOT NULL DEFAULT 0,\n  \"IsActive\" INTEGER NOT NULL DEFAULT 1 CHECK (\"IsActive\" IN (0,1)),\n  \"IsSystem\" INTEGER NOT NULL DEFAULT 1 CHECK (\"IsSystem\" IN (0,1)),\n  \"CreatedAtUtc\" TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n  \"CreatedByUserId\" INTEGER,\n  \"UpdatedAtUtc\" TEXT,\n  \"UpdatedByUserId\" INTEGER,\n  \"RowVersion\" BLOB NOT NULL DEFAULT (randomblob(8)) CHECK (length(\"RowVersion\")=8),\n  UNIQUE (\"CountryCode\",\"Code\")\n)"
+    },
+    {
+      "type": "table",
+      "name": "mst__PermissionMatrixMetadata",
+      "table": "mst__PermissionMatrixMetadata",
+      "sqlite_sql": "CREATE TABLE \"mst__PermissionMatrixMetadata\" (\n  \"PermissionId\" INTEGER PRIMARY KEY NOT NULL,\n  \"ModuleCode\" TEXT NOT NULL,\n  \"ResourceCode\" TEXT NOT NULL,\n  \"ActionCode\" TEXT NOT NULL,\n  \"PermissionDescription\" TEXT NOT NULL,\n  \"ReadinessCode\" TEXT NOT NULL,\n  \"RestrictionReason\" TEXT,\n  \"UpdatedAtUtc\" TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n  \"MatrixRowVersion\" BLOB NOT NULL DEFAULT (randomblob(8)) CHECK (length(\"MatrixRowVersion\")=8),\n  FOREIGN KEY (\"PermissionId\") REFERENCES \"mst__Permissions\" (\"PermissionId\"),\n  FOREIGN KEY (\"ReadinessCode\") REFERENCES \"mst__PermissionReadinessStatuses\" (\"Code\")\n)"
+    },
+    {
+      "type": "table",
+      "name": "mst__PermissionReadinessStatuses",
+      "table": "mst__PermissionReadinessStatuses",
+      "sqlite_sql": "CREATE TABLE \"mst__PermissionReadinessStatuses\" (\n  \"Code\" TEXT NOT NULL,\n  \"Name\" TEXT NOT NULL,\n  \"AllowsEffective\" INTEGER NOT NULL CHECK (\"AllowsEffective\" IN (0,1)),\n  \"AllowsMatrixEdit\" INTEGER NOT NULL CHECK (\"AllowsMatrixEdit\" IN (0,1)),\n  \"IsActive\" INTEGER NOT NULL DEFAULT 1 CHECK (\"IsActive\" IN (0,1)),\n  PRIMARY KEY (\"Code\")\n)"
+    },
+    {
+      "type": "table",
+      "name": "mst__Permissions",
+      "table": "mst__Permissions",
+      "sqlite_sql": "CREATE TABLE \"mst__Permissions\" (\n  \"PermissionId\" INTEGER PRIMARY KEY AUTOINCREMENT,\n  \"Code\" TEXT NOT NULL,\n  \"RoleScopeId\" INTEGER NOT NULL,\n  \"Name\" TEXT NOT NULL,\n  \"Description\" TEXT,\n  \"SortOrder\" INTEGER NOT NULL DEFAULT 0,\n  \"IsActive\" INTEGER NOT NULL DEFAULT 1 CHECK (\"IsActive\" IN (0,1)),\n  \"IsSystem\" INTEGER NOT NULL DEFAULT 1 CHECK (\"IsSystem\" IN (0,1)),\n  \"CreatedAtUtc\" TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n  \"CreatedByUserId\" INTEGER,\n  \"UpdatedAtUtc\" TEXT,\n  \"UpdatedByUserId\" INTEGER,\n  \"RowVersion\" BLOB NOT NULL DEFAULT (randomblob(8)) CHECK (length(\"RowVersion\")=8),\n  UNIQUE (\"Code\"),\n  FOREIGN KEY (\"RoleScopeId\") REFERENCES \"mst__RoleScopes\" (\"RoleScopeId\")\n)"
+    },
+    {
+      "type": "table",
+      "name": "mst__RolePermissions",
+      "table": "mst__RolePermissions",
+      "sqlite_sql": "CREATE TABLE \"mst__RolePermissions\" (\n  \"RoleId\" INTEGER NOT NULL,\n  \"PermissionId\" INTEGER NOT NULL,\n  \"CreatedAtUtc\" TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n  \"CreatedByUserId\" INTEGER,\n  \"TenantTypeId\" INTEGER,\n  \"MatrixRowVersion\" BLOB NOT NULL DEFAULT (randomblob(8)) CHECK (length(\"MatrixRowVersion\")=8),\n  FOREIGN KEY (\"RoleId\") REFERENCES \"mst__Roles\" (\"RoleId\"),\n  FOREIGN KEY (\"PermissionId\") REFERENCES \"mst__Permissions\" (\"PermissionId\"),\n  FOREIGN KEY (\"TenantTypeId\") REFERENCES \"mst__TenantTypes\" (\"TenantTypeId\")\n)"
+    },
+    {
+      "type": "table",
+      "name": "mst__RoleScopes",
+      "table": "mst__RoleScopes",
+      "sqlite_sql": "CREATE TABLE \"mst__RoleScopes\" (\n  \"RoleScopeId\" INTEGER PRIMARY KEY AUTOINCREMENT,\n  \"Code\" TEXT NOT NULL,\n  \"Name\" TEXT NOT NULL,\n  \"Description\" TEXT,\n  \"SortOrder\" INTEGER NOT NULL DEFAULT 0,\n  \"IsActive\" INTEGER NOT NULL DEFAULT 1 CHECK (\"IsActive\" IN (0,1)),\n  \"IsSystem\" INTEGER NOT NULL DEFAULT 1 CHECK (\"IsSystem\" IN (0,1)),\n  \"CreatedAtUtc\" TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n  \"CreatedByUserId\" INTEGER,\n  \"UpdatedAtUtc\" TEXT,\n  \"UpdatedByUserId\" INTEGER,\n  \"RowVersion\" BLOB NOT NULL DEFAULT (randomblob(8)) CHECK (length(\"RowVersion\")=8),\n  UNIQUE (\"Code\")\n)"
+    },
+    {
+      "type": "table",
+      "name": "mst__Roles",
+      "table": "mst__Roles",
+      "sqlite_sql": "CREATE TABLE \"mst__Roles\" (\n  \"RoleId\" INTEGER PRIMARY KEY AUTOINCREMENT,\n  \"Code\" TEXT NOT NULL,\n  \"RoleScopeId\" INTEGER NOT NULL,\n  \"IsAssignable\" INTEGER NOT NULL DEFAULT 1 CHECK (\"IsAssignable\" IN (0,1)),\n  \"Name\" TEXT NOT NULL,\n  \"Description\" TEXT,\n  \"SortOrder\" INTEGER NOT NULL DEFAULT 0,\n  \"IsActive\" INTEGER NOT NULL DEFAULT 1 CHECK (\"IsActive\" IN (0,1)),\n  \"IsSystem\" INTEGER NOT NULL DEFAULT 1 CHECK (\"IsSystem\" IN (0,1)),\n  \"CreatedAtUtc\" TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n  \"CreatedByUserId\" INTEGER,\n  \"UpdatedAtUtc\" TEXT,\n  \"UpdatedByUserId\" INTEGER,\n  \"RowVersion\" BLOB NOT NULL DEFAULT (randomblob(8)) CHECK (length(\"RowVersion\")=8),\n  UNIQUE (\"RoleScopeId\",\"Code\"),\n  FOREIGN KEY (\"RoleScopeId\") REFERENCES \"mst__RoleScopes\" (\"RoleScopeId\")\n)"
+    },
+    {
+      "type": "table",
+      "name": "mst__SecurityEventTypes",
+      "table": "mst__SecurityEventTypes",
+      "sqlite_sql": "CREATE TABLE \"mst__SecurityEventTypes\" (\n  \"SecurityEventTypeId\" INTEGER PRIMARY KEY AUTOINCREMENT,\n  \"Code\" TEXT NOT NULL,\n  \"DefaultSeverity\" TEXT NOT NULL DEFAULT 'INFO',\n  \"Name\" TEXT NOT NULL,\n  \"Description\" TEXT,\n  \"SortOrder\" INTEGER NOT NULL DEFAULT 0,\n  \"IsActive\" INTEGER NOT NULL DEFAULT 1 CHECK (\"IsActive\" IN (0,1)),\n  \"IsSystem\" INTEGER NOT NULL DEFAULT 1 CHECK (\"IsSystem\" IN (0,1)),\n  \"CreatedAtUtc\" TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n  \"CreatedByUserId\" INTEGER,\n  \"UpdatedAtUtc\" TEXT,\n  \"UpdatedByUserId\" INTEGER,\n  \"RowVersion\" BLOB NOT NULL DEFAULT (randomblob(8)) CHECK (length(\"RowVersion\")=8),\n  UNIQUE (\"Code\"),\n  CHECK (DefaultSeverity IN ('INFO','WARNING','CRITICAL'))\n)"
+    },
+    {
+      "type": "table",
+      "name": "mst__TenantStatuses",
+      "table": "mst__TenantStatuses",
+      "sqlite_sql": "CREATE TABLE \"mst__TenantStatuses\" (\n  \"TenantStatusId\" INTEGER PRIMARY KEY AUTOINCREMENT,\n  \"Code\" TEXT NOT NULL,\n  \"Name\" TEXT NOT NULL,\n  \"Description\" TEXT,\n  \"SortOrder\" INTEGER NOT NULL DEFAULT 0,\n  \"IsActive\" INTEGER NOT NULL DEFAULT 1 CHECK (\"IsActive\" IN (0,1)),\n  \"IsSystem\" INTEGER NOT NULL DEFAULT 1 CHECK (\"IsSystem\" IN (0,1)),\n  \"CreatedAtUtc\" TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n  \"CreatedByUserId\" INTEGER,\n  \"UpdatedAtUtc\" TEXT,\n  \"UpdatedByUserId\" INTEGER,\n  \"RowVersion\" BLOB NOT NULL DEFAULT (randomblob(8)) CHECK (length(\"RowVersion\")=8),\n  UNIQUE (\"Code\")\n)"
+    },
+    {
+      "type": "table",
+      "name": "mst__TenantTypes",
+      "table": "mst__TenantTypes",
+      "sqlite_sql": "CREATE TABLE \"mst__TenantTypes\" (\n  \"TenantTypeId\" INTEGER PRIMARY KEY AUTOINCREMENT,\n  \"Code\" TEXT NOT NULL,\n  \"AllowMultipleMembers\" INTEGER NOT NULL DEFAULT 0 CHECK (\"AllowMultipleMembers\" IN (0,1)),\n  \"Name\" TEXT NOT NULL,\n  \"Description\" TEXT,\n  \"SortOrder\" INTEGER NOT NULL DEFAULT 0,\n  \"IsActive\" INTEGER NOT NULL DEFAULT 1 CHECK (\"IsActive\" IN (0,1)),\n  \"IsSystem\" INTEGER NOT NULL DEFAULT 1 CHECK (\"IsSystem\" IN (0,1)),\n  \"CreatedAtUtc\" TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n  \"CreatedByUserId\" INTEGER,\n  \"UpdatedAtUtc\" TEXT,\n  \"UpdatedByUserId\" INTEGER,\n  \"RowVersion\" BLOB NOT NULL DEFAULT (randomblob(8)) CHECK (length(\"RowVersion\")=8),\n  UNIQUE (\"Code\")\n)"
+    },
+    {
+      "type": "table",
+      "name": "mst__VerificationPurposes",
+      "table": "mst__VerificationPurposes",
+      "sqlite_sql": "CREATE TABLE \"mst__VerificationPurposes\" (\n  \"VerificationPurposeId\" INTEGER PRIMARY KEY AUTOINCREMENT,\n  \"Code\" TEXT NOT NULL,\n  \"Name\" TEXT NOT NULL,\n  \"Description\" TEXT,\n  \"SortOrder\" INTEGER NOT NULL DEFAULT 0,\n  \"IsActive\" INTEGER NOT NULL DEFAULT 1 CHECK (\"IsActive\" IN (0,1)),\n  \"IsSystem\" INTEGER NOT NULL DEFAULT 1 CHECK (\"IsSystem\" IN (0,1)),\n  \"CreatedAtUtc\" TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n  \"CreatedByUserId\" INTEGER,\n  \"UpdatedAtUtc\" TEXT,\n  \"UpdatedByUserId\" INTEGER,\n  \"RowVersion\" BLOB NOT NULL DEFAULT (randomblob(8)) CHECK (length(\"RowVersion\")=8),\n  UNIQUE (\"Code\")\n)"
+    },
+    {
+      "type": "table",
+      "name": "mst__VerificationStatuses",
+      "table": "mst__VerificationStatuses",
+      "sqlite_sql": "CREATE TABLE \"mst__VerificationStatuses\" (\n  \"VerificationStatusId\" INTEGER PRIMARY KEY AUTOINCREMENT,\n  \"Code\" TEXT NOT NULL,\n  \"Name\" TEXT NOT NULL,\n  \"Description\" TEXT,\n  \"SortOrder\" INTEGER NOT NULL DEFAULT 0,\n  \"IsActive\" INTEGER NOT NULL DEFAULT 1 CHECK (\"IsActive\" IN (0,1)),\n  \"IsSystem\" INTEGER NOT NULL DEFAULT 1 CHECK (\"IsSystem\" IN (0,1)),\n  \"CreatedAtUtc\" TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n  \"CreatedByUserId\" INTEGER,\n  \"UpdatedAtUtc\" TEXT,\n  \"UpdatedByUserId\" INTEGER,\n  \"RowVersion\" BLOB NOT NULL DEFAULT (randomblob(8)) CHECK (length(\"RowVersion\")=8),\n  UNIQUE (\"Code\")\n)"
+    },
+    {
+      "type": "table",
+      "name": "ntf__NotificationChannelStatuses",
+      "table": "ntf__NotificationChannelStatuses",
+      "sqlite_sql": "CREATE TABLE ntf__NotificationChannelStatuses(StatusCode TEXT PRIMARY KEY NOT NULL,DisplayName TEXT NOT NULL,IsOperational INTEGER NOT NULL CHECK(IsOperational IN(0,1)))"
+    },
+    {
+      "type": "table",
+      "name": "ntf__NotificationChannels",
+      "table": "ntf__NotificationChannels",
+      "sqlite_sql": "CREATE TABLE ntf__NotificationChannels(ChannelId INTEGER PRIMARY KEY AUTOINCREMENT,ChannelCode TEXT NOT NULL UNIQUE,DisplayName TEXT NOT NULL,IsEnabled INTEGER NOT NULL DEFAULT 0 CHECK(IsEnabled IN(0,1)),StatusCode TEXT NOT NULL REFERENCES ntf__NotificationChannelStatuses(StatusCode),RowVersion BLOB NOT NULL DEFAULT(randomblob(8)) CHECK(length(RowVersion)=8))"
+    },
+    {
+      "type": "table",
+      "name": "ntf__NotificationDeliveries",
+      "table": "ntf__NotificationDeliveries",
+      "sqlite_sql": "CREATE TABLE ntf__NotificationDeliveries(DeliveryId TEXT PRIMARY KEY NOT NULL DEFAULT(lower(hex(randomblob(16)))),TemplateVersionId TEXT REFERENCES ntf__NotificationTemplateVersions(TemplateVersionId),TemplateCodeSnapshot TEXT NOT NULL,TemplateVersionSnapshot INTEGER CHECK(TemplateVersionSnapshot IS NULL OR TemplateVersionSnapshot>0),ChannelId INTEGER NOT NULL REFERENCES ntf__NotificationChannels(ChannelId),CorrelationId TEXT NOT NULL,CreatedAtUtc TEXT NOT NULL DEFAULT(strftime('%Y-%m-%dT%H:%M:%fZ','now')))"
+    },
+    {
+      "type": "table",
+      "name": "ntf__NotificationDeliveryAttempts",
+      "table": "ntf__NotificationDeliveryAttempts",
+      "sqlite_sql": "CREATE TABLE ntf__NotificationDeliveryAttempts(AttemptId INTEGER PRIMARY KEY AUTOINCREMENT,DeliveryId TEXT NOT NULL REFERENCES ntf__NotificationDeliveries(DeliveryId),AttemptNumber INTEGER NOT NULL CHECK(AttemptNumber>0),OutcomeCode TEXT NOT NULL REFERENCES ntf__NotificationDeliveryOutcomes(OutcomeCode),ErrorCategoryCode TEXT REFERENCES ntf__NotificationErrorCategories(ErrorCategoryCode),OccurredAtUtc TEXT NOT NULL DEFAULT(strftime('%Y-%m-%dT%H:%M:%fZ','now')),ProviderAccepted INTEGER NOT NULL CHECK(ProviderAccepted IN(0,1)),UNIQUE(DeliveryId,AttemptNumber),CHECK((ProviderAccepted=1 AND OutcomeCode='PROVIDER_ACCEPTED' AND ErrorCategoryCode IS NULL) OR (ProviderAccepted=0 AND OutcomeCode='PROVIDER_REJECTED' AND ErrorCategoryCode IS NOT NULL)))"
+    },
+    {
+      "type": "table",
+      "name": "ntf__NotificationDeliveryOutcomes",
+      "table": "ntf__NotificationDeliveryOutcomes",
+      "sqlite_sql": "CREATE TABLE ntf__NotificationDeliveryOutcomes(OutcomeCode TEXT PRIMARY KEY NOT NULL,DisplayName TEXT NOT NULL)"
+    },
+    {
+      "type": "table",
+      "name": "ntf__NotificationErrorCategories",
+      "table": "ntf__NotificationErrorCategories",
+      "sqlite_sql": "CREATE TABLE ntf__NotificationErrorCategories(ErrorCategoryCode TEXT PRIMARY KEY NOT NULL,DisplayName TEXT NOT NULL)"
+    },
+    {
+      "type": "table",
+      "name": "ntf__NotificationTemplateApprovals",
+      "table": "ntf__NotificationTemplateApprovals",
+      "sqlite_sql": "CREATE TABLE ntf__NotificationTemplateApprovals(ApprovalId INTEGER PRIMARY KEY AUTOINCREMENT,TemplateVersionId TEXT NOT NULL REFERENCES ntf__NotificationTemplateVersions(TemplateVersionId),ActorUserId INTEGER NOT NULL REFERENCES iam__Users(UserId),DecisionCode TEXT NOT NULL CHECK(DecisionCode IN('APPROVE','REJECT')),DecisionNote TEXT,DecidedAtUtc TEXT NOT NULL DEFAULT(strftime('%Y-%m-%dT%H:%M:%fZ','now')))"
+    },
+    {
+      "type": "table",
+      "name": "ntf__NotificationTemplateStatuses",
+      "table": "ntf__NotificationTemplateStatuses",
+      "sqlite_sql": "CREATE TABLE ntf__NotificationTemplateStatuses(StatusCode TEXT PRIMARY KEY NOT NULL,DisplayName TEXT NOT NULL,IsTerminal INTEGER NOT NULL CHECK(IsTerminal IN(0,1)))"
+    },
+    {
+      "type": "table",
+      "name": "ntf__NotificationTemplateTypes",
+      "table": "ntf__NotificationTemplateTypes",
+      "sqlite_sql": "CREATE TABLE ntf__NotificationTemplateTypes(TemplateCode TEXT PRIMARY KEY NOT NULL,DisplayName TEXT NOT NULL,IsEnabled INTEGER NOT NULL DEFAULT 0 CHECK(IsEnabled IN(0,1)))"
+    },
+    {
+      "type": "table",
+      "name": "ntf__NotificationTemplateVersionVariables",
+      "table": "ntf__NotificationTemplateVersionVariables",
+      "sqlite_sql": "CREATE TABLE ntf__NotificationTemplateVersionVariables(TemplateVersionId TEXT NOT NULL,TemplateCode TEXT NOT NULL,VariableCode TEXT NOT NULL,IsRequired INTEGER NOT NULL CHECK(IsRequired IN(0,1)),PRIMARY KEY(TemplateVersionId,VariableCode),FOREIGN KEY(TemplateVersionId,TemplateCode) REFERENCES ntf__NotificationTemplateVersions(TemplateVersionId,TemplateCode),FOREIGN KEY(TemplateCode,VariableCode) REFERENCES ntf__NotificationVariableDefinitions(TemplateCode,VariableCode))"
+    },
+    {
+      "type": "table",
+      "name": "ntf__NotificationTemplateVersions",
+      "table": "ntf__NotificationTemplateVersions",
+      "sqlite_sql": "CREATE TABLE ntf__NotificationTemplateVersions(TemplateVersionId TEXT PRIMARY KEY NOT NULL DEFAULT(lower(hex(randomblob(16)))),TemplateId TEXT NOT NULL REFERENCES ntf__NotificationTemplates(TemplateId),TemplateCode TEXT NOT NULL,VersionNumber INTEGER NOT NULL CHECK(VersionNumber>0),StatusCode TEXT NOT NULL REFERENCES ntf__NotificationTemplateStatuses(StatusCode),Subject TEXT NOT NULL CHECK(length(rtrim(Subject))>0),Body TEXT NOT NULL CHECK(length(rtrim(Body))>0),CreatedByUserId INTEGER NOT NULL REFERENCES iam__Users(UserId),CreatedAtUtc TEXT NOT NULL DEFAULT(strftime('%Y-%m-%dT%H:%M:%fZ','now')),SubmittedAtUtc TEXT,ActivatedAtUtc TEXT,ArchivedAtUtc TEXT,RowVersion BLOB NOT NULL DEFAULT(randomblob(8)) CHECK(length(RowVersion)=8),UNIQUE(TemplateId,VersionNumber),UNIQUE(TemplateVersionId,TemplateCode),FOREIGN KEY(TemplateId,TemplateCode) REFERENCES ntf__NotificationTemplates(TemplateId,TemplateCode))"
+    },
+    {
+      "type": "table",
+      "name": "ntf__NotificationTemplates",
+      "table": "ntf__NotificationTemplates",
+      "sqlite_sql": "CREATE TABLE ntf__NotificationTemplates(TemplateId TEXT PRIMARY KEY NOT NULL DEFAULT(lower(hex(randomblob(16)))),TemplateCode TEXT NOT NULL REFERENCES ntf__NotificationTemplateTypes(TemplateCode),DisplayName TEXT NOT NULL,ChannelId INTEGER NOT NULL REFERENCES ntf__NotificationChannels(ChannelId),LocaleCode TEXT NOT NULL,CreatedByUserId INTEGER NOT NULL REFERENCES iam__Users(UserId),CreatedAtUtc TEXT NOT NULL DEFAULT(strftime('%Y-%m-%dT%H:%M:%fZ','now')),RowVersion BLOB NOT NULL DEFAULT(randomblob(8)) CHECK(length(RowVersion)=8),UNIQUE(TemplateCode,ChannelId,LocaleCode),UNIQUE(TemplateId,TemplateCode))"
+    },
+    {
+      "type": "table",
+      "name": "ntf__NotificationVariableDefinitions",
+      "table": "ntf__NotificationVariableDefinitions",
+      "sqlite_sql": "CREATE TABLE ntf__NotificationVariableDefinitions(TemplateCode TEXT NOT NULL REFERENCES ntf__NotificationTemplateTypes(TemplateCode),VariableCode TEXT NOT NULL,DisplayName TEXT NOT NULL,DataTypeCode TEXT NOT NULL,IsRequired INTEGER NOT NULL CHECK(IsRequired IN(0,1)),PRIMARY KEY(TemplateCode,VariableCode))"
+    },
+    {
+      "type": "table",
+      "name": "reg__ApplicationSupportingDocuments",
+      "table": "reg__ApplicationSupportingDocuments",
+      "sqlite_sql": "CREATE TABLE \"reg__ApplicationSupportingDocuments\" (\n  \"SupportingDocumentId\" INTEGER PRIMARY KEY AUTOINCREMENT,\n  \"ApplicationId\" INTEGER NOT NULL,\n  \"IdentityDocumentTypeId\" INTEGER NOT NULL,\n  \"VerificationStatusId\" INTEGER NOT NULL,\n  \"StorageReference\" TEXT NOT NULL,\n  \"ContentHash\" BLOB NOT NULL CHECK (length(\"ContentHash\")=32),\n  \"MimeType\" TEXT NOT NULL,\n  \"FileSizeBytes\" INTEGER NOT NULL,\n  \"UploadedByUserId\" INTEGER NOT NULL,\n  \"UploadedAtUtc\" TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n  \"RowVersion\" BLOB NOT NULL DEFAULT (randomblob(8)) CHECK (length(\"RowVersion\")=8),\n  UNIQUE (\"StorageReference\"),\n  FOREIGN KEY (\"ApplicationId\") REFERENCES \"reg__RegistrationApplications\" (\"ApplicationId\"),\n  FOREIGN KEY (\"IdentityDocumentTypeId\") REFERENCES \"mst__IdentityDocumentTypes\" (\"IdentityDocumentTypeId\"),\n  FOREIGN KEY (\"VerificationStatusId\") REFERENCES \"mst__VerificationStatuses\" (\"VerificationStatusId\"),\n  FOREIGN KEY (\"UploadedByUserId\") REFERENCES \"iam__Users\" (\"UserId\"),\n  CHECK (FileSizeBytes>0)\n)"
+    },
+    {
+      "type": "table",
+      "name": "reg__OrganizationOnboardingDetails",
+      "table": "reg__OrganizationOnboardingDetails",
+      "sqlite_sql": "CREATE TABLE \"reg__OrganizationOnboardingDetails\" (\n  \"ApplicationId\" INTEGER PRIMARY KEY NOT NULL,\n  \"OrganizationTypeId\" INTEGER,\n  \"CountryCode\" TEXT,\n  \"RegisteredName\" TEXT,\n  \"ContactEmail\" TEXT,\n  \"ContactPhone\" TEXT,\n  \"Region\" TEXT,\n  \"City\" TEXT,\n  \"PostalCode\" TEXT,\n  \"AddressLine\" TEXT,\n  \"VerificationStatusId\" INTEGER NOT NULL,\n  \"CreatedAtUtc\" TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n  \"UpdatedAtUtc\" TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n  \"RowVersion\" BLOB NOT NULL DEFAULT (randomblob(8)) CHECK (length(\"RowVersion\")=8),\n  FOREIGN KEY (\"ApplicationId\") REFERENCES \"reg__RegistrationApplications\" (\"ApplicationId\"),\n  FOREIGN KEY (\"OrganizationTypeId\") REFERENCES \"mst__OrganizationTypes\" (\"OrganizationTypeId\"),\n  FOREIGN KEY (\"VerificationStatusId\") REFERENCES \"mst__VerificationStatuses\" (\"VerificationStatusId\"),\n  CHECK (CountryCode IS NULL OR length(CountryCode)=2)\n)"
+    },
+    {
+      "type": "table",
+      "name": "reg__PersonalOnboardingDetails",
+      "table": "reg__PersonalOnboardingDetails",
+      "sqlite_sql": "CREATE TABLE \"reg__PersonalOnboardingDetails\" (\n  \"ApplicationId\" INTEGER PRIMARY KEY NOT NULL,\n  \"PhoneNumber\" TEXT,\n  \"CountryCode\" TEXT,\n  \"Region\" TEXT,\n  \"City\" TEXT,\n  \"PostalCode\" TEXT,\n  \"AddressLine\" TEXT,\n  \"CreatedAtUtc\" TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n  \"UpdatedAtUtc\" TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n  \"RowVersion\" BLOB NOT NULL DEFAULT (randomblob(8)) CHECK (length(\"RowVersion\")=8),\n  FOREIGN KEY (\"ApplicationId\") REFERENCES \"reg__RegistrationApplications\" (\"ApplicationId\"),\n  CHECK (CountryCode IS NULL OR length(CountryCode)=2)\n)"
+    },
+    {
+      "type": "table",
+      "name": "reg__RegistrationApplicationHistory",
+      "table": "reg__RegistrationApplicationHistory",
+      "sqlite_sql": "CREATE TABLE \"reg__RegistrationApplicationHistory\" (\n  \"HistoryId\" INTEGER PRIMARY KEY AUTOINCREMENT,\n  \"ApplicationId\" INTEGER NOT NULL,\n  \"FromStatusId\" INTEGER,\n  \"ToStatusId\" INTEGER NOT NULL,\n  \"ActorUserId\" INTEGER,\n  \"EventCode\" TEXT NOT NULL,\n  \"RequestId\" TEXT,\n  \"CorrelationId\" TEXT,\n  \"OccurredAtUtc\" TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n  FOREIGN KEY (\"ApplicationId\") REFERENCES \"reg__RegistrationApplications\" (\"ApplicationId\"),\n  FOREIGN KEY (\"FromStatusId\") REFERENCES \"mst__OnboardingStatuses\" (\"OnboardingStatusId\"),\n  FOREIGN KEY (\"ToStatusId\") REFERENCES \"mst__OnboardingStatuses\" (\"OnboardingStatusId\"),\n  FOREIGN KEY (\"ActorUserId\") REFERENCES \"iam__Users\" (\"UserId\")\n)"
+    },
+    {
+      "type": "table",
+      "name": "reg__RegistrationApplications",
+      "table": "reg__RegistrationApplications",
+      "sqlite_sql": "CREATE TABLE \"reg__RegistrationApplications\" (\n  \"ApplicationId\" INTEGER PRIMARY KEY AUTOINCREMENT,\n  \"UserId\" INTEGER NOT NULL,\n  \"TenantTypeId\" INTEGER NOT NULL,\n  \"OnboardingStatusId\" INTEGER NOT NULL,\n  \"TenantId\" INTEGER,\n  \"IsCurrent\" INTEGER NOT NULL DEFAULT 1 CHECK (\"IsCurrent\" IN (0,1)),\n  \"CreatedAtUtc\" TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n  \"UpdatedAtUtc\" TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n  \"CompletedAtUtc\" TEXT,\n  \"RequestId\" TEXT,\n  \"CorrelationId\" TEXT,\n  \"RowVersion\" BLOB NOT NULL DEFAULT (randomblob(8)) CHECK (length(\"RowVersion\")=8),\n  FOREIGN KEY (\"UserId\") REFERENCES \"iam__Users\" (\"UserId\"),\n  FOREIGN KEY (\"TenantTypeId\") REFERENCES \"mst__TenantTypes\" (\"TenantTypeId\"),\n  FOREIGN KEY (\"OnboardingStatusId\") REFERENCES \"mst__OnboardingStatuses\" (\"OnboardingStatusId\"),\n  FOREIGN KEY (\"TenantId\") REFERENCES \"ten__Tenants\" (\"TenantId\"),\n  CHECK (CompletedAtUtc IS NULL OR TenantId IS NOT NULL)\n)"
+    },
+    {
+      "type": "table",
+      "name": "studio__ChangeLog",
+      "table": "studio__ChangeLog",
+      "sqlite_sql": "CREATE TABLE studio__ChangeLog(ChangeId INTEGER PRIMARY KEY AUTOINCREMENT, Version TEXT NOT NULL, Summary TEXT NOT NULL, ChangedAtUtc TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)"
+    },
+    {
+      "type": "table",
+      "name": "studio__Metadata",
+      "table": "studio__Metadata",
+      "sqlite_sql": "CREATE TABLE studio__Metadata(Key TEXT PRIMARY KEY, Value TEXT NOT NULL)"
+    },
+    {
+      "type": "table",
+      "name": "studio__SourceObjects",
+      "table": "studio__SourceObjects",
+      "sqlite_sql": "CREATE TABLE studio__SourceObjects(SqlServerName TEXT PRIMARY KEY, SQLiteName TEXT NOT NULL, SourceVersion TEXT NOT NULL, Status TEXT NOT NULL)"
+    },
+    {
+      "type": "table",
+      "name": "ten__Organizations",
+      "table": "ten__Organizations",
+      "sqlite_sql": "CREATE TABLE \"ten__Organizations\" (\n  \"TenantId\" INTEGER PRIMARY KEY NOT NULL,\n  \"OrganizationTypeId\" INTEGER NOT NULL,\n  \"RegisteredName\" TEXT NOT NULL,\n  \"VerificationStatusId\" INTEGER NOT NULL,\n  \"VerifiedAtUtc\" TEXT,\n  \"VerifiedByUserId\" INTEGER,\n  \"CreatedAtUtc\" TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n  \"UpdatedAtUtc\" TEXT,\n  \"RowVersion\" BLOB NOT NULL DEFAULT (randomblob(8)) CHECK (length(\"RowVersion\")=8),\n  FOREIGN KEY (\"TenantId\") REFERENCES \"ten__Tenants\" (\"TenantId\"),\n  FOREIGN KEY (\"OrganizationTypeId\") REFERENCES \"mst__OrganizationTypes\" (\"OrganizationTypeId\"),\n  FOREIGN KEY (\"VerificationStatusId\") REFERENCES \"mst__VerificationStatuses\" (\"VerificationStatusId\"),\n  FOREIGN KEY (\"VerifiedByUserId\") REFERENCES \"iam__Users\" (\"UserId\")\n)"
+    },
+    {
+      "type": "table",
+      "name": "ten__TenantMemberships",
+      "table": "ten__TenantMemberships",
+      "sqlite_sql": "CREATE TABLE \"ten__TenantMemberships\" (\n  \"MembershipId\" INTEGER PRIMARY KEY AUTOINCREMENT,\n  \"TenantId\" INTEGER NOT NULL,\n  \"UserId\" INTEGER NOT NULL,\n  \"MembershipStatusId\" INTEGER NOT NULL,\n  \"JoinedAtUtc\" TEXT,\n  \"LeftAtUtc\" TEXT,\n  \"CreatedAtUtc\" TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n  \"CreatedByUserId\" INTEGER,\n  \"UpdatedAtUtc\" TEXT,\n  \"UpdatedByUserId\" INTEGER,\n  \"RowVersion\" BLOB NOT NULL DEFAULT (randomblob(8)) CHECK (length(\"RowVersion\")=8),\n  UNIQUE (\"TenantId\",\"UserId\"),\n  FOREIGN KEY (\"TenantId\") REFERENCES \"ten__Tenants\" (\"TenantId\"),\n  FOREIGN KEY (\"UserId\") REFERENCES \"iam__Users\" (\"UserId\"),\n  FOREIGN KEY (\"MembershipStatusId\") REFERENCES \"mst__MembershipStatuses\" (\"MembershipStatusId\"),\n  FOREIGN KEY (\"CreatedByUserId\") REFERENCES \"iam__Users\" (\"UserId\"),\n  FOREIGN KEY (\"UpdatedByUserId\") REFERENCES \"iam__Users\" (\"UserId\"),\n  CHECK (LeftAtUtc IS NULL OR JoinedAtUtc IS NULL OR LeftAtUtc>=JoinedAtUtc)\n)"
+    },
+    {
+      "type": "table",
+      "name": "ten__Tenants",
+      "table": "ten__Tenants",
+      "sqlite_sql": "CREATE TABLE \"ten__Tenants\" (\n  \"TenantId\" INTEGER PRIMARY KEY AUTOINCREMENT,\n  \"PublicTenantId\" TEXT NOT NULL DEFAULT (lower(hex(randomblob(16)))),\n  \"TenantCode\" TEXT NOT NULL,\n  \"TenantTypeId\" INTEGER NOT NULL,\n  \"TenantStatusId\" INTEGER NOT NULL,\n  \"DisplayName\" TEXT NOT NULL,\n  \"CreatedAtUtc\" TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),\n  \"CreatedByUserId\" INTEGER,\n  \"UpdatedAtUtc\" TEXT,\n  \"UpdatedByUserId\" INTEGER,\n  \"RowVersion\" BLOB NOT NULL DEFAULT (randomblob(8)) CHECK (length(\"RowVersion\")=8),\n  UNIQUE (\"PublicTenantId\"),\n  UNIQUE (\"TenantCode\"),\n  FOREIGN KEY (\"TenantTypeId\") REFERENCES \"mst__TenantTypes\" (\"TenantTypeId\"),\n  FOREIGN KEY (\"TenantStatusId\") REFERENCES \"mst__TenantStatuses\" (\"TenantStatusId\"),\n  FOREIGN KEY (\"CreatedByUserId\") REFERENCES \"iam__Users\" (\"UserId\"),\n  FOREIGN KEY (\"UpdatedByUserId\") REFERENCES \"iam__Users\" (\"UserId\")\n)"
+    },
+    {
+      "type": "trigger",
+      "name": "trg_NotificationTemplateVersions_ActiveDelete",
+      "table": "ntf__NotificationTemplateVersions",
+      "sqlite_sql": "CREATE TRIGGER trg_NotificationTemplateVersions_ActiveDelete BEFORE DELETE ON ntf__NotificationTemplateVersions WHEN OLD.StatusCode IN('ACTIVE','ARCHIVED') BEGIN SELECT RAISE(ABORT,'Active and archived versions cannot be deleted'); END"
+    },
+    {
+      "type": "trigger",
+      "name": "trg_NotificationTemplateVersions_ActiveImmutable",
+      "table": "ntf__NotificationTemplateVersions",
+      "sqlite_sql": "CREATE TRIGGER trg_NotificationTemplateVersions_ActiveImmutable BEFORE UPDATE ON ntf__NotificationTemplateVersions WHEN OLD.StatusCode IN('ACTIVE','ARCHIVED') AND (NEW.TemplateVersionId IS NOT OLD.TemplateVersionId OR NEW.TemplateId IS NOT OLD.TemplateId OR NEW.TemplateCode IS NOT OLD.TemplateCode OR NEW.VersionNumber IS NOT OLD.VersionNumber OR NEW.Subject IS NOT OLD.Subject OR NEW.Body IS NOT OLD.Body OR NEW.CreatedByUserId IS NOT OLD.CreatedByUserId OR NEW.CreatedAtUtc IS NOT OLD.CreatedAtUtc OR NEW.SubmittedAtUtc IS NOT OLD.SubmittedAtUtc OR NEW.ActivatedAtUtc IS NOT OLD.ActivatedAtUtc OR (OLD.StatusCode='ACTIVE' AND (NEW.StatusCode NOT IN('ACTIVE','ARCHIVED') OR (NEW.StatusCode='ACTIVE' AND NEW.ArchivedAtUtc IS NOT OLD.ArchivedAtUtc) OR (NEW.StatusCode='ARCHIVED' AND NEW.ArchivedAtUtc IS NULL))) OR (OLD.StatusCode='ARCHIVED' AND (NEW.StatusCode<>'ARCHIVED' OR NEW.ArchivedAtUtc IS NOT OLD.ArchivedAtUtc))) BEGIN SELECT RAISE(ABORT,'Active and archived versions immutable'); END"
+    },
+    {
+      "type": "trigger",
+      "name": "trg_RolePermissions_ValidateMatrixScope_INSERT",
+      "table": "mst__RolePermissions",
+      "sqlite_sql": "CREATE TRIGGER trg_RolePermissions_ValidateMatrixScope_INSERT BEFORE INSERT ON mst__RolePermissions WHEN NOT EXISTS(SELECT 1 FROM mst__Roles r JOIN mst__Permissions p ON p.PermissionId=NEW.PermissionId JOIN mst__RoleScopes s ON s.RoleScopeId=r.RoleScopeId WHERE r.RoleId=NEW.RoleId AND r.RoleScopeId=p.RoleScopeId AND ((s.Code='PLATFORM' AND NEW.TenantTypeId IS NULL) OR (s.Code='TENANT' AND NEW.TenantTypeId IS NOT NULL))) BEGIN SELECT RAISE(ABORT,'Incompatible role permission scope'); END"
+    },
+    {
+      "type": "trigger",
+      "name": "trg_RolePermissions_ValidateMatrixScope_UPDATE",
+      "table": "mst__RolePermissions",
+      "sqlite_sql": "CREATE TRIGGER trg_RolePermissions_ValidateMatrixScope_UPDATE BEFORE UPDATE ON mst__RolePermissions WHEN NOT EXISTS(SELECT 1 FROM mst__Roles r JOIN mst__Permissions p ON p.PermissionId=NEW.PermissionId JOIN mst__RoleScopes s ON s.RoleScopeId=r.RoleScopeId WHERE r.RoleId=NEW.RoleId AND r.RoleScopeId=p.RoleScopeId AND ((s.Code='PLATFORM' AND NEW.TenantTypeId IS NULL) OR (s.Code='TENANT' AND NEW.TenantTypeId IS NOT NULL))) BEGIN SELECT RAISE(ABORT,'Incompatible role permission scope'); END"
+    }
+  ],
+  "limitations": [
+    "ROWVERSION BLOB placeholder, no native SQL Server concurrency",
+    "SQLite UUID text/default differs from SQL Server",
+    "No SQL Server stored procedures, collation or grant semantics",
+    "Earlier v1.0 projection remains partial; no live introspection"
+  ]
+}
