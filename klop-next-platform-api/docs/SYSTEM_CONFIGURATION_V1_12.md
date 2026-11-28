@@ -116,7 +116,7 @@ The templates default to refusal and require a separately approved Development t
 | Backend isolated tests | `dotnet test tests/KLOP.Platform.UnitTests/KLOP.Platform.UnitTests.csproj --configuration Release` — 170 passed, 0 failed | Fake repository/contract tests; no SQL Server |
 | Frontend | `npm run api:types`, `npm run typecheck`, `npm test -- --run`, `npm run build` — succeeded; 15 test files / 100 tests passed | Local contract/type/unit/build only; build reports existing third-party Rollup comment warnings |
 | SQL scripts | Static SQL contract tests included in backend suite passed; scripts manually reviewed | No SQL parse/compile/execution evidence |
-| CI / deployment | Not run against the updated commit yet | Current-head CI status must be reviewed after push; no live deployment/UAT claim |
+| CI / deployment | KLOP CI run `46125362817` on commit `29e3d2d` completed with `action_required`; it had 0 jobs and the failed-job log query reported no failed jobs | GitHub did not execute CI jobs; approval is required before CI evidence exists. No live deployment/UAT claim |
 
 The repository's separate `scripts/validate_static.py` check remains a known unrelated failure: it references the removed legacy `src/KLOP.Platform.Infrastructure/KlopRepository.cs` path. It was not changed as part of this issue. No model identity has been confirmed from task evidence: **UNVERIFIED**.
 
