@@ -1,84 +1,55 @@
-# Configuration catalog
+# Configuration catalog and runtime source
 
-Business/runtime settings are read from `cfg.SystemConfigurations` through `cfg.usp_Configuration_GetByKey`. Values are validated at startup and held in memory until restart. The application does not implement a generic configuration write API.
+`cfg.SystemConfigurations` remains the only persisted business/runtime configuration store. `cfg.usp_Configuration_GetByKey` and `RuntimeSettings.Load` remain authoritative. Runtime settings are loaded at process startup and held in memory; the management catalog is a protected metadata projection and never claims to read the live in-memory value.
 
-## Bootstrap settings
+The v1.12 proposal does not change the configuration loader, create a competing value store, edit bootstrap settings, or execute SQL. It does not disclose `ConfigurationValue`, `DefaultValue`, patterns, allowed-values JSON, secret names/references, or unclassified key names. `PLAIN` is not a disclosure grant. Only the explicit non-sensitive allowlist in the v1.12 catalog procedure can be returned. Unclassified database rows contribute only to an aggregate count.
 
-Only infrastructure bootstrap values belong in `appsettings.Development.json`, `appsettings.Production.json`, or environment variables:
+## Bootstrap settings stay separate
+
+Infrastructure bootstrap values remain in environment-specific `appsettings` and environment variables:
 
 | Setting | Purpose |
 |---|---|
-| `Sql:Server` | SQL Server host/instance |
-| `Sql:Database` | Environment-specific database |
-| `Sql:Authentication` | `IntegratedSecurity`, `ActiveDirectoryDefault`, or `ActiveDirectoryManagedIdentity` |
-| `Sql:TrustServerCertificate` | Development-only certificate trust override; do not enable in Production |
-| `KeyVault:VaultUri` | Environment-specific HTTPS Key Vault address |
-| `AllowedHosts` | Explicit host filtering; wildcard is rejected in Production |
-| `ForwardedHeaders:KnownProxies` | Explicit trusted proxy IPs, if deployed behind a proxy |
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | Optional telemetry collector endpoint |
+| `Sql:Server`, `Sql:Database`, `Sql:Authentication` | Environment-specific SQL connection bootstrap |
+| `Sql:TrustServerCertificate` | Development-only certificate override |
+| `KeyVault:VaultUri` | Environment-specific Key Vault endpoint |
+| `AllowedHosts` | Explicit host filtering |
+| `ForwardedHeaders:KnownProxies` | Explicit trusted proxy IPs |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | Optional telemetry endpoint |
 
-No passwords, signing keys, SMTP credentials, or business/runtime flags belong in these files. In particular, `database.command_timeout_seconds` is loaded from SQL; a `Sql:CommandTimeoutSeconds` appsettings value is not supported or used.
+Development and Production appsettings are not edited by this feature. No credentials, key material, connection strings, SMTP configuration, or business flags are moved into bootstrap configuration.
 
-## SQL-backed values
+## RuntimeSettings source inventory
 
-### Existing v1.1 / v1.2 values
+The safe management catalog contains metadata for only the following keys consumed by the current `RuntimeSettings.Load` implementation. It does not return their persisted values. Static ranges below are the typed runtime validator bounds; database metadata bounds are intersected when a proposal is validated.
 
-| Key | Type | Use |
-|---|---|---|
-| `auth.access_token_minutes` | INTEGER / PLAIN | Access token lifetime |
-| `auth.refresh_token_days` | INTEGER / PLAIN | Session and refresh lifetime |
-| `security.max_login_attempts` | INTEGER / PLAIN | SQL login lockout threshold |
-| `security.password.min_length` | INTEGER / PLAIN | Password policy (12–128) |
-| `registration.personal.enabled` | BOOLEAN / PLAIN | Registration toggle for the database tenant type with this code |
-| `registration.organization.enabled` | BOOLEAN / PLAIN | Registration toggle for the database tenant type with this code |
+| Configuration key | Type/storage | Runtime constraint | Management |
+|---|---|---|---|
+| `auth.access_token_minutes` | INTEGER / PLAIN | 5–60 | Metadata only; HOLD |
+| `auth.refresh_token_days` | INTEGER / PLAIN | 1–30 | Metadata only; HOLD |
+| `auth.email_verification_hours` | INTEGER / PLAIN | 1–24 | Metadata only; HOLD |
+| `security.max_login_attempts` | INTEGER / PLAIN | 3–10 | Metadata only; HOLD |
+| `security.password.min_length` | INTEGER / PLAIN | 12–128 | Metadata only; HOLD |
+| `security.auth_requests_per_minute` | INTEGER / PLAIN | 1–120 | Metadata only; HOLD |
+| `registration.personal.enabled` | BOOLEAN / PLAIN | Strict boolean | Metadata only; HOLD |
+| `registration.organization.enabled` | BOOLEAN / PLAIN | Strict boolean | Metadata only; HOLD |
+| `registration.legal_consent_enforcement` | BOOLEAN / PLAIN | Strict boolean; v1.8 enforcement source | Metadata only; HOLD |
+| `notification.email_verification_templates.enabled` | BOOLEAN / PLAIN | Optional boolean; absent means disabled | Metadata only; HOLD |
+| `notification.email_verification_delivery_audit.enabled` | BOOLEAN / PLAIN | Optional boolean; absent means disabled | Metadata only; HOLD |
+| `database.command_timeout_seconds` | INTEGER / PLAIN | 1–120 | Metadata only; HOLD; existing v1.4 source seed has `IsEditable=0` |
 
-### v1.3 proposed values
+Presence is evaluated from current persisted metadata as `PRESENT`, `MISSING`, `INACTIVE`, or `INVALID`; no live environment was queried for this change, so actual presence is not asserted here. Policy status is separately `HOLD` unless explicitly reviewed by the owner. The v1.12 seed leaves every policy held and non-manageable. No user/role mapping or active readiness is proposed.
 
-| Key | Expected type | Use |
-|---|---|---|
-| `auth.jwt.issuer` | STRING / PLAIN | JWT issuer |
-| `auth.jwt.audience` | STRING / PLAIN | JWT audience |
-| `web.allowed_origin` | STRING / PLAIN | Single HTTPS SPA origin |
-| `smtp.host` | STRING / PLAIN | SMTP host |
-| `smtp.port` | INTEGER / PLAIN | SMTP port |
-| `smtp.from` | STRING / PLAIN | Sender address |
-| `smtp.require_tls` | BOOLEAN / PLAIN | Production must be true |
-| `smtp.username` | STRING / PLAIN, optional | SMTP login name |
-| `auth.email_verification_hours` | INTEGER / PLAIN | Verification challenge lifetime (1–24) |
-| `auth.signing_key_ref` | STRING / KEYVAULT_REFERENCE | Key Vault secret name only |
-| `smtp.password_ref` | STRING / KEYVAULT_REFERENCE | Key Vault secret name only |
+`database.command_timeout_seconds` is the only proposed value-workflow candidate. It is an INTEGER in the 1–120 runtime range, but the existing v1.4 seed explicitly marks it non-editable. This proposal does not flip that flag or the management policy; actual draft creation/apply therefore fails closed. Candidate unlock, editable policy, and role assignment need separate owner approval.
 
-These are authored in `sql/050_config_seed_DEVELOPMENT_REVIEW.sql`, which is a Development-only proposal and must be reviewed before execution. Startup fails closed if required issuer or audience settings are missing, inactive, empty, or have the wrong type or storage; the issuer must also be an HTTPS URI. Do not bypass these checks to access Swagger. For a read-only presence/type check (without displaying configuration values), use:
+## Validation and startup semantics
 
-```sql
-SELECT expected.ConfigurationKey,
-       CASE WHEN actual.ConfigurationId IS NULL THEN 'MISSING_OR_INACTIVE'
-            WHEN NULLIF(LTRIM(RTRIM(actual.ConfigurationValue)), '') IS NULL THEN 'EMPTY'
-            ELSE 'PRESENT' END AS Status,
-       actual.ValueType, actual.StorageType
-FROM (VALUES ('auth.jwt.issuer'), ('auth.jwt.audience'), ('auth.signing_key_ref')) AS expected(ConfigurationKey)
-LEFT JOIN cfg.SystemConfigurations AS actual
-  ON actual.ConfigurationKey = expected.ConfigurationKey AND actual.IsActive = 1;
-```
+The safe metadata catalog is not a replacement for startup validation. `RuntimeSettings.Load` trims required SQL values and validates the expected type/storage, URI/origin requirements, booleans, and fixed numeric ranges. Optional notification rollout gates default to `false` when absent and reject invalid type/value/storage when present. Registration legal-consent enforcement remains read by the existing loader and v1.8 SQL enforcement path; the Development bypass remains a separate default-off bootstrap option. None of these settings is hot-reloaded by v1.12.
 
-Also verify that `cfg.usp_Configuration_GetByKey` returns the active rows to the application identity. Review the existing Development-only seed with a DBA before any authorized database change; it does not overwrite existing rows. The signing-key reference can be empty only for Development when no Key Vault URI is configured, in which case the existing ephemeral key is used. Production requires an approved Key Vault reference and valid private key.
+SMTP host/from/account/credentials, Key Vault references and secret names, connection/JWT/signing material, and other sensitive or unclassified configuration are excluded from the management allowlist, result DTOs, request bodies, history, and UI. SMTP remains manual. This catalog is not a secret readiness endpoint.
 
-### v1.4 additions
+## State and restart interpretation
 
-The additive, idempotent proposal is [001_runtime_settings.sql](../database/migrations/v1.4/001_runtime_settings.sql):
+The catalog reports persisted-row presence, safe metadata, edit/approval/restart flags, version, timestamps, and safe numeric constraints. It does not expose a current value or a default. An applied request would update the persisted row only after separate authorization and would record a restart-required pending state; the process’s startup-loaded `RuntimeSettings` would remain unchanged until an independently authorized service restart. There is no restart endpoint or automatic restart behavior.
 
-| Key | Default proposal | Bounds | Use |
-|---|---:|---:|---|
-| `database.command_timeout_seconds` | 30 | 1–120 | Dapper Stored Procedure timeout |
-| `security.auth_requests_per_minute` | 8 | 1–120 | Per-IP auth route fixed-window limit |
-
-The application fails startup if these required keys are absent or invalid. DBA review and Development-only execution are required. The migration does not overwrite existing rows.
-
-## Secret loading and environment rules
-
-- Production signing and SMTP secrets are read from Azure Key Vault using `DefaultAzureCredential`; managed identity is preferred.
-- `auth.signing_key_ref` must reference a private RSA PEM key of at least 3072 bits. Only public key parameters are exposed through JWKS.
-- SMTP credentials are fetched only if an SMTP username is configured.
-- Development may use an ephemeral RSA key only when no Key Vault URI is configured. This invalidates tokens on restart and is not suitable for production.
-- Only `Development` and `Production` are supported. Production requires TLS for SMTP, explicit `AllowedHosts`, a Key Vault signing key, and environment-separated SQL/Key Vault resources.
-- Startup settings are not hot-reloaded; restart after approved configuration changes.
+See [SYSTEM_CONFIGURATION_V1_12.md](SYSTEM_CONFIGURATION_V1_12.md) for the proposed schema, permission matrix, migration order, evidence, and owner/UAT checklist.

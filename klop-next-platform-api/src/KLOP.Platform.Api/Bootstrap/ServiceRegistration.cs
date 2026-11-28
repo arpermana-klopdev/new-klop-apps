@@ -80,6 +80,7 @@ public static class ServiceRegistration
         services.AddScoped<PlatformRegistrationService>();
         services.AddScoped<RolePermissionMatrixService>();
         services.AddScoped<NotificationManagementService>();
+        services.AddScoped<SystemConfigurationService>();
         services.AddScoped<IAuthorizationHandler, TenantPermissionHandler>();
         services.AddScoped<IAuthorizationHandler, PlatformPermissionHandler>();
         services.AddHealthChecks().AddCheck<SqlServerReadinessCheck>("sql-server", tags: ["ready"]);

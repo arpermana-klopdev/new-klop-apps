@@ -1610,6 +1610,236 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ApiEnvelopeOfNotificationSettingsReadiness' }
+  /api/v1/platform/configurations/permissions:
+    get:
+      tags: [Platform System Configuration]
+      summary: Discover effective configuration-management capabilities
+      security:
+        - Bearer: []
+      responses:
+        '200':
+          description: Effective capabilities
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiEnvelopeOfSystemConfigurationAccessResponse' }
+  /api/v1/platform/configurations/catalog:
+    get:
+      tags: [Platform System Configuration]
+      summary: Read the explicitly classified safe configuration catalog
+      security:
+        - Bearer: []
+      parameters:
+        - name: category
+          in: query
+          schema: { type: string, maxLength: 80 }
+        - name: pageNumber
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100000, default: 1 }
+        - name: pageSize
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 25 }
+      responses:
+        '200':
+          description: Safe metadata only; no persisted value or secret reference
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiEnvelopeOfSystemConfigurationCatalogPage' }
+  /api/v1/platform/configurations/requests:
+    get:
+      tags: [Platform System Configuration]
+      summary: List safe configuration change request metadata
+      security:
+        - Bearer: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [ALL, DRAFT, SUBMITTED, APPROVED, REJECTED, CANCELED, APPLIED]
+        - name: pageNumber
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100000, default: 1 }
+        - name: pageSize
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 25 }
+      responses:
+        '200':
+          description: Safe requests and allowlisted proposed integer only
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiEnvelopeOfSystemConfigurationRequestPage' }
+    post:
+      tags: [Platform System Configuration]
+      summary: Create a draft for the explicitly supported bounded integer candidate
+      security:
+        - Bearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SystemConfigurationDraftRequest' }
+      responses:
+        '200':
+          description: Draft created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiEnvelopeOfSystemConfigurationDraftResult' }
+        '409':
+          description: Candidate remains held or target/policy changed
+  /api/v1/platform/configurations/approvals:
+    get:
+      tags: [Platform System Configuration]
+      summary: List submitted requests awaiting an independent decision
+      security:
+        - Bearer: []
+      parameters:
+        - name: pageNumber
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100000, default: 1 }
+        - name: pageSize
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 25 }
+      responses:
+        '200':
+          description: Submitted request metadata
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiEnvelopeOfSystemConfigurationRequestPage' }
+  /api/v1/platform/configurations/history:
+    get:
+      tags: [Platform System Configuration]
+      summary: Read deterministic paginated safe applied history
+      security:
+        - Bearer: []
+      parameters:
+        - name: pageNumber
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100000, default: 1 }
+        - name: pageSize
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 25 }
+      responses:
+        '200':
+          description: Safe applied history; startup runtime values are not returned
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiEnvelopeOfSystemConfigurationHistoryPage' }
+  /api/v1/platform/configurations/requests/{requestId}:
+    put:
+      tags: [Platform System Configuration]
+      summary: Edit an owned unsubmitted draft using optimistic concurrency
+      security:
+        - Bearer: []
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SystemConfigurationDraftUpdate' }
+      responses:
+        '200':
+          description: Draft updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiEnvelopeOfSystemConfigurationDraftResult' }
+        '409':
+          description: Request or current policy changed
+  /api/v1/platform/configurations/requests/{requestId}/submit:
+    post:
+      tags: [Platform System Configuration]
+      summary: Submit a draft for independent approval
+      security:
+        - Bearer: []
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SystemConfigurationTransitionRequest' }
+      responses:
+        '200':
+          description: Submitted request
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiEnvelopeOfSystemConfigurationDraftResult' }
+  /api/v1/platform/configurations/requests/{requestId}/approval:
+    post:
+      tags: [Platform System Configuration]
+      summary: Approve or reject a submitted request; self-approval is denied
+      security:
+        - Bearer: []
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SystemConfigurationDecisionRequest' }
+      responses:
+        '200':
+          description: Decision recorded
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiEnvelopeOfSystemConfigurationDraftResult' }
+        '409':
+          description: State, policy, or request version conflict
+  /api/v1/platform/configurations/requests/{requestId}/cancel:
+    post:
+      tags: [Platform System Configuration]
+      summary: Cancel an owned draft or submitted request
+      security:
+        - Bearer: []
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SystemConfigurationTransitionRequest' }
+      responses:
+        '200':
+          description: Request canceled
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiEnvelopeOfSystemConfigurationDraftResult' }
+  /api/v1/platform/configurations/requests/{requestId}/apply:
+    post:
+      tags: [Platform System Configuration]
+      summary: Apply an approved request exactly once; no automatic restart occurs
+      security:
+        - Bearer: []
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SystemConfigurationTransitionRequest' }
+      responses:
+        '200':
+          description: Request applied; startup in-memory value remains unchanged until authorized restart
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiEnvelopeOfSystemConfigurationDraftResult' }
+        '409':
+          description: Request, policy, or target configuration version conflict
 components:
   parameters:
     DocumentVersionId:
@@ -3468,6 +3698,161 @@ components:
         pageNumber: { type: integer }
         pageSize: { type: integer }
         totalCount: { type: integer, format: int64 }
+    SystemConfigurationAccessResponse:
+      required: [canRead, canCreateRequest, canEditRequest, canSubmit, canCancel, canApprove, canApply, canReadHistory]
+      type: object
+      properties:
+        canRead: { type: boolean }
+        canCreateRequest: { type: boolean }
+        canEditRequest: { type: boolean }
+        canSubmit: { type: boolean }
+        canCancel: { type: boolean }
+        canApprove: { type: boolean }
+        canApply: { type: boolean }
+        canReadHistory: { type: boolean }
+    SystemConfigurationCatalogItem:
+      required: [configurationKey, category, valueType, storageType, readiness, managementStatus, isEditable, requiresApproval, requiresRestart]
+      type: object
+      properties:
+        configurationKey: { type: string }
+        category: { type: string }
+        valueType: { type: string }
+        storageType: { type: string }
+        readiness: { type: string, enum: [PRESENT, MISSING, INACTIVE, INVALID] }
+        managementStatus: { type: string, enum: [HOLD, ACTIVE, INVALID, MISSING] }
+        isEditable: { type: boolean }
+        requiresApproval: { type: boolean }
+        requiresRestart: { type: boolean }
+        versionNumber: { type: integer, nullable: true }
+        concurrencyVersion: { type: string, format: byte, nullable: true }
+        createdAtUtc: { type: string, format: date-time, nullable: true }
+        updatedAtUtc: { type: string, format: date-time, nullable: true }
+        minimum: { type: number, nullable: true }
+        maximum: { type: number, nullable: true }
+    SystemConfigurationCatalogPage:
+      required: [items, pageNumber, pageSize, totalCount, unclassifiedCount]
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/SystemConfigurationCatalogItem' }
+        pageNumber: { type: integer }
+        pageSize: { type: integer }
+        totalCount: { type: integer, format: int64 }
+        unclassifiedCount: { type: integer, format: int64 }
+    SystemConfigurationRequestItem:
+      required: [requestId, configurationKey, status, reasonCode, createdAtUtc]
+      type: object
+      properties:
+        requestId: { type: string, format: uuid }
+        configurationKey: { type: string }
+        status: { type: string, enum: [DRAFT, SUBMITTED, APPROVED, REJECTED, CANCELED, APPLIED] }
+        proposedInteger: { type: integer, nullable: true }
+        expectedVersionNumber: { type: integer, nullable: true }
+        reasonCode: { type: string }
+        createdAtUtc: { type: string, format: date-time }
+        updatedAtUtc: { type: string, format: date-time, nullable: true }
+        requestConcurrencyVersion: { type: string, format: byte, nullable: true }
+    SystemConfigurationRequestPage:
+      required: [items, pageNumber, pageSize, totalCount]
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/SystemConfigurationRequestItem' }
+        pageNumber: { type: integer }
+        pageSize: { type: integer }
+        totalCount: { type: integer, format: int64 }
+    SystemConfigurationHistoryItem:
+      required: [historyId, configurationKey, versionNumber, changeType, reasonCode, occurredAtUtc, actorUserId]
+      type: object
+      properties:
+        historyId: { type: integer, format: int64 }
+        configurationKey: { type: string }
+        versionNumber: { type: integer }
+        changeType: { type: string }
+        appliedInteger: { type: integer, nullable: true }
+        reasonCode: { type: string }
+        occurredAtUtc: { type: string, format: date-time }
+        actorUserId: { type: integer, format: int64 }
+    SystemConfigurationHistoryPage:
+      required: [items, pageNumber, pageSize, totalCount]
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/SystemConfigurationHistoryItem' }
+        pageNumber: { type: integer }
+        pageSize: { type: integer }
+        totalCount: { type: integer, format: int64 }
+    SystemConfigurationDraftRequest:
+      required: [configurationKey, proposedInteger, expectedVersionNumber, targetConcurrencyVersion, reasonCode]
+      type: object
+      properties:
+        configurationKey: { type: string, enum: [database.command_timeout_seconds] }
+        proposedInteger: { type: integer, minimum: 1, maximum: 120 }
+        expectedVersionNumber: { type: integer, minimum: 1 }
+        targetConcurrencyVersion: { type: string, format: byte }
+        reasonCode: { type: string, enum: [ROUTINE_MAINTENANCE, CAPACITY_ADJUSTMENT, INCIDENT_FOLLOWUP] }
+    SystemConfigurationDraftUpdate:
+      required: [proposedInteger, reasonCode, requestConcurrencyVersion]
+      type: object
+      properties:
+        proposedInteger: { type: integer, minimum: 1, maximum: 120 }
+        reasonCode: { type: string, enum: [ROUTINE_MAINTENANCE, CAPACITY_ADJUSTMENT, INCIDENT_FOLLOWUP] }
+        requestConcurrencyVersion: { type: string, format: byte }
+    SystemConfigurationTransitionRequest:
+      required: [requestConcurrencyVersion]
+      type: object
+      properties:
+        requestConcurrencyVersion: { type: string, format: byte }
+    SystemConfigurationDecisionRequest:
+      required: [decision, requestConcurrencyVersion]
+      type: object
+      properties:
+        decision: { type: string, enum: [APPROVE, REJECT] }
+        requestConcurrencyVersion: { type: string, format: byte }
+    SystemConfigurationDraftResult:
+      required: [requestId, requestConcurrencyVersion]
+      type: object
+      properties:
+        requestId: { type: string, format: uuid }
+        requestConcurrencyVersion: { type: string, format: byte }
+    ApiEnvelopeOfSystemConfigurationAccessResponse:
+      type: object
+      properties:
+        success: { type: boolean }
+        data: { oneOf: [{ type: 'null' }, { $ref: '#/components/schemas/SystemConfigurationAccessResponse' }] }
+        error: { oneOf: [{ type: 'null' }, { $ref: '#/components/schemas/ApiError' }] }
+        meta: { $ref: '#/components/schemas/ApiMeta' }
+    ApiEnvelopeOfSystemConfigurationCatalogPage:
+      type: object
+      properties:
+        success: { type: boolean }
+        data: { oneOf: [{ type: 'null' }, { $ref: '#/components/schemas/SystemConfigurationCatalogPage' }] }
+        error: { oneOf: [{ type: 'null' }, { $ref: '#/components/schemas/ApiError' }] }
+        meta: { $ref: '#/components/schemas/ApiMeta' }
+    ApiEnvelopeOfSystemConfigurationRequestPage:
+      type: object
+      properties:
+        success: { type: boolean }
+        data: { oneOf: [{ type: 'null' }, { $ref: '#/components/schemas/SystemConfigurationRequestPage' }] }
+        error: { oneOf: [{ type: 'null' }, { $ref: '#/components/schemas/ApiError' }] }
+        meta: { $ref: '#/components/schemas/ApiMeta' }
+    ApiEnvelopeOfSystemConfigurationHistoryPage:
+      type: object
+      properties:
+        success: { type: boolean }
+        data: { oneOf: [{ type: 'null' }, { $ref: '#/components/schemas/SystemConfigurationHistoryPage' }] }
+        error: { oneOf: [{ type: 'null' }, { $ref: '#/components/schemas/ApiError' }] }
+        meta: { $ref: '#/components/schemas/ApiMeta' }
+    ApiEnvelopeOfSystemConfigurationDraftResult:
+      type: object
+      properties:
+        success: { type: boolean }
+        data: { oneOf: [{ type: 'null' }, { $ref: '#/components/schemas/SystemConfigurationDraftResult' }] }
+        error: { oneOf: [{ type: 'null' }, { $ref: '#/components/schemas/ApiError' }] }
+        meta: { $ref: '#/components/schemas/ApiMeta' }
     ApiEnvelopeOfNotificationPermissionsResponse:
       type: object
       properties:

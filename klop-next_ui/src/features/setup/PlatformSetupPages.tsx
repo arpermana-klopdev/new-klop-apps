@@ -19,6 +19,7 @@ import type { OrganizationType } from "../../api/contracts";
 import { Button, Notice, PageHeading, Skeleton, StatusBadge } from "../../components/ui";
 import { RolePermissionMatrixPage } from "./RolePermissionMatrixPage";
 import { NotificationManagementPage } from "./NotificationManagementPage";
+import { SystemConfigurationPage as ProtectedSystemConfigurationPage } from "./SystemConfigurationPage";
 
 const setupSections = [
   {
@@ -45,8 +46,8 @@ const setupSections = [
   {
     title: "System Configuration",
     route: "/platform-setup/system-configuration",
-    description: "Configuration values and approval controls are not exposed to the frontend.",
-    status: "API unavailable",
+    description: "Read a protected safe metadata catalog and separately authorized change workflow; editing remains held by policy.",
+    status: "Catalog protected; edits HOLD",
     icon: Settings2,
   },
   {
@@ -147,7 +148,7 @@ export function PlatformSetupPage() {
         description="A single entry point for platform configuration and operational setup, with availability based only on verified backend capabilities."
       />
       <Notice kind="info">
-        The unified Role & Permission Matrix uses database-backed policy, authorization, concurrency, and audit APIs. Other Platform Setup Center enhancements remain read-only or on HOLD.
+        The unified Role & Permission Matrix uses database-backed policy, authorization, concurrency, and audit APIs. System Configuration exposes only a protected metadata allowlist; candidate changes and role grants remain on HOLD.
       </Notice>
       <section aria-label="Platform Setup sections" className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {sections.map(({ title, route, description, status, icon: Icon }) => (
@@ -355,38 +356,8 @@ function ReferenceCatalog({ title, endpoint, load }: {
   );
 }
 
-function UnavailableSetupPage({
-  title,
-  description,
-  status,
-  detail,
-}: {
-  title: string;
-  description: string;
-  status: string;
-  detail: string;
-}) {
-  return (
-    <SetupSectionPage title={title} description={description} status={status}>
-      <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">{detail}</p>
-      <div className="mt-5">
-        <Notice kind="info">
-          No mutation controls are available. This page does not use a client-side role label as authorization.
-        </Notice>
-      </div>
-    </SetupSectionPage>
-  );
-}
-
 export function SystemConfigurationPage() {
-  return (
-    <UnavailableSetupPage
-      title="System Configuration"
-      description="System-wide runtime, security, and business configuration status."
-      status="API unavailable"
-      detail="Configuration reads may exist inside backend services, but no frontend-facing configuration API is mapped. Sensitive values are not requested or displayed."
-    />
-  );
+  return <ProtectedSystemConfigurationPage />;
 }
 
 export function NotificationsSetupPage() {

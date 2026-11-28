@@ -8,7 +8,7 @@ namespace KLOP.Platform.Infrastructure;
 public sealed partial class KlopRepository(SqlConnectionFactory factory, RuntimeSettings settings) :
     IPlatformRepository, IRegistrationRepository, IPlatformRegistrationRepository,
     IPlatformPermissionRepository, ILegalDocumentsRepository, IRolePermissionMatrixRepository,
-    INotificationManagementRepository
+    INotificationManagementRepository, ISystemConfigurationRepository
 {
     private async Task Execute(string name, DynamicParameters parameters, CancellationToken cancellationToken)
     {

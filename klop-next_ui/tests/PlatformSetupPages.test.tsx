@@ -66,7 +66,7 @@ describe("Platform Setup foundation", () => {
       );
     }
     expect(section.querySelectorAll("a")).toHaveLength(6);
-    expect(screen.getByText(/Other Platform Setup Center enhancements remain read-only or on HOLD/))
+    expect(screen.getByText(/System Configuration exposes only a protected metadata allowlist/))
       .toBeInTheDocument();
   });
 
